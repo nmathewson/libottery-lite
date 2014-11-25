@@ -97,13 +97,13 @@ Speed comparison
 (Done on my desktop.)
 
 Right now, with no effort optimizing (and no effort debugging!) it's actually
-a 25% faster than libottery for 4-byte outputs.  Looks like simplicity pays
+about 0-25% faster as libottery for 4-byte outputs. Looks like simplicity pays
 off for low output sizes where the overhead of outputting the bytes
 dominates.
 
-For 1024-byte outputs, libottery-lite is 143% slower than libottery.  (4.4
-microseconds instead of 1.8.)  That's as expected; when generating a lot of
-bytes at once, cipher performance will dominate.
+For 1024-byte outputs, libottery-lite is about 150% slower than libottery.
+(4.4 microseconds instead of 1.8.)  That's as expected; when generating a lot
+of bytes at once, cipher performance will dominate.
 
 Copyright notices
 -----------------

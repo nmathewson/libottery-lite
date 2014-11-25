@@ -16,12 +16,14 @@
 #define STATE_ARG_OUT state
 #define RNG (&(state)->rng)
 #define STATE_FIELD(fld) (state->fld)
+#define FUNC_PREFIX ottery_st_
 #else
 #define STATE_ARG_ONLY void
 #define STATE_ARG_FIRST
 #define STATE_ARG_OUT
-#define RNG &ottery_rng
+#define RNG (&ottery_rng)
 #define STATE_FIELD(fld) (ottery_ ## fld)
+#define FUNC_PREFIX ottery_
 #endif
 
 #if defined(i386) || \
@@ -86,6 +88,9 @@
 #define MAGIC 0x6f747472
 #define RESEED_AFTER_BLOCKS 2048
 
+#define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ getpid())
+#define MAGIC_OKAY(m) ((m == (MAGIC ^ getpid())))
+
 #ifdef OTTERY_STRUCT
 struct ottery_state {
   pthread_mutex_t mutex;
@@ -93,10 +98,14 @@ struct ottery_state {
   struct ottery_rng rng;
 };
 #else
-static pthread_mutex_t ottery_mutex;
+static pthread_mutex_t ottery_mutex = PTHREAD_MUTEX_INITIALIZER;
 static unsigned ottery_magic;
 static struct ottery_rng ottery_rng;
 #endif
+
+#define PASTE(a,b) a ## b
+#define PASTE2(a,b) PASTE(a, b)
+#define PUBLIC_FN(name) PASTE2(FUNC_PREFIX, name)
 
 static int
 ottery_seed(STATE_ARG_ONLY)
@@ -126,10 +135,15 @@ ottery_seed(STATE_ARG_ONLY)
   return 0;
 }
 
-static void
-ottery_init(STATE_ARG_ONLY)
+#ifndef OTTERY_STRUCT
+static
+#endif
+void
+PUBLIC_FN(init)(STATE_ARG_ONLY)
 {
+#ifdef OTTERY_STRUCT
   pthread_mutex_init(&STATE_FIELD(mutex), NULL);
+#endif
 
   memset(RNG, 0, sizeof(*RNG));
 
@@ -140,19 +154,20 @@ ottery_init(STATE_ARG_ONLY)
 }
 
 void
-ottery_teardown(STATE_ARG_ONLY)
+PUBLIC_FN(teardown)(STATE_ARG_ONLY)
 {
-
+#ifdef OTTERY_STRUCT
   pthread_mutex_destroy(&STATE_FIELD(mutex));
+#endif
   memset(RNG, 0, sizeof(*RNG));
-  STATE_FIELD(magic) = 0 ^ getpid();
+  MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
-#define INIT()                                          \
-  do {                                                  \
-    if (STATE_FIELD(magic) != (MAGIC ^ getpid())) {     \
-      ottery_init(STATE_ARG_OUT);                       \
-    }                                                   \
+#define INIT()                                                  \
+  do {                                                          \
+    if (UNLIKELY(! MAGIC_OKAY(STATE_FIELD(magic)))) {           \
+      PUBLIC_FN(init)(STATE_ARG_OUT);                           \
+    }                                                           \
   } while (0)
 
 #define LOCK()                                  \
@@ -165,43 +180,54 @@ ottery_teardown(STATE_ARG_ONLY)
     pthread_mutex_unlock(&STATE_FIELD(mutex));  \
   } while (0)
 
+void
+PUBLIC_FN(need_reseed)(STATE_ARG_ONLY)
+{
+  LOCK();
+  MAGIC_MAKE_INVALID(STATE_FIELD(magic));
+  UNLOCK();
+}
+
 #define CHECK()                                                       \
   do {                                                                \
-    if (RNG->counter > RESEED_AFTER_BLOCKS) {                         \
+    if (RNG->count > RESEED_AFTER_BLOCKS) {                           \
       ottery_seed(STATE_ARG_OUT);                                     \
-      RNG->counter = 0;                                               \
+      RNG->count = 0;                                                 \
     }                                                                 \
   } while (0)
 
 unsigned
-ottery_st_random(STATE_ARG_ONLY)
+PUBLIC_FN(random)(STATE_ARG_ONLY)
 {
   unsigned result;
-  INIT();
   LOCK();
+  INIT();
+  CHECK();
   ottery_bytes(RNG, &result, sizeof(result));
   UNLOCK();
   return result;
 }
 
 uint64_t
-ottery_st_random_uint64(STATE_ARG_ONLY)
+PUBLIC_FN(random64)(STATE_ARG_ONLY)
 {
   unsigned result;
-  INIT();
   LOCK();
+  INIT();
+  CHECK();
   ottery_bytes(RNG, &result, sizeof(result));
   UNLOCK();
   return result;
 }
 
 unsigned
-ottery_st_random_range(STATE_ARG_FIRST unsigned upper)
+PUBLIC_FN(random_uniform)(STATE_ARG_FIRST unsigned upper)
 {
   const unsigned divisor = UINT_MAX / upper;
   unsigned result;
-  INIT();
   LOCK();
+  INIT();
+  CHECK();
   do {
     ottery_bytes(RNG, &result, sizeof(result));
     result /= divisor;
@@ -211,12 +237,13 @@ ottery_st_random_range(STATE_ARG_FIRST unsigned upper)
 }
 
 uint64_t
-ottery_st_random_range64(STATE_ARG_FIRST uint64_t upper)
+PUBLIC_FN(random_uniform64)(STATE_ARG_FIRST uint64_t upper)
 {
   const uint64_t divisor = UINT_MAX / upper;
   uint64_t result;
-  INIT();
   LOCK();
+  INIT();
+  CHECK();
   do {
     ottery_bytes(RNG, &result, sizeof(result));
     result /= divisor;
@@ -226,27 +253,29 @@ ottery_st_random_range64(STATE_ARG_FIRST uint64_t upper)
 }
 
 void
-ottery_st_random_bytes(STATE_ARG_FIRST void *output, size_t n)
+PUBLIC_FN(random_bytes)(STATE_ARG_FIRST void *output, size_t n)
 {
-  INIT();
   LOCK();
+  INIT();
+  CHECK();
   ottery_bytes(RNG, output, n);
   UNLOCK();
 }
 
-#if 0
+#if 1
 /* XXXX This should get pulled into its own file before we go to production. */
 
 int main(int c, char **v)
 {
   struct timeval tv_start, tv_end, tv_diff;
-  u8 block[1024];
+  //  u8 block[1024];
   int i;
   const int N=10000;
   unsigned long long ns;
   gettimeofday(&tv_start, NULL);
   for(i=0;i<N;++i) {
-    ottery_st_random_bytes(block, 1024);
+    // ottery_random_bytes(block, 4);
+    ottery_random();
   }
   gettimeofday(&tv_end, NULL);
   //printf("%u\n", u);
@@ -266,7 +295,7 @@ int main(int c, char **v)
   u8 buf[1024];
 
   while (1) {
-    ottery_st_random_bytes(buf, 1024);
+    ottery_random_bytes(buf, 1024);
     write(1, buf, sizeof(buf));
   }
   return 0;
