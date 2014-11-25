@@ -1,0 +1,104 @@
+libottery-lite -- drop-in secure replacement for your RNG.
+==========================================================
+
+This project is meant to provide a good portable implemented-from-scratch
+secure RNG.
+
+Libottery-lite based on my earlier project "Libottery", with some
+architectural differences.  Notably, libottery-lite is not as optimized as
+libottery, but it is much shorter, less configurable, and much simpler
+architecturally.  I believe that the performance fallout will be acceptable:
+OpenBSD has started using an unoptimized ChaCha20 for their arc4random()
+PRNG, and it hasn't hurt them much.
+
+It currently uses Dan Bernstein's ChaCha20 stream cipher as its base.
+It uses Blake2[bs] as a hash function for dealing with multiple entropy
+sources.
+
+This time, I've written all the code from scratch, so that I can comfortably
+dedicate the whole thing under cc0 or whatever license I want.
+
+Current status
+--------------
+
+Libottery-lite compiles and runs for me on Linux 3.17.  It has no tests yet.
+It has no documentation yet.  Don't use it.
+
+WARNING WARNING WARNING
+-----------------------
+
+(Copied from the Libottery README)
+
+YOU WOULD HAVE TO BE SOME KIND OF LUNATIC TO USE THIS IN PRODUCTION CODE
+RIGHT NOW.  It is so alpha that it begins the Greek alphabet.  It is so
+alpha that Jean-Luc Godard is filming there.  It is so alpha that it's
+64-bit RISC from the 1990s.  It's so alpha that it'll try to tell you
+that you belong to everyone else.  It's so alpha that when you turn it
+sideways, it looks like an ox.  It's so alpha that the Planck constant
+wobbles a little bit whenever I run the unit tests.
+
+I *will* break backward compatibility more than once. (Probably.)
+
+I *will* change something you were depending on. (Or at least, I won't
+promise not to.)
+
+There *might* be horrible security bugs left in it. If there are, I
+won't be very embarrassed: I told you not to use it yet!
+
+If it breaks, you *don't* get to keep both pieces!  I will come over and
+break the pieces into even smaller pieces, then break something else
+that you actually liked, then point at them and laugh and laugh and
+laugh.
+
+
+
+            DO YOU BEGIN TO GRASP THE TRUE MEANING OF "ALPHA"?
+
+
+
+(To people without my particular sense of humor: the purpose of this
+section is to make you not use libottery in production code yet, because
+it isn't ready. If it makes you nervous about using this version of the
+software in production: good!  That's the point.)
+
+How to build it
+---------------
+
+    gcc -Wall -O2 -c -I src src/otterylite.c
+
+If that doesn't work, debug the program.
+
+How to use it
+-------------
+
+Don't, yet.
+
+Details
+-------
+
+We collect entropy from all the available high-entropy sources, compress it
+with Blake2b or Blake2s, and use that for the key and IV of a ChaCha20
+cipher.  We generate 4K of ChaCha20 stream at a time, clear output as we
+yield it, and use the tail end of the 4K stream chunk as the key and IV for
+the next 4K block.
+
+At least, that's what we do if there aren't any bugs.  But there probably are.
+
+Read the source for more info.  I'll write more about how it works once it's
+closer to being done.
+
+
+Speed comparison
+----------------
+
+(Done on my desktop.)
+
+Right now, with no effort optimizing (and no effort debugging!) it's actually
+a 25% faster than libottery for 4-byte outputs.  Looks like simplicity pays
+off for low output sizes where the overhead of outputting the bytes
+dominates.
+
+For 1024-byte outputs, libottery-lite is 143% slower than libottery.  (4.4
+microseconds instead of 1.8.)  That's as expected; when generating a lot of
+bytes at once, cipher performance will dominate.
+
