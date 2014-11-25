@@ -269,6 +269,18 @@ OTTERY_PUBLIC_FN(random_bytes)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
   UNLOCK();
 }
 
+#ifdef OTTERY_ENABLE_EGD
+int
+OTTERY_PUBLIC_FN(set_egd_address)(const struct sockaddr *sa, int socklen)
+{
+  if (socklen > (int) sizeof(ottery_egd_sockaddr))
+      return -1;
+  memcpy(&ottery_egd_sockaddr, sa, socklen);
+  ottery_egd_socklen = socklen;
+  return 0;
+}
+#endif
+
 #if 1
 /* XXXX This should get pulled into its own file before we go to production. */
 

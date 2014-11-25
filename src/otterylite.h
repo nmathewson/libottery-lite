@@ -56,6 +56,11 @@ unsigned OTTERY_PUBLIC_FN(random_uniform)(OTTERY_STATE_ARG_FIRST unsigned limit)
 ottery_u64_t OTTERY_PUBLIC_FN(random_uniform64)(OTTERY_STATE_ARG_FIRST ottery_u64_t limit);
 void OTTERY_PUBLIC_FN(random_bytes)(OTTERY_STATE_ARG_FIRST void *out, size_t n);
 
+#ifdef OTTERY_ENABLE_EGD
+struct sockaddr;
+int OTTERY_PUBLIC_FN(set_egd_address)(const struct sockaddr *sa, int socklen);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
