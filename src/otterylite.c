@@ -4,26 +4,22 @@
   "cc0" public domain dedication.  See doc/cc0.txt or
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
-#include <stdio.h> // XXXXX REMOVE
-#define TRACE(x) printf x
 
-// #define OTTERY_STRUCT
-#define OTTERY_ENABLE_EGD
+#include "otterylite.h"
+
+#include <stdio.h> /* XXXXX REMOVE */
+#define TRACE(x) printf x
+/* #define TRACE(x) */
 
 #ifdef OTTERY_STRUCT
-#define STATE_ARG_ONLY struct ottery_state *state
-#define STATE_ARG_FIRST STATE_ARG_ONLY ,
-#define STATE_ARG_OUT state
+#define OTTERY_STATE_ARG_OUT state
 #define RNG (&(state)->rng)
 #define STATE_FIELD(fld) (state->fld)
 #define FUNC_PREFIX ottery_st_
 #else
-#define STATE_ARG_ONLY void
-#define STATE_ARG_FIRST
-#define STATE_ARG_OUT
+#define OTTERY_STATE_ARG_OUT
 #define RNG (&ottery_rng)
 #define STATE_FIELD(fld) (ottery_ ## fld)
-#define FUNC_PREFIX ottery_
 #endif
 
 #if defined(i386) || \
@@ -100,7 +96,7 @@
 #include "otterylite_digest.h"
 #include "otterylite_entropy.h"
 
-#define MAGIC 0x6f747472
+#define MAGIC 0x6f747472u
 #define RESEED_AFTER_BLOCKS 2048
 
 #define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ getpid())
@@ -118,12 +114,8 @@ static unsigned ottery_magic;
 static struct ottery_rng ottery_rng;
 #endif
 
-#define PASTE(a,b) a ## b
-#define PASTE2(a,b) PASTE(a, b)
-#define PUBLIC_FN(name) PASTE2(FUNC_PREFIX, name)
-
 static int
-ottery_seed(STATE_ARG_ONLY)
+ottery_seed(OTTERY_STATE_ARG_ONLY)
 {
   int n;
   unsigned char entropy[KEYLEN+OTTERY_ENTROPY_MAXLEN];
@@ -154,7 +146,7 @@ ottery_seed(STATE_ARG_ONLY)
 static
 #endif
 void
-PUBLIC_FN(init)(STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN(init)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
   pthread_mutex_init(&STATE_FIELD(mutex), NULL);
@@ -162,14 +154,14 @@ PUBLIC_FN(init)(STATE_ARG_ONLY)
 
   memset(RNG, 0, sizeof(*RNG));
 
-  if (ottery_seed(STATE_ARG_OUT) < 0)
+  if (ottery_seed(OTTERY_STATE_ARG_OUT) < 0)
     abort();
 
   STATE_FIELD(magic) = MAGIC ^ getpid();
 }
 
 void
-PUBLIC_FN(teardown)(STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN(teardown)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
   pthread_mutex_destroy(&STATE_FIELD(mutex));
@@ -181,7 +173,7 @@ PUBLIC_FN(teardown)(STATE_ARG_ONLY)
 #define INIT()                                                  \
   do {                                                          \
     if (UNLIKELY(! MAGIC_OKAY(STATE_FIELD(magic)))) {           \
-      PUBLIC_FN(init)(STATE_ARG_OUT);                           \
+      OTTERY_PUBLIC_FN(init)(OTTERY_STATE_ARG_OUT);                           \
     }                                                           \
   } while (0)
 
@@ -196,7 +188,7 @@ PUBLIC_FN(teardown)(STATE_ARG_ONLY)
   } while (0)
 
 void
-PUBLIC_FN(need_reseed)(STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN(need_reseed)(OTTERY_STATE_ARG_ONLY)
 {
   LOCK();
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
@@ -206,13 +198,13 @@ PUBLIC_FN(need_reseed)(STATE_ARG_ONLY)
 #define CHECK()                                                       \
   do {                                                                \
     if (RNG->count > RESEED_AFTER_BLOCKS) {                           \
-      ottery_seed(STATE_ARG_OUT);                                     \
+      ottery_seed(OTTERY_STATE_ARG_OUT);                                     \
       RNG->count = 0;                                                 \
     }                                                                 \
   } while (0)
 
 unsigned
-PUBLIC_FN(random)(STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_ONLY)
 {
   unsigned result;
   LOCK();
@@ -224,7 +216,7 @@ PUBLIC_FN(random)(STATE_ARG_ONLY)
 }
 
 uint64_t
-PUBLIC_FN(random64)(STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN(random64)(OTTERY_STATE_ARG_ONLY)
 {
   unsigned result;
   LOCK();
@@ -236,7 +228,7 @@ PUBLIC_FN(random64)(STATE_ARG_ONLY)
 }
 
 unsigned
-PUBLIC_FN(random_uniform)(STATE_ARG_FIRST unsigned upper)
+OTTERY_PUBLIC_FN(random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
 {
   const unsigned divisor = UINT_MAX / upper;
   unsigned result;
@@ -252,7 +244,7 @@ PUBLIC_FN(random_uniform)(STATE_ARG_FIRST unsigned upper)
 }
 
 uint64_t
-PUBLIC_FN(random_uniform64)(STATE_ARG_FIRST uint64_t upper)
+OTTERY_PUBLIC_FN(random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
 {
   const uint64_t divisor = UINT_MAX / upper;
   uint64_t result;
@@ -268,7 +260,7 @@ PUBLIC_FN(random_uniform64)(STATE_ARG_FIRST uint64_t upper)
 }
 
 void
-PUBLIC_FN(random_bytes)(STATE_ARG_FIRST void *output, size_t n)
+OTTERY_PUBLIC_FN(random_bytes)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
 {
   LOCK();
   INIT();
@@ -283,31 +275,34 @@ PUBLIC_FN(random_bytes)(STATE_ARG_FIRST void *output, size_t n)
 int main(int c, char **v)
 {
   struct timeval tv_start, tv_end, tv_diff;
-  //  u8 block[1024];
+  /* u8 block[1024]; */
   int i;
   const int N=10000;
-  unsigned long long ns;
+  uint64_t ns;
+  (void)c; (void)v;
+
   gettimeofday(&tv_start, NULL);
   for(i=0;i<N;++i) {
-    // ottery_random_bytes(block, 4);
+    /* ottery_random_bytes(block, 4); */
     ottery_random();
   }
   gettimeofday(&tv_end, NULL);
-  //printf("%u\n", u);
+  /* printf("%u\n", u); */
   timersub(&tv_end, &tv_start, &tv_diff);
-  ns = tv_diff.tv_sec * 1000000000ull + tv_diff.tv_usec * 1000;
+  ns = tv_diff.tv_sec * (uint64_t)1000000000 + tv_diff.tv_usec * 1000;
   ns /= N;
-  printf("%llu ns per call\n", ns);
+  printf("%llu ns per call\n", (unsigned long long) ns);
   return 0;
 }
 #endif
 
-#if 1
+#if 0
 /* XXXX This should get pulled into its own file before we go to production. */
 
 int main(int c, char **v)
 {
   u8 buf[1024];
+  (void)c; (void)v;
 
   while (1) {
     ottery_random_bytes(buf, 1024);

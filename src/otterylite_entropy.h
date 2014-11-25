@@ -108,7 +108,7 @@ ottery_getrandom_(void *out, size_t n, unsigned flags)
   int r;
   do {
     r = ottery_getrandom_ll_(out, n, flags);
-    if (r == n)
+    if (r == (int)n)
       return n;
   } while (r == -EINTR);
   return -1;
@@ -449,7 +449,12 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   } while (0)
 #define ADD_ADDR(ptr)                           \
   do {                                          \
-    void *p = (void*)ptr;                       \
+    void *p = (void*) ptr;                      \
+    ADD(p);                                     \
+  } while(0)
+#define ADD_FN_ADDR(ptr)                        \
+  do {                                          \
+    uint64_t p = (uint64_t) &ptr;               \
     ADD(p);                                     \
   } while(0)
 #define ADD_FILE(fname)                         \
@@ -502,15 +507,15 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
     char fname_buf[64];
     for (i = 0; i < 32; ++i) {
       int n = snprintf(fname_buf, sizeof(fname_buf), "/proc/irc/%d/spurious", i);
-      if (n > 0 && n < sizeof(fname_buf))
+      if (n > 0 && n < (int)sizeof(fname_buf))
         ADD_FILE(fname_buf);
     }
   }
 #endif
 
-  ADD_ADDR(ottery_getentropy_fallback_kludge);
-  ADD_ADDR(socket);
-  ADD_ADDR(printf);
+  ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
+  ADD_FN_ADDR(socket);
+  ADD_FN_ADDR(printf);
   ADD_ADDR(&iter);
 
   for (iter = 0; iter < 8; ++iter) {
@@ -521,7 +526,7 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 #ifdef CLOCK_MONOTONIC
     {
       struct timespec delay = { 0, 10 };
-      for (i = 0; i < N_CLOCK_IDS; ++i) {
+      for (i = 0; i < (int)N_CLOCK_IDS; ++i) {
          struct timespec ts;
          if (clock_gettime(clock_ids[i], &ts) == 0) {
            ADD(ts);
@@ -699,7 +704,7 @@ ottery_getentropy(unsigned char *out)
 
   memset(out, 0, OTTERY_ENTROPY_MAXLEN);
 
-  for (i = 0; i < N_ENTROPY_SOURCES; ++i) {
+  for (i = 0; i < (int)N_ENTROPY_SOURCES; ++i) {
     if (NULL == entropy_sources[i].getentropy_fn)
       continue;
     if (have_strong && (entropy_sources[i].flags & FLAG_AVOID))

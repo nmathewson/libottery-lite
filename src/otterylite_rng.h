@@ -83,13 +83,14 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
 #undef QUARTER_ROUND
 
 static inline void
-ottery_bytes(struct ottery_rng *st, void *output, size_t n)
+ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
 {
   size_t available_bytes = BUFLEN - KEYLEN - st->idx;
+  char *out = output;
 
   if (n <= available_bytes) {
     /* Can do in one go */
-    memcpy(output, st->buf + st->idx, n);
+    memcpy(out, st->buf + st->idx, n);
     memset(st->buf + st->idx, 0, n);
     st->idx += n;
     return;
@@ -97,19 +98,19 @@ ottery_bytes(struct ottery_rng *st, void *output, size_t n)
 
   ++st->count;
 
-  memcpy(output, st->buf + st->idx, available_bytes);
-  output += available_bytes;
+  memcpy(out, st->buf + st->idx, available_bytes);
+  out += available_bytes;
   n -= available_bytes;
 
   while (n > BUFLEN - KEYLEN) {
     chacha20_blocks(st->buf+BUFLEN-KEYLEN, N_BLOCKS, st->buf);
-    memcpy(output, st->buf, BUFLEN - KEYLEN);
-    output += (BUFLEN - KEYLEN);
+    memcpy(out, st->buf, BUFLEN - KEYLEN);
+    out += (BUFLEN - KEYLEN);
     n -= (BUFLEN - KEYLEN);
   }
 
   chacha20_blocks(st->buf+BUFLEN-KEYLEN, N_BLOCKS, st->buf);
-  memcpy(output, st->buf, n);
+  memcpy(out, st->buf, n);
   memset(st->buf, 0, n);
   st->idx = n;
 }

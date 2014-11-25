@@ -4,13 +4,14 @@ For 1.0
   - Detect 32 vs 64
   - Document the code
   - Document the approach
-  - Better API
-  - Flexible API
+  . Better API
+  . Flexible API
   o Cleanup function
+  o Namespace the public functions.
   - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT
-  - Support win32; build with mingw32
+  . Support win32; build with mingw32
   - Match glibc coding style more closely
   - Make make make.
   - Unit tests
-  - Benchmark
+  . Benchmark
 
