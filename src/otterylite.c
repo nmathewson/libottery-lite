@@ -169,12 +169,26 @@ ottery_st_random_bytes(STATE_ARG_FIRST void *output, size_t n)
   UNLOCK();
 }
 
+/* This should get pulled into its own file before we go to production. */
 #include <stdio.h>
+#include <sys/time.h>
 
 int main(int c, char **v)
 {
-  while (1) {
-    printf("%u\n", ottery_st_random());
-  };
+  struct timeval tv_start, tv_end, tv_diff;
+  u8 block[1024];
+  int i;
+  const int N=10000;
+  unsigned long long ns;
+  gettimeofday(&tv_start, NULL);
+  for(i=0;i<N;++i) {
+    ottery_st_random_bytes(block, 1024);
+  }
+  gettimeofday(&tv_end, NULL);
+  //printf("%u\n", u);
+  timersub(&tv_end, &tv_start, &tv_diff);
+  ns = tv_diff.tv_sec * 1000000000ull + tv_diff.tv_usec * 1000;
+  ns /= N;
+  printf("%llu ns per call\n", ns);
   return 0;
 }
