@@ -6,7 +6,7 @@
 */
 
 #define u32 uint32_t
-#define KEYLEN 44
+#define KEYLEN 40
 #define BLOCKSIZE 64
 #define ROUNDS 20
 #define BUFLEN 4096
@@ -32,7 +32,7 @@ memwipe(volatile void *p, size_t n)
     a += b;                    \
     d = ROTATE(d ^ a, 16);     \
     c += d;                    \
-    b = ROTATE(b ^ d, 12);     \
+    b = ROTATE(b ^ c, 12);     \
     a += b;                    \
     d = ROTATE(d ^ a, 8);      \
     c += d;                    \
@@ -42,7 +42,7 @@ memwipe(volatile void *p, size_t n)
 
 static void
 chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
-                unsigned char *output)
+                unsigned char *const output)
 {
   u32 x[16];
   u32 y[16];
@@ -53,12 +53,14 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
   x[1] = 857760878u;
   x[2] = 2036477234u;
   x[3] = 1797285236u;
-  memcpy(&x[4], key, 11*sizeof(u32));
-  x[15] = 0;
+  memcpy(&x[4], key, 8*sizeof(u32));
+  x[12] = 0;
+  x[13] = 0;
+  memcpy(&x[14], key+32, 2*sizeof(u32));
 
   for (i = 0; i < n_blocks; ++i) {
+    x[12] = i;
     memcpy(y, x, sizeof(x));
-    y[15] = i;
 
     for (j = 0; j < (ROUNDS / 2); ++j) {
       QUARTER_ROUND( y[0], y[4], y[8],y[12]);
@@ -69,6 +71,10 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
       QUARTER_ROUND( y[1], y[6],y[11],y[12]);
       QUARTER_ROUND( y[2], y[7], y[8],y[13]);
       QUARTER_ROUND( y[3], y[4], y[9],y[14]);
+    }
+
+    for (j = 0; j < 16; ++j) {
+      y[j] += x[j];
     }
 
     memcpy(outp, y, sizeof(y));
@@ -82,7 +88,7 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
 #undef ROTATE
 #undef QUARTER_ROUND
 
-static inline void
+static void
 ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
 {
   size_t available_bytes = BUFLEN - KEYLEN - st->idx;
