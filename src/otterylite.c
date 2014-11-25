@@ -234,7 +234,8 @@ ottery_st_random_bytes(STATE_ARG_FIRST void *output, size_t n)
   UNLOCK();
 }
 
-/* This should get pulled into its own file before we go to production. */
+#if 0
+/* XXXX This should get pulled into its own file before we go to production. */
 
 int main(int c, char **v)
 {
@@ -255,3 +256,19 @@ int main(int c, char **v)
   printf("%llu ns per call\n", ns);
   return 0;
 }
+#endif
+
+#if 1
+/* XXXX This should get pulled into its own file before we go to production. */
+
+int main(int c, char **v)
+{
+  u8 buf[1024];
+
+  while (1) {
+    ottery_st_random_bytes(buf, 1024);
+    write(1, buf, sizeof(buf));
+  }
+  return 0;
+}
+#endif
