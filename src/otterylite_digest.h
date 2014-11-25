@@ -7,8 +7,6 @@
 
 #define WORDBITS 32
 
-typedef unsigned char u8;
-
 #if WORDBITS == 64
 typedef uint64_t word_t;
 #define U64(n) n ## ull
