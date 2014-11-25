@@ -139,6 +139,15 @@ ottery_init(STATE_ARG_ONLY)
   STATE_FIELD(magic) = MAGIC ^ getpid();
 }
 
+void
+ottery_teardown(STATE_ARG_ONLY)
+{
+
+  pthread_mutex_destroy(&STATE_FIELD(mutex));
+  memset(RNG, 0, sizeof(*RNG));
+  STATE_FIELD(magic) = 0 ^ getpid();
+}
+
 #define INIT()                                          \
   do {                                                  \
     if (STATE_FIELD(magic) != (MAGIC ^ getpid())) {     \
