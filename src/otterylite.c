@@ -53,7 +53,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -79,6 +78,22 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/statvfs.h>
+#endif
+
+#ifdef _MSC_VER
+#define uint8_t unsigned char
+#define uint16_t unsigned short
+#define uint32_t unsigned int
+#define uint64_t unsigned __int64
+#define inline __inline
+#else
+#include <stdint.h>
+#endif
+
+#ifdef __GNUC__
+#define UNLIKELY(expr) (__builtin_expect(!!(expr), 0))
+#else
+#define UNLIKELY(expr) (expr)
 #endif
 
 #include "otterylite_rng.h"
