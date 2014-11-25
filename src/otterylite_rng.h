@@ -58,7 +58,7 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
 
   for (i = 0; i < n_blocks; ++i) {
     memcpy(y, x, sizeof(x));
-    x[15] = i;
+    y[15] = i;
 
     for (j = 0; j < (ROUNDS / 2); ++j) {
       QUARTER_ROUND( y[0], y[4], y[8],y[12]);
