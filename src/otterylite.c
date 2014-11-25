@@ -1,5 +1,9 @@
 
+#include <stdio.h> // XXXXX REMOVE
+#define TRACE(x) printf x
+
 // #define OTTERY_STRUCT
+#define OTTERY_ENABLE_EGD
 
 #ifdef OTTERY_STRUCT
 #define STATE_ARG_ONLY struct ottery_state *state
@@ -15,13 +19,60 @@
 #define STATE_FIELD(fld) (ottery_ ## fld)
 #endif
 
+#if defined(i386) || \
+    defined(__i386) || \
+    defined(__x86_64) || \
+    defined(__M_IX86) || \
+    defined(_M_IX86) || \
+    defined(_M_AMD64) || \
+    defined(__INTEL_COMPILER)
+
+#define OTTERY_X86
+
+#if defined(__x86_64) || \
+    defined(_M_AMD64)
+#define OTTERY_X86_64
+#endif
+
+#endif
+
+
 #include <sys/types.h>
+#include <sys/stat.h>
+#if defined(__OpenBSD__)
+#include <param.h>
+#endif
+#include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <time.h>
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <sys/sysctl.h>
+#include <linux/random.h>
+#endif
+
+#ifdef OTTERY_ENABLE_EGD
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#endif
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <ucontext.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/statvfs.h>
+#endif
 
 #include "otterylite_rng.h"
 #include "otterylite_digest.h"
@@ -170,8 +221,6 @@ ottery_st_random_bytes(STATE_ARG_FIRST void *output, size_t n)
 }
 
 /* This should get pulled into its own file before we go to production. */
-#include <stdio.h>
-#include <sys/time.h>
 
 int main(int c, char **v)
 {
