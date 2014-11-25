@@ -105,3 +105,11 @@ For 1024-byte outputs, libottery-lite is 143% slower than libottery.  (4.4
 microseconds instead of 1.8.)  That's as expected; when generating a lot of
 bytes at once, cipher performance will dominate.
 
+Copyright notices
+-----------------
+
+To the extent possible under law, Nick Mathewson has waived all copyright and
+related or neighboring rights to libottery-lite, using the creative commons
+"cc0" public domain dedication.  See doc/cc0.txt or
+<http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+
