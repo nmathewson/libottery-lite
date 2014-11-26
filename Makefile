@@ -37,7 +37,7 @@ benchmarks: $(BENCH_PROGRAMS)
 test/tinytest/tinytest.o: test/tinytest/tinytest.c
 	$(CC) $(TEST_CFLAGS) $< -o $@
 
-test/test: test/test_main.c test/test_blake2.c test/test_chacha.c $(HEADERS) test/tinytest/tinytest.o
+test/test: test/test_main.c test/test_blake2.c test/test_chacha.c test/test_rng_core.c $(HEADERS) test/tinytest/tinytest.o
 	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@
 
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o

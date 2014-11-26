@@ -38,16 +38,6 @@ test_kat(void *arg)
   ;
 }
 
-static int
-iszero(u8 *p, size_t n)
-{
-  while (n--) {
-    if (*p++)
-      return 0;
-  }
-  return 1;
-}
-
 static void
 test_output_len(void *arg)
 {
