@@ -10,6 +10,9 @@ For 1.0
     - Test the streaming rng in 'ottery_bytes'.
     - Test as many entropy sources as possible.
     - "Shallow" tests from libottery.
+    - Actual test driver.
+
+  o Make make make.
 
   . Better API
   . Flexible API
@@ -31,6 +34,5 @@ For 1.0
 
   - Match glibc coding style more closely
 
-  - Make make make.
 
 

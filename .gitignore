@@ -1,3 +1,12 @@
 *~
 *.o
+*.exe
 \#*\#
+
+/test/test_blake2
+/test/test_chacha
+/test/test_streamgen
+/bench/bench
+
+received_output
+wanted_output
