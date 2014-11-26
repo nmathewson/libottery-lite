@@ -88,7 +88,7 @@ ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
   size_t available_bytes = BUFLEN - KEYLEN - st->idx;
   char *out = output;
 
-  if (n <= available_bytes) {
+  if (LIKELY(n <= available_bytes)) {
     /* Can do in one go */
     memcpy(out, st->buf + st->idx, n);
     memset(st->buf + st->idx, 0, n);

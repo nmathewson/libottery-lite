@@ -130,7 +130,7 @@ OTTERY_PUBLIC_FN(need_reseed)(OTTERY_STATE_ARG_ONLY)
 
 #define CHECK()                                                       \
   do {                                                                \
-    if (RNG->count > RESEED_AFTER_BLOCKS && !STATE_FIELD(seeding)) { \
+    if (UNLIKELY(RNG->count > RESEED_AFTER_BLOCKS) && !STATE_FIELD(seeding)) { \
       ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                      \
     }                                                                 \
   } while (0)

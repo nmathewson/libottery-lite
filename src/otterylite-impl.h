@@ -101,8 +101,10 @@
 
 #ifdef __GNUC__
 #define UNLIKELY(expr) (__builtin_expect(!!(expr), 0))
+#define LIKELY(expr) (__builtin_expect(!!(expr), 1))
 #else
 #define UNLIKELY(expr) (expr)
+#define LIKELY(expr) (expr)
 #endif
 
 typedef unsigned char u8;
