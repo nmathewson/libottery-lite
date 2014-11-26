@@ -120,5 +120,6 @@ ottery_setkey(struct ottery_rng *st, const unsigned char key[KEYLEN])
 {
   chacha20_blocks(key, N_BLOCKS, st->buf);
   st->idx = 0;
+  st->count = 0;
 }
 
