@@ -13,11 +13,13 @@
 
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_OUT state
+#define COMMA ,
 #define RNG (&(state)->rng)
 #define STATE_FIELD(fld) (state->fld)
 #define FUNC_PREFIX ottery_st_
 #else
 #define OTTERY_STATE_ARG_OUT
+#define COMMA
 #define RNG (&ottery_rng)
 #define STATE_FIELD(fld) (ottery_ ## fld)
 #endif

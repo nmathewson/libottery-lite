@@ -23,16 +23,28 @@
 struct ottery_state {
   pthread_mutex_t mutex;
   unsigned magic;
+  int seeding;
   struct ottery_rng rng;
 };
 #else
 static pthread_mutex_t ottery_mutex = PTHREAD_MUTEX_INITIALIZER;
 static unsigned ottery_magic;
 static struct ottery_rng ottery_rng;
+static int ottery_seeding;
 #endif
 
+#define LOCK()                                  \
+  do {                                          \
+    pthread_mutex_lock(&STATE_FIELD(mutex));    \
+  } while (0)
+
+#define UNLOCK()                                \
+  do {                                          \
+    pthread_mutex_unlock(&STATE_FIELD(mutex));  \
+  } while (0)
+
 static int
-ottery_seed(OTTERY_STATE_ARG_ONLY)
+ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 {
   int n;
   unsigned char entropy[KEYLEN+OTTERY_ENTROPY_MAXLEN];
@@ -45,13 +57,27 @@ ottery_seed(OTTERY_STATE_ARG_ONLY)
 
   ottery_bytes(RNG, entropy, KEYLEN);
 
+  STATE_FIELD(seeding) = 1;
+  RNG->count = 0;
+
+  if (release_lock)
+    UNLOCK();
+  /* Release the lock in this section, since it can take a while to get
+   * entropy. */
+
   n = ottery_getentropy(entropy+KEYLEN);
+
+  if (release_lock)
+    LOCK();
+
   if (n < OTTERY_ENTROPY_MINLEN)
     return -1;
 
   OTTERY_DIGEST(digest, entropy, n+KEYLEN);
 
+  STATE_FIELD(seeding) = 0;
   ottery_setkey(RNG, digest);
+  RNG->count = 0;
 
   memwipe(digest, sizeof(digest));
   memwipe(entropy, sizeof(entropy));
@@ -71,7 +97,7 @@ OTTERY_PUBLIC_FN(init)(OTTERY_STATE_ARG_ONLY)
 
   memset(RNG, 0, sizeof(*RNG));
 
-  if (ottery_seed(OTTERY_STATE_ARG_OUT) < 0)
+  if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
 
   STATE_FIELD(magic) = MAGIC ^ getpid();
@@ -90,18 +116,8 @@ OTTERY_PUBLIC_FN(teardown)(OTTERY_STATE_ARG_ONLY)
 #define INIT()                                                  \
   do {                                                          \
     if (UNLIKELY(! MAGIC_OKAY(STATE_FIELD(magic)))) {           \
-      OTTERY_PUBLIC_FN(init)(OTTERY_STATE_ARG_OUT);                           \
+      OTTERY_PUBLIC_FN(init)(OTTERY_STATE_ARG_OUT);             \
     }                                                           \
-  } while (0)
-
-#define LOCK()                                  \
-  do {                                          \
-    pthread_mutex_lock(&STATE_FIELD(mutex));    \
-  } while (0)
-
-#define UNLOCK()                                \
-  do {                                          \
-    pthread_mutex_unlock(&STATE_FIELD(mutex));  \
   } while (0)
 
 void
@@ -114,9 +130,8 @@ OTTERY_PUBLIC_FN(need_reseed)(OTTERY_STATE_ARG_ONLY)
 
 #define CHECK()                                                       \
   do {                                                                \
-    if (RNG->count > RESEED_AFTER_BLOCKS) {                           \
-      ottery_seed(OTTERY_STATE_ARG_OUT);                                     \
-      RNG->count = 0;                                                 \
+    if (RNG->count > RESEED_AFTER_BLOCKS && !STATE_FIELD(seeding)) { \
+      ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                      \
     }                                                                 \
   } while (0)
 
