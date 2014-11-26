@@ -2,10 +2,12 @@
 *.o
 *.exe
 \#*\#
-
+*.gcov
+*.gcda
+*.gcno
 *.dSYM
 
-/test/test_blake2
+/test/test
 /test/test_chacha
 /test/test_streamgen
 /bench/bench

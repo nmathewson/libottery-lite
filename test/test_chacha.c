@@ -1,11 +1,4 @@
 
-#include "otterylite.h"
-#include "otterylite-impl.h"
-#include "otterylite_wipe.h"
-#include "otterylite_rng.h"
-
-#include <assert.h>
-
 #define MAXSKIP 8192
 
 static void
@@ -32,7 +25,7 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   u8 k[KEYLEN];
   unsigned n = skip + OUTPUT;
 
-  assert(n <= sizeof(buf));
+  tt_int_op(n, <=, sizeof(buf));
 
   memset(k, 0, sizeof(k));
   memcpy(k, key, 32);
@@ -46,6 +39,8 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   printf("offset: %d\n", skip);
 
   dumphex(NULL, buf + skip, OUTPUT);
+ end:
+  ;
 }
 
 #define X(key, nonce, skip)                                     \
@@ -54,15 +49,10 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   } while (0)
 
 
-int
-main(int argc, char **argv)
+static void
+dump_chacha20_test_vectors(void *arg)
 {
-  (void)argc;
-  (void)argv;
-
-  (void)ottery_setkey;
-  (void)ottery_bytes;
-
+  (void)arg;
   X("helloworld!helloworld!helloworld", "!hellowo", 0);
   X("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
     "\0\0\0\0\0\0\0\0", 0);
@@ -73,6 +63,11 @@ main(int argc, char **argv)
   X("nam rick grimes malum cerebro. D", "e carne ", 512);
   X("lumbering animata corpora quaeri", "tis. Sum", 640);
   X("mus brains sit, morbo vel malefi", "cia? De ", 704);
-
-  return 0;
 }
+
+static struct testcase_t chacha_testvectors_tests[] = {
+  { "make_chacha_testvectors", dump_chacha20_test_vectors,
+    TT_OFF_BY_DEFAULT, NULL, 0
+  },
+  END_OF_TESTCASES
+};

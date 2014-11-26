@@ -10,14 +10,17 @@ HEADERS = \
 	src/otterylite-impl.h
 
 TEST_PROGRAMS = \
-	test/test_blake2 \
-	test/test_chacha \
+	test/test \
 	test/test_streamgen
 
 BENCH_PROGRAMS = \
 	bench/bench
 
-CFLAGS = -I ./src -Wall --coverage -g
+COMMON_CFLAGS = -I ./src -Wall
+
+CFLAGS = $(COMMON_CFLAGS) -O3
+
+TEST_CFLAGS = $(COMMON_CFLAGS) --coverage -g -I test/tinytest
 
 CC=gcc
 
@@ -31,11 +34,11 @@ tests: $(TEST_PROGRAMS)
 
 benchmarks: $(BENCH_PROGRAMS)
 
-test/test_blake2: test/test_blake2.c $(HEADERS)
-	$(CC) $(CFLAGS) $< -o $@
+test/tinytest/tinytest.o: test/tinytest/tinytest.c
+	$(CC) $(TEST_CFLAGS) $< -o $@
 
-test/test_chacha: test/test_chacha.c $(HEADERS)
-	$(CC) $(CFLAGS) $< -o $@
+test/test: test/test_main.c test/test_blake2.c test/test_chacha.c $(HEADERS) test/tinytest/tinytest.o
+	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@
 
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
 	$(CC) $(CFLAGS) $< src/otterylite.o -o $@
@@ -47,12 +50,17 @@ wanted_output: ./test/make_test_vectors.py
 	python ./test/make_test_vectors.py > wanted_output
 
 check: all wanted_output
-	./test/test_blake2
-	./test/test_chacha > received_output
+	rm -f test_main.gcda
+	./test/test
+	./test/test --quiet chacha_dump/make_chacha_testvectors +chacha_dump/make_chacha_testvectors > received_output
 	cmp received_output wanted_output
+
+coverage:
+	gcov -o . test/test_main.c
 
 dieharder: ./test/test_streamgen
 	./test/test_streamgen --yes-really | dieharder -g 200 -a
 
 clean:
 	rm -f *.o */*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output received_output
+

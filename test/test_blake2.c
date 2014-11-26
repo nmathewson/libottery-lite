@@ -1,16 +1,13 @@
 
-#include "otterylite.h"
-#include "otterylite-impl.h"
-#include "otterylite_wipe.h"
-#include "otterylite_digest.h"
-
 #define BLAKE2S_OUTBYTES 32
 #define BLAKE2B_OUTBYTES 64
 #include "blake2-kat.h"
 
-static int
-test_kat(void)
+static void
+test_kat(void *arg)
 {
+  (void)arg;
+
 #define ITERATIONS 256
   int i;
   /* this will fail if the platform is big-endian. Don't worry. */
@@ -31,69 +28,53 @@ test_kat(void)
         blake2s_kat[i]
 #endif
         ;
-      blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0);
+      tt_int_op(BLAKE2_MAX_OUTPUT, ==,
+                blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0));
 
-      if (memcmp(out, expected, BLAKE2_MAX_OUTPUT))
-        {
-          printf("Error: %d\n", i);
-          return -1;
-        }
+      tt_mem_op(out, ==, expected, BLAKE2_MAX_OUTPUT);
     }
 
-  return 0;
+ end:
+  ;
 }
 
 static int
-nonzero(u8 *p, size_t n)
+iszero(u8 *p, size_t n)
 {
   while (n--) {
     if (*p++)
-      return 1;
+      return 0;
   }
-  return 0;
+  return 1;
 }
 
-static int
-test_output_len(void)
+static void
+test_output_len(void *arg)
 {
   u8 msg[] = "hi";
   u8 out[128];
+  (void)arg;
 
   memset(out, 0, sizeof(out));
 
-  if (-1 != blake2_noendian(out, 128, msg, 3, 0, 0))
-    return -1;
-  if (nonzero(out, sizeof(out)))
-    return -1;
-  if (-1 != blake2_noendian(out, 0, msg, 3, 0, 0))
-    return -1;
-  if (nonzero(out, sizeof(out)))
-    return -1;
-  if (1 != blake2_noendian(out, 1, msg, 3, 0, 0))
-    return -1;
-  if (nonzero(out+1, sizeof(out)-1))
-    return -1;
-  if (20 != blake2_noendian(out, 20, msg, 3, 0, 0))
-    return -1;
-  if (nonzero(out+20, sizeof(out)-20))
-    return -1;
-  if (21 != blake2_noendian(out+20, 21, msg, 3, 0, 0))
-    return -1;
-  if (!memcmp(out, out+20, 20))
-    return -1;
-
-  return 0;
+  tt_int_op(-1, ==, blake2_noendian(out, 128, msg, 3, 0, 0));
+  tt_assert(iszero(out, sizeof(out)));
+  tt_int_op(-1, ==, blake2_noendian(out, 0, msg, 3, 0, 0));
+  tt_assert(iszero(out, sizeof(out)));
+  tt_int_op(1, ==, blake2_noendian(out, 1, msg, 3, 0, 0));
+  tt_assert(iszero(out+1, sizeof(out)-1));
+  tt_int_op(20, ==, blake2_noendian(out, 20, msg, 3, 0, 0));
+  tt_assert(iszero(out+20, sizeof(out)-20));
+  tt_assert(! iszero(out, 20));
+  tt_int_op(21, ==, blake2_noendian(out+20, 21, msg, 3, 0, 0));
+  tt_mem_op(out, !=, out+20, 20);
+ end:
+  ;
 }
 
-int main(int argc, char **argv)
-{
-  (void)argc;
-  (void)argv;
+static struct testcase_t blake2_tests[] = {
+  { "kat", test_kat, 0, NULL, NULL },
+  { "output_len", test_output_len, 0, NULL, NULL },
+  END_OF_TESTCASES
+};
 
-  if (test_kat() < 0)
-    return 1;
-  if (test_output_len() < 0)
-    return 1;
-
-  return 0;
-}
