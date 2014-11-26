@@ -7,7 +7,7 @@
 
 #define WORDBITS 32
 
-#if WORDBITS == 64
+#if WORDBITS >= 64
 typedef uint64_t word_t;
 #define U64(n) n ## ull
 #define BLAKE2_IV0 U64(0x6a09e667f3bcc908)
@@ -18,7 +18,7 @@ typedef uint64_t word_t;
 #define BLAKE2_IV5 U64(0x9b05688c2b3e6c1f)
 #define BLAKE2_IV6 U64(0x1f83d9abfb41bd6b)
 #define BLAKE2_IV7 U64(0x5be0cd19137e2179)
-#define ROT(x, n)  (((x) >> (n)) | ((x) << (64 - n)))
+#define ROT(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
 #define OTTERY_PERSONALIZATION_1 U64(0x4f74746572792042)
 #define OTTERY_PERSONALIZATION_2 U64(0x6c616b6532622121)
 #define BLAKE2_BLOCKSIZE 128
@@ -37,7 +37,7 @@ typedef uint32_t word_t;
 #define BLAKE2_IV5 0x9b05688c
 #define BLAKE2_IV6 0x1f83d9ab
 #define BLAKE2_IV7 0x5be0cd19
-#define ROT(x, n)  (((x) >> (n)) | ((x) << (32 - n)))
+#define ROT(x, n)  (((x) >> (n)) | ((x) << (32 - (n))))
 #define OTTERY_PERSONALIZATION_1 0x6c6f6c62
 #define OTTERY_PERSONALIZATION_2 0x6c6b3273
 #define BLAKE2_BLOCKSIZE 64
@@ -107,18 +107,18 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
   h[0] = BLAKE2_IV0;
   /* these parameters include: the digest length, the key length (0),
    * the fanout (1), and the depth (1). */
-  h[0] ^= ( (word_t) 0x00000101 | (output_len << 24) ) << (WORDBITS - 32);
+  h[0] ^= 0x01010000 | output_len;
   h[1] = BLAKE2_IV1; /* only used by blake2p */
   h[2] = BLAKE2_IV2; /* only used by blake2p */
   h[3] = BLAKE2_IV3; /* only used by blake2p  */
   h[4] = BLAKE2_IV4; /* salt would go here*/
   h[5] = BLAKE2_IV5; /* salt would go here */
   h[6] = BLAKE2_IV6 ^ personalization_0;
-  h[7] = BLAKE2_IV6 ^ personalization_1;
+  h[7] = BLAKE2_IV7 ^ personalization_1;
 
   /* We would add the key as the first block, if we supported keys. */
 
-  while (input_len) {
+  do {
     word_t f0;
     word_t inc;
     int i;
@@ -134,19 +134,19 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
       inc = input_len;
     }
 
+    counter += inc;
+    input += inc;
+    input_len -= inc;
+
     memcpy(v, h, sizeof(h));
     v[8] = BLAKE2_IV0;
     v[9] = BLAKE2_IV1;
     v[10] = BLAKE2_IV2;
     v[11] = BLAKE2_IV3;
-    v[12] = BLAKE2_IV4; /* naughty; should be the high word of the counter */
-    v[13] = BLAKE2_IV5 ^ counter;
+    v[12] = BLAKE2_IV4 ^ counter;
+    v[13] = BLAKE2_IV5; /* naughty; should be the high word of the counter */
     v[14] = BLAKE2_IV6 ^ f0;
     v[15] = BLAKE2_IV7;
-
-    input += inc;
-    counter += inc;
-    input_len -= inc;
 
     for (i = 0; i < BLAKE2_ROUNDS; ++i) {
       BLAKE2_ROUND(i);
@@ -155,7 +155,7 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
     for (i = 0; i < 8; ++i) {
       h[i] ^= v[i] ^ v[i+8];
     }
-  }
+  } while (input_len);
 
   memcpy(output, h, output_len);
 
