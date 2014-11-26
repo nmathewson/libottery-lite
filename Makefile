@@ -43,9 +43,11 @@ test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
 bench/bench: bench/bench.c $(HEADERS) src/otterylite.o
 	$(CC) $(CFLAGS) $< src/otterylite.o -o $@
 
-check: all
-	./test/test_blake2
+wanted_output: ./test/make_test_vectors.py
 	python ./test/make_test_vectors.py > wanted_output
+
+check: all wanted_output
+	./test/test_blake2
 	./test/test_chacha > received_output
 	cmp received_output wanted_output
 
