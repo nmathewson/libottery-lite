@@ -17,7 +17,7 @@ TEST_PROGRAMS = \
 BENCH_PROGRAMS = \
 	bench/bench
 
-CFLAGS = -I ./src -Wall -O3 -g
+CFLAGS = -I ./src -Wall --coverage -g
 
 CC=gcc
 

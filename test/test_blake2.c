@@ -43,6 +43,48 @@ test_kat(void)
   return 0;
 }
 
+static int
+nonzero(u8 *p, size_t n)
+{
+  while (n--) {
+    if (*p++)
+      return 1;
+  }
+  return 0;
+}
+
+static int
+test_output_len(void)
+{
+  u8 msg[] = "hi";
+  u8 out[128];
+
+  memset(out, 0, sizeof(out));
+
+  if (-1 != blake2_noendian(out, 128, msg, 3, 0, 0))
+    return -1;
+  if (nonzero(out, sizeof(out)))
+    return -1;
+  if (-1 != blake2_noendian(out, 0, msg, 3, 0, 0))
+    return -1;
+  if (nonzero(out, sizeof(out)))
+    return -1;
+  if (1 != blake2_noendian(out, 1, msg, 3, 0, 0))
+    return -1;
+  if (nonzero(out+1, sizeof(out)-1))
+    return -1;
+  if (20 != blake2_noendian(out, 20, msg, 3, 0, 0))
+    return -1;
+  if (nonzero(out+20, sizeof(out)-20))
+    return -1;
+  if (21 != blake2_noendian(out+20, 21, msg, 3, 0, 0))
+    return -1;
+  if (!memcmp(out, out+20, 20))
+    return -1;
+
+  return 0;
+}
+
 int main(int argc, char **argv)
 {
   (void)argc;
@@ -50,5 +92,8 @@ int main(int argc, char **argv)
 
   if (test_kat() < 0)
     return 1;
+  if (test_output_len() < 0)
+    return 1;
+
   return 0;
 }
