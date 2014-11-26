@@ -62,7 +62,7 @@ static int
 cpuid_says_rdrand_supported_(void)
 {
   unsigned result[4];
-  cpuid_(2, result);
+  cpuid_(1, result);
   return 0 != (result[2] & (1u<<30));
 }
 static int
