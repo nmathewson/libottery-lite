@@ -55,25 +55,36 @@
 #include <time.h>
 #ifdef __linux__
 #include <sys/syscall.h>
-#include <sys/sysctl.h>
 #include <linux/random.h>
 #endif
 
 #ifdef OTTERY_ENABLE_EGD
 #ifdef _WIN32
 #include <winsock2.h>
-#else
-#include <sys/socket.h>
 #endif
 #endif
 
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <ucontext.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/statvfs.h>
+#include <sys/sysctl.h>
+#include <sys/socket.h>
+#endif
+
+#ifdef __APPLE__
+#include <netinet/in.h>
+#include <sys/socketvar.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp_var.h>
+#include <netinet/udp_var.h>
+#include <mach/mach_time.h>
+#else
+#include <ucontext.h>
 #endif
 
 #ifdef _MSC_VER

@@ -385,13 +385,13 @@ static const int mib_vnode[] = { CTL_KERN, KERN_VNODE };
 static const int mib_inet_tcp[] =
   { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
 static const int mib_inet_udp[] =
-  { CTL_NET, PF_INET, IPPROTO_UCP, UDPCTL_STATS };
+  { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
 static const int mib_inet_ip[] =
   { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
-static const int mib6_inet6_tcp[] =
+static const int mib_inet6_tcp[] =
   { CTL_NET, PF_INET6, IPPROTO_TCP, TCPCTL_STATS };
-static const int mib6_inet6_udp[] =
-  { CTL_NET, PF_INET6, IPPROTO_UCP, UDPCTL_STATS };
+static const int mib_inet6_udp[] =
+  { CTL_NET, PF_INET6, IPPROTO_UDP, UDPCTL_STATS };
 static const int mib_inet6_ip[] =
   { CTL_NET, PF_INET6, IPPROTO_IP, IPCTL_STATS };
 static const int mib_loadavg[] =
@@ -550,11 +550,13 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
       ADD(t);
     }
 #endif
+#ifndef __APPLE__
     {
       ucontext_t uc;
       if (getcontext(&uc) == 0)
         ADD(uc);
     }
+#endif
 #ifdef __linux__
     ADD_FILE("/proc/diskstats");
     ADD_FILE("/proc/interrupts");
@@ -607,10 +609,10 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
 #ifdef USE_SYSCTL
     for (i = 0; i < MIB_LIST_LEN; ++i) {
-      char tmp[1024];
-      int n = sizeof(tmp);
-      int r = sysctl(miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
-      if (r < 0 || n < 0 || n > sizeof(tmp))
+      u8 tmp[1024];
+      size_t n = sizeof(tmp);
+      int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
+      if (r < 0 || n > sizeof(tmp))
         continue;
       ADD_CHUNK(tmp,n);
     }
