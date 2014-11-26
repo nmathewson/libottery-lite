@@ -96,19 +96,19 @@ ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
     return;
   }
 
-  ++st->count;
-
   memcpy(out, st->buf + st->idx, available_bytes);
   out += available_bytes;
   n -= available_bytes;
 
   while (n > BUFLEN - KEYLEN) {
+    ++st->count;
     chacha20_blocks(st->buf+BUFLEN-KEYLEN, N_BLOCKS, st->buf);
     memcpy(out, st->buf, BUFLEN - KEYLEN);
     out += (BUFLEN - KEYLEN);
     n -= (BUFLEN - KEYLEN);
   }
 
+  ++st->count;
   chacha20_blocks(st->buf+BUFLEN-KEYLEN, N_BLOCKS, st->buf);
   memcpy(out, st->buf, n);
   memset(st->buf, 0, n);
