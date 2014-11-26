@@ -1,9 +1,9 @@
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 
 #define WORDBITS 32
 
@@ -54,27 +54,27 @@ typedef uint32_t word_t;
 
 #define BLAKE2_G(a, b, c, d, round, idx)               \
   do {                                          \
-    a += b + m[blake2_sigma[round][2*idx]];     \
-    d = ROT(d ^ a, ROT1);                       \
-    c += d;                                     \
-    b = ROT(b ^ c, ROT2);                        \
-    a += b + m[blake2_sigma[round][2*idx+1]];    \
-    d = ROT(d ^ a, ROT3);                        \
-    c += d;                                      \
-    b = ROT(b ^ c, ROT4);                        \
-  } while(0)
+      a += b + m[blake2_sigma[round][2 * idx]];     \
+      d = ROT(d ^ a, ROT1);                       \
+      c += d;                                     \
+      b = ROT(b ^ c, ROT2);                        \
+      a += b + m[blake2_sigma[round][2 * idx + 1]];    \
+      d = ROT(d ^ a, ROT3);                        \
+      c += d;                                      \
+      b = ROT(b ^ c, ROT4);                        \
+    } while (0)
 
 #define BLAKE2_ROUND(round)                               \
   do {                                                    \
-    BLAKE2_G(v[0] , v[4] , v[8] , v[12], round, 0);       \
-    BLAKE2_G(v[1] , v[5] , v[9] , v[13], round, 1);       \
-    BLAKE2_G(v[2] , v[6] , v[10], v[14], round, 2);       \
-    BLAKE2_G(v[3] , v[7] , v[11], v[15], round, 3);       \
-    BLAKE2_G(v[0] , v[5] , v[10], v[15], round, 4);       \
-    BLAKE2_G(v[1] , v[6] , v[11], v[12], round, 5);       \
-    BLAKE2_G(v[2] , v[7] , v[8] , v[13], round, 6);       \
-    BLAKE2_G(v[3] , v[4] , v[9] , v[14], round, 7);       \
-  } while(0)
+      BLAKE2_G(v[0], v[4], v[8], v[12], round, 0);       \
+      BLAKE2_G(v[1], v[5], v[9], v[13], round, 1);       \
+      BLAKE2_G(v[2], v[6], v[10], v[14], round, 2);       \
+      BLAKE2_G(v[3], v[7], v[11], v[15], round, 3);       \
+      BLAKE2_G(v[0], v[5], v[10], v[15], round, 4);       \
+      BLAKE2_G(v[1], v[6], v[11], v[12], round, 5);       \
+      BLAKE2_G(v[2], v[7], v[8], v[13], round, 6);       \
+      BLAKE2_G(v[3], v[4], v[9], v[14], round, 7);       \
+    } while (0)
 
 static const u8 blake2_sigma[12][16] = {
   { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
@@ -118,62 +118,68 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
 
   /* We would add the key as the first block, if we supported keys. */
 
-  do {
-    word_t f0;
-    word_t inc;
-    int i;
+  do
+    {
+      word_t f0;
+      word_t inc;
+      int i;
 
-    if (input_len > sizeof(m)) {
-      memcpy(m, input, sizeof(m));
-      f0 = 0;
-      inc = sizeof(m);
-    } else {
-      memset(m, 0, sizeof(m));
-      memcpy(m, input, input_len);
-      f0 = ~(word_t)0;
-      inc = input_len;
-    }
+      if (input_len > sizeof(m))
+        {
+          memcpy(m, input, sizeof(m));
+          f0 = 0;
+          inc = sizeof(m);
+        }
+      else
+        {
+          memset(m, 0, sizeof(m));
+          memcpy(m, input, input_len);
+          f0 = ~(word_t)0;
+          inc = input_len;
+        }
 
-    counter += inc;
-    input += inc;
-    input_len -= inc;
+      counter += inc;
+      input += inc;
+      input_len -= inc;
 
-    memcpy(v, h, sizeof(h));
-    v[8] = BLAKE2_IV0;
-    v[9] = BLAKE2_IV1;
-    v[10] = BLAKE2_IV2;
-    v[11] = BLAKE2_IV3;
-    v[12] = BLAKE2_IV4 ^ counter;
-    v[13] = BLAKE2_IV5; /* naughty; should be the high word of the counter */
-    v[14] = BLAKE2_IV6 ^ f0;
-    v[15] = BLAKE2_IV7;
+      memcpy(v, h, sizeof(h));
+      v[8] = BLAKE2_IV0;
+      v[9] = BLAKE2_IV1;
+      v[10] = BLAKE2_IV2;
+      v[11] = BLAKE2_IV3;
+      v[12] = BLAKE2_IV4 ^ counter;
+      v[13] = BLAKE2_IV5; /* naughty; should be the high word of the counter */
+      v[14] = BLAKE2_IV6 ^ f0;
+      v[15] = BLAKE2_IV7;
 
-    for (i = 0; i < BLAKE2_ROUNDS; ++i) {
-      BLAKE2_ROUND(i);
-    }
+      for (i = 0; i < BLAKE2_ROUNDS; ++i)
+        {
+          BLAKE2_ROUND(i);
+        }
 
-    for (i = 0; i < 8; ++i) {
-      h[i] ^= v[i] ^ v[i+8];
-    }
-  } while (input_len);
+      for (i = 0; i < 8; ++i)
+        {
+          h[i] ^= v[i] ^ v[i + 8];
+        }
+    } while (input_len);
 
   memcpy(output, h, output_len);
 
   memwipe(h, sizeof(h));
   memwipe(v, sizeof(v));
 
-  return (int) output_len;
+  return (int)output_len;
 }
 
 #define OTTERY_DIGEST_LEN BLAKE2_MAX_OUTPUT
 #define OTTERY_DIGEST(out, inp, inplen)                                 \
   do {                                                                  \
-    int blake_output;                                                   \
-    blake_output = blake2_noendian((out), BLAKE2_MAX_OUTPUT,            \
-                                   (inp), (inplen),                     \
-                                   OTTERY_PERSONALIZATION_1,            \
-                                   OTTERY_PERSONALIZATION_2);           \
-    if (blake_output != BLAKE2_MAX_OUTPUT)                              \
-      abort();                                                          \
-  } while(0)
+      int blake_output;                                                   \
+      blake_output = blake2_noendian((out), BLAKE2_MAX_OUTPUT,            \
+                                     (inp), (inplen),                     \
+                                     OTTERY_PERSONALIZATION_1,            \
+                                     OTTERY_PERSONALIZATION_2);           \
+      if (blake_output != BLAKE2_MAX_OUTPUT)                              \
+        abort();                                                          \
+    } while (0)
 

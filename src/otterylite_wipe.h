@@ -1,5 +1,5 @@
 
-#if ( (defined(__OpenBSD__) && OpenBSD >= 201405 /* 5.5 */) )
+#if ((defined(__OpenBSD__) && OpenBSD >= 201405 /* 5.5 */))
 
 #define memwipe(p, n) explicit_bzero((p), (n))
 
@@ -13,9 +13,9 @@ static inline void
 memwipe(volatile void *p, size_t n)
 {
   volatile char *cp = p;
+
   while (n--)
     *cp++ = 0;
   asm volatile ("" : : : "memory"); /* for good measure. */
 }
-
 #endif

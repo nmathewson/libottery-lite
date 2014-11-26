@@ -12,12 +12,15 @@ static void
 dumphex(const char *label, const u8 *bytes, int n)
 {
   int m = 0;
-  if (label) printf("%s: ", label);
-  while (n--) {
-    printf("%02x", *bytes++);
-    if (0 == (++m % 32) && n)
-      printf("\n");
-  }
+
+  if (label)
+    printf("%s: ", label);
+  while (n--)
+    {
+      printf("%02x", *bytes++);
+      if (0 == (++m % 32) && n)
+        printf("\n");
+    }
   puts("");
 }
 
@@ -45,10 +48,10 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   dumphex(NULL, buf + skip, OUTPUT);
 }
 
-#define X(key,nonce,skip)                                              \
+#define X(key, nonce, skip)                                              \
   do {                                                                 \
-    experiment((const u8*)(key),(const u8*)(nonce),(skip));            \
-  } while (0)
+      experiment((const u8*)(key), (const u8*)(nonce), (skip));            \
+    } while (0)
 
 
 int

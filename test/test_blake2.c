@@ -17,26 +17,28 @@ test_kat(void)
   u8 buf[KAT_LENGTH];
   u8 out[64];
 
-  for (i = 0; i < KAT_LENGTH; ++i) {
-    buf[i] = (u8) i;
-  }
-
-  for (i = 0; i < ITERATIONS; ++i) {
-    const u8 * expected =
-#if WORDBITS >= 64
-      blake2b_kat[i]
-#else
-      blake2s_kat[i]
-#endif
-      ;
-    blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0);
-
-    if (memcmp(out, expected, BLAKE2_MAX_OUTPUT)) {
-      printf("Error: %d\n", i);
-      return -1;
+  for (i = 0; i < KAT_LENGTH; ++i)
+    {
+      buf[i] = (u8)i;
     }
 
-  }
+  for (i = 0; i < ITERATIONS; ++i)
+    {
+      const u8 * expected =
+#if WORDBITS >= 64
+        blake2b_kat[i]
+#else
+        blake2s_kat[i]
+#endif
+      ;
+      blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0);
+
+      if (memcmp(out, expected, BLAKE2_MAX_OUTPUT))
+        {
+          printf("Error: %d\n", i);
+          return -1;
+        }
+    }
 
   return 0;
 }

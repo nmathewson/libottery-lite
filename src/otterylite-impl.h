@@ -1,9 +1,9 @@
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 
 #ifndef OTTERYLITE_IMPL_H_INCLUDED
 #define OTTERYLITE_IMPL_H_INCLUDED
@@ -25,20 +25,19 @@
 #endif
 
 #if defined(i386) || \
-    defined(__i386) || \
-    defined(__x86_64) || \
-    defined(__M_IX86) || \
-    defined(_M_IX86) || \
-    defined(_M_AMD64) || \
-    defined(__INTEL_COMPILER)
+  defined(__i386) || \
+  defined(__x86_64) || \
+  defined(__M_IX86) || \
+  defined(_M_IX86) || \
+  defined(_M_AMD64) || \
+  defined(__INTEL_COMPILER)
 
 #define OTTERY_X86
 
 #if defined(__x86_64) || \
-    defined(_M_AMD64)
+  defined(_M_AMD64)
 #define OTTERY_X86_64
 #endif
-
 #endif
 
 #include <sys/types.h>
@@ -108,5 +107,4 @@
 #endif
 
 typedef unsigned char u8;
-
 #endif

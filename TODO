@@ -15,7 +15,11 @@ For 1.0
   o Make make make.
 
   . Better API
+    - Include a 'status' thing.
+
   . Flexible API
+    - Make it able to call itself arc4random
+
   . Support win32; build with mingw32
     - Omit fork detection on win32.
     - windows mutex or critical_section; not pthreads.
@@ -33,6 +37,4 @@ For 1.0
   - Support atfork stuff, just in case.
 
   - Match glibc coding style more closely
-
-
 
