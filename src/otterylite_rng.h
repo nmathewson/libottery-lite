@@ -83,19 +83,8 @@ chacha20_blocks(const unsigned char key[KEYLEN], int n_blocks,
 #undef QUARTER_ROUND
 
 static void
-ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
+ottery_bytes_slow(struct ottery_rng *st, u8 *out, size_t n, size_t available_bytes)
 {
-  size_t available_bytes = BUFLEN - KEYLEN - st->idx;
-  char *out = output;
-
-  if (LIKELY(n <= available_bytes)) {
-    /* Can do in one go */
-    memcpy(out, st->buf + st->idx, n);
-    memset(st->buf + st->idx, 0, n);
-    st->idx += n;
-    return;
-  }
-
   memcpy(out, st->buf + st->idx, available_bytes);
   out += available_bytes;
   n -= available_bytes;
@@ -114,6 +103,23 @@ ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
   memset(st->buf, 0, n);
   st->idx = n;
 }
+
+static inline void
+ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
+{
+  size_t available_bytes = BUFLEN - KEYLEN - st->idx;
+  u8 *out = output;
+
+  if (LIKELY(n <= available_bytes)) {
+    /* Can do in one go */
+    memcpy(out, st->buf + st->idx, n);
+    memset(st->buf + st->idx, 0, n);
+    st->idx += n;
+  } else {
+    ottery_bytes_slow(st, output, n, available_bytes);
+  }
+}
+
 
 static void
 ottery_setkey(struct ottery_rng *st, const unsigned char key[KEYLEN])
