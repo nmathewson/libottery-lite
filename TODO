@@ -1,17 +1,36 @@
 
 For 1.0
   o Support more platforms in entropy gathering
+  o Cleanup function
+  o Namespace the public functions.
+  . Unit tests
+    o ChaCha20 test vectors from libottery
+    o Blake2[bs] test vectors from blake2 source
+    - Fresh blake2 test vectors with personalization.
+    - Test the streaming rng in 'ottery_bytes'.
+    - Test as many entropy sources as possible.
+    - "Shallow" tests from libottery.
+
+  . Better API
+  . Flexible API
+  . Support win32; build with mingw32
+    - Omit fork detection on win32.
+    - windows mutex or critical_section; not pthreads.
+
+  . Benchmark
+
   - Detect 32 vs 64
   - Document the code
   - Document the approach
-  . Better API
-  . Flexible API
-  o Cleanup function
-  o Namespace the public functions.
-  - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT
-  . Support win32; build with mingw32
+
+  - Better allocation; use mmap like openbsd likes to use.
+
+  - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT.
+
+  - Support atfork stuff, just in case.
+
   - Match glibc coding style more closely
+
   - Make make make.
-  - Unit tests
-  . Benchmark
+
 
