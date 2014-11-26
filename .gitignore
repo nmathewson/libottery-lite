@@ -3,6 +3,8 @@
 *.exe
 \#*\#
 
+*.dSYM
+
 /test/test_blake2
 /test/test_chacha
 /test/test_streamgen
