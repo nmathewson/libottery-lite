@@ -46,6 +46,7 @@ int main(int argc, char **argv)
   (void)argc;
   (void)argv;
 
-  test_kat();
+  if (test_kat() < 0)
+    return 1;
   return 0;
 }
