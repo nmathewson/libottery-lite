@@ -26,7 +26,7 @@ extern "C" {
 
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_ONLY struct ottery_state *state
-#define OTTERY_STATE_ARG_FIRST STATE_ARG_ONLY ,
+#define OTTERY_STATE_ARG_FIRST OTTERY_STATE_ARG_ONLY ,
 struct ottery_state;
 #else
 #define OTTERY_STATE_ARG_ONLY void
