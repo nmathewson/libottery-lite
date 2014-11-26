@@ -700,7 +700,7 @@ ottery_getentropy(unsigned char *out)
   int i, n;
   unsigned char *outp = out;
   int have_strong = 0;
-  unsigned have_groups = 0, have_sources;
+  unsigned have_groups = 0, have_sources = 0;
 
   memset(out, 0, OTTERY_ENTROPY_MAXLEN);
 
