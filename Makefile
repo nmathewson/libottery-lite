@@ -55,4 +55,4 @@ dieharder: ./test/test_streamgen
 	./test/test_streamgen --yes-really | dieharder -g 200 -a
 
 clean:
-	rm -f *.o */*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output
+	rm -f *.o */*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output received_output
