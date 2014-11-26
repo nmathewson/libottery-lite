@@ -8,6 +8,7 @@
 #include "otterylite.h"
 #include "otterylite-impl.h"
 
+#include "otterylite_wipe.h"
 #include "otterylite_rng.h"
 #include "otterylite_digest.h"
 #include "otterylite_entropy.h"

@@ -1,6 +1,7 @@
 
 #include "otterylite.h"
 #include "otterylite-impl.h"
+#include "otterylite_wipe.h"
 #include "otterylite_rng.h"
 
 #include <assert.h>

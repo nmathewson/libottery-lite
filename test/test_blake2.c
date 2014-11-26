@@ -1,7 +1,7 @@
 
 #include "otterylite.h"
 #include "otterylite-impl.h"
-#include "otterylite_rng.h" /* XXXX make this unneeded here. */
+#include "otterylite_wipe.h"
 #include "otterylite_digest.h"
 
 #define BLAKE2S_OUTBYTES 32
@@ -33,7 +33,7 @@ test_kat(void)
 
     if (memcmp(out, expected, BLAKE2_MAX_OUTPUT)) {
       printf("Error: %d\n", i);
-//return -1;
+      return -1;
     }
 
   }
@@ -45,8 +45,6 @@ int main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
-  (void)ottery_bytes;
-  (void)ottery_setkey;
 
   test_kat();
   return 0;
