@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 #ifndef OTTERYLITE_H_INCLUDED_
 #define OTTERYLITE_H_INCLUDED_
 
@@ -11,9 +11,9 @@
 extern "C" {
 #endif
 
-/*
-   #define OTTERY_STRUCT
- */
+  /*
+    #define OTTERY_STRUCT
+  */
 #define OTTERY_ENABLE_EGD
 
 #ifndef OTTERY_FUNC_PREFIX

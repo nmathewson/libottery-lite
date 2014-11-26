@@ -36,5 +36,5 @@ For 1.0
 
   - Support atfork stuff, just in case.
 
-  - Match glibc coding style more closely
+  o Match glibc coding style more closely
 

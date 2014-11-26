@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 #define u32 uint32_t
 #define KEYLEN 40
@@ -21,17 +21,17 @@ struct ottery_rng {
 #define ROTATE(x, n)                            \
   (((x) << (n)) | ((x) >> (32 - (n))))
 
-#define QUARTER_ROUND(a, b, c, d) \
-  do {                         \
-      a += b;                    \
-      d = ROTATE(d ^ a, 16);     \
-      c += d;                    \
-      b = ROTATE(b ^ c, 12);     \
-      a += b;                    \
-      d = ROTATE(d ^ a, 8);      \
-      c += d;                    \
-      b = ROTATE(b ^ c, 7);      \
-    } while (0)
+#define QUARTER_ROUND(a, b, c, d)               \
+  do {                                          \
+    a += b;                                     \
+    d = ROTATE(d ^ a, 16);                      \
+    c += d;                                     \
+    b = ROTATE(b ^ c, 12);                      \
+    a += b;                                     \
+    d = ROTATE(d ^ a, 8);                       \
+    c += d;                                     \
+    b = ROTATE(b ^ c, 7);                       \
+  } while (0)
 
 
 static void

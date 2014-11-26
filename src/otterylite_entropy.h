@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 #define ENTROPY_CHUNK 32
 #define OTTERY_ENTROPY_MINLEN 32
@@ -52,10 +52,10 @@ cpuid_(int index, unsigned result[4])
         : "0" (index));
 #else
   __asm volatile (
-    "xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1"
-    : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
-    : "0" (index)
-    : "cc");
+                  "xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1"
+                  : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
+                  : "0" (index)
+                  : "cc");
 #endif
   result[0] = eax;
   result[1] = ebx;
@@ -151,7 +151,7 @@ ottery_getentropy_cryptgenrandom(unsigned char *out)
 
   n = ottery_getentropy_cryptgenrandom_OUTLEN;
 
-out:
+ out:
   CryptReleaseContext(h, 0);
   return n;
 }
@@ -198,19 +198,19 @@ ottery_getentropy_device_(unsigned char *out, int len,
       remain -= r;
     }
 
-out:
+ out:
   close(fd);
   return output;
 }
 static int
 ottery_getentropy_dev_urandom(unsigned char *out)
 {
-#define TRY(fname) \
+#define TRY(fname)                                                      \
   do {                                                                  \
-      r = ottery_getentropy_device_(out, ENTROPY_CHUNK, fname, S_IFCHR);  \
-      if (r == ENTROPY_CHUNK)                                             \
-        return r;                                                         \
-    } while (0)
+    r = ottery_getentropy_device_(out, ENTROPY_CHUNK, fname, S_IFCHR);  \
+    if (r == ENTROPY_CHUNK)                                             \
+      return r;                                                         \
+  } while (0)
   int r;
 #if defined(__sun) || defined(sun)
   TRY("/devices/pseudo/random@0:urandom");
@@ -306,7 +306,7 @@ ottery_getentropy_egd(unsigned char *out)
 
   result = n_read;
 
-out:
+ out:
   closesocket(sock);
   return result;
 }
@@ -406,19 +406,19 @@ static const int mib_files[] = { CTL_KERN, KERN_FILE };
 static const int mib_procs[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
 static const int mib_vnode[] = { CTL_KERN, KERN_VNODE };
 static const int mib_inet_tcp[] =
-{ CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
+  { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
 static const int mib_inet_udp[] =
-{ CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
+  { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
 static const int mib_inet_ip[] =
-{ CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
+  { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
 static const int mib_inet6_tcp[] =
-{ CTL_NET, PF_INET6, IPPROTO_TCP, TCPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_TCP, TCPCTL_STATS };
 static const int mib_inet6_udp[] =
-{ CTL_NET, PF_INET6, IPPROTO_UDP, UDPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_UDP, UDPCTL_STATS };
 static const int mib_inet6_ip[] =
-{ CTL_NET, PF_INET6, IPPROTO_IP, IPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_IP, IPCTL_STATS };
 static const int mib_loadavg[] =
-{ CTL_VM, VM_LOADAVG };
+  { CTL_VM, VM_LOADAVG };
 static const struct {
   const int *mib;
   int miblen;
@@ -452,67 +452,67 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
 #define ADD_CHUNK(chunk, len)                   \
   do {                                          \
-      if (cp - buf + OTTERY_DIGEST_LEN > 4096) {  \
-          OTTERY_DIGEST(buf, buf, sizeof(buf));     \
-          cp = buf + OTTERY_DIGEST_LEN;             \
-        }                                           \
-      bytes_added += (len);                       \
-      OTTERY_DIGEST(cp, (chunk), (len));          \
-      cp += OTTERY_DIGEST_LEN;                    \
-    } while (0)
+    if (cp - buf + OTTERY_DIGEST_LEN > 4096) {  \
+      OTTERY_DIGEST(buf, buf, sizeof(buf));     \
+      cp = buf + OTTERY_DIGEST_LEN;             \
+    }                                           \
+    bytes_added += (len);                       \
+    OTTERY_DIGEST(cp, (chunk), (len));          \
+    cp += OTTERY_DIGEST_LEN;                    \
+  } while (0)
 #define ADD(object)                             \
   do {                                          \
-      if (cp - buf + sizeof(object) > 4096) {       \
-          OTTERY_DIGEST(buf, buf, sizeof(buf));     \
-          cp = buf + OTTERY_DIGEST_LEN;             \
-        }                                           \
-      bytes_added += sizeof(object);              \
-      memcpy(buf, &object, sizeof(object));       \
-      cp += sizeof(object);                       \
-    } while (0)
+    if (cp - buf + sizeof(object) > 4096) {     \
+      OTTERY_DIGEST(buf, buf, sizeof(buf));     \
+      cp = buf + OTTERY_DIGEST_LEN;             \
+    }                                           \
+    bytes_added += sizeof(object);              \
+    memcpy(buf, &object, sizeof(object));       \
+    cp += sizeof(object);                       \
+  } while (0)
 #define ADD_ADDR(ptr)                           \
   do {                                          \
-      void *p = (void*)ptr;                      \
-      ADD(p);                                     \
-    } while (0)
+    void *p = (void*)ptr;                       \
+    ADD(p);                                     \
+  } while (0)
 #define ADD_FN_ADDR(ptr)                        \
   do {                                          \
-      uint64_t p = (uint64_t)&ptr;               \
-      ADD(p);                                     \
-    } while (0)
-#define ADD_FILE(fname)                         \
-  do {                                          \
-      unsigned char tmp[1024];                    \
-      int fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);   \
-      int n;                                      \
-      if (fd >= 0) {                              \
-          while (1) {                               \
-              n = read(fd, tmp, sizeof(tmp));         \
-              if (n <= 0)                             \
-                break;                                \
-              ADD_CHUNK(tmp, n);                      \
-            }                                         \
-          close(fd);                                \
-        }                                           \
-    } while (0)
+    uint64_t p = (uint64_t)&ptr;                \
+    ADD(p);                                     \
+  } while (0)
+#define ADD_FILE(fname)                                         \
+  do {                                                          \
+    unsigned char tmp[1024];                                    \
+    int fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);    \
+    int n;                                                      \
+    if (fd >= 0) {                                              \
+      while (1) {                                               \
+        n = read(fd, tmp, sizeof(tmp));                         \
+        if (n <= 0)                                             \
+          break;                                                \
+        ADD_CHUNK(tmp, n);                                      \
+      }                                                         \
+      close(fd);                                                \
+    }                                                           \
+  } while (0)
 
   (void)i;
 
   cp = buf;
 
   {
-    pid_t pid;
-    pid = getppid();
-    ADD(pid);
-    pid = getpid();
-    ADD(pid);
-    pid = getpgid(0);
-    ADD(pid);
-  }
+  pid_t pid;
+  pid = getppid();
+  ADD(pid);
+  pid = getpid();
+  ADD(pid);
+  pid = getpgid(0);
+  ADD(pid);
+}
   {
-    long hostid = gethostid();
-    ADD(hostid);
-  }
+  long hostid = gethostid();
+  ADD(hostid);
+}
 #ifdef __linux__
   ADD_FILE("/proc/cmdline");
   ADD_FILE("/proc/iomem");
@@ -527,14 +527,14 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   ADD_FILE("/proc/version");
   ADD_FILE("/proc/kallsyms");
   {
-    char fname_buf[64];
-    for (i = 0; i < 32; ++i)
-      {
-        int n = snprintf(fname_buf, sizeof(fname_buf), "/proc/irc/%d/spurious", i);
-        if (n > 0 && n < (int)sizeof(fname_buf))
-          ADD_FILE(fname_buf);
-      }
-  }
+  char fname_buf[64];
+  for (i = 0; i < 32; ++i)
+    {
+  int n = snprintf(fname_buf, sizeof(fname_buf), "/proc/irc/%d/spurious", i);
+  if (n > 0 && n < (int)sizeof(fname_buf))
+    ADD_FILE(fname_buf);
+}
+}
 #endif
 
   ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
@@ -544,119 +544,119 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
   for (iter = 0; iter < 8; ++iter)
     {
-      struct timeval tv;
-      if (gettimeofday(&tv, NULL) == 0)
-        ADD(tv);
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) == 0)
+    ADD(tv);
 
 #ifdef CLOCK_MONOTONIC
-      {
-        struct timespec delay = { 0, 10 };
-        for (i = 0; i < (int)N_CLOCK_IDS; ++i)
-          {
-            struct timespec ts;
-            if (clock_gettime(clock_ids[i], &ts) == 0)
-              {
-                ADD(ts);
-                clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
-              }
-          }
-      }
+  {
+  struct timespec delay = { 0, 10 };
+  for (i = 0; i < (int)N_CLOCK_IDS; ++i)
+    {
+  struct timespec ts;
+  if (clock_gettime(clock_ids[i], &ts) == 0)
+    {
+  ADD(ts);
+  clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
+}
+}
+}
 #endif
 #ifdef OTTERY_X86
-      {
-        unsigned regs[4];
-        for (i = 0; i < 16; ++i)
-          {
-            cpuid_(i, regs);
-            ADD(regs);
-          }
-      }
+  {
+  unsigned regs[4];
+  for (i = 0; i < 16; ++i)
+    {
+  cpuid_(i, regs);
+  ADD(regs);
+}
+}
 #endif
 #ifdef __MACH__
-      {
-        uint64_t t = mach_absolute_time();
-        ADD(t);
-      }
+  {
+  uint64_t t = mach_absolute_time();
+  ADD(t);
+}
 #endif
 #ifndef __APPLE__
-      {
-        ucontext_t uc;
-        if (getcontext(&uc) == 0)
-          ADD(uc);
-      }
+  {
+  ucontext_t uc;
+  if (getcontext(&uc) == 0)
+    ADD(uc);
+}
 #endif
 #ifdef __linux__
-      ADD_FILE("/proc/diskstats");
-      ADD_FILE("/proc/interrupts");
-      ADD_FILE("/proc/loadavg");
-      ADD_FILE("/proc/locks");
-      ADD_FILE("/proc/meminfo");
-      ADD_FILE("/proc/net/dev");
-      ADD_FILE("/proc/net/udp");
-      ADD_FILE("/proc/net/tcp");
-      ADD_FILE("/proc/pagetypeinfo");
-      ADD_FILE("/proc/sched_debug");
-      ADD_FILE("/proc/self/stat");
-      ADD_FILE("/proc/self/statm");
-      ADD_FILE("/proc/self/syscall");
-      ADD_FILE("/proc/stat");
-      ADD_FILE("/proc/sysvipc/shm");
-      ADD_FILE("/proc/timer_list");
-      ADD_FILE("/proc/uptime");
-      ADD_FILE("/proc/vmstat");
-      ADD_FILE("/proc/zoneinfo");
+  ADD_FILE("/proc/diskstats");
+  ADD_FILE("/proc/interrupts");
+  ADD_FILE("/proc/loadavg");
+  ADD_FILE("/proc/locks");
+  ADD_FILE("/proc/meminfo");
+  ADD_FILE("/proc/net/dev");
+  ADD_FILE("/proc/net/udp");
+  ADD_FILE("/proc/net/tcp");
+  ADD_FILE("/proc/pagetypeinfo");
+  ADD_FILE("/proc/sched_debug");
+  ADD_FILE("/proc/self/stat");
+  ADD_FILE("/proc/self/statm");
+  ADD_FILE("/proc/self/syscall");
+  ADD_FILE("/proc/stat");
+  ADD_FILE("/proc/sysvipc/shm");
+  ADD_FILE("/proc/timer_list");
+  ADD_FILE("/proc/uptime");
+  ADD_FILE("/proc/vmstat");
+  ADD_FILE("/proc/zoneinfo");
 #endif
 
 #ifdef CLOCK_MONOTONIC
-      {
-        struct timespec ts = { 0, 100 };
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
-      }
+  {
+  struct timespec ts = { 0, 100 };
+  clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+}
 #endif
 
-      {
-        struct rusage ru;
-        if (getrusage(RUSAGE_SELF, &ru) == 0)
-          ADD(ru);
-        if (getrusage(RUSAGE_CHILDREN, &ru) == 0)
-          ADD(ru);
-      }
+  {
+  struct rusage ru;
+  if (getrusage(RUSAGE_SELF, &ru) == 0)
+    ADD(ru);
+  if (getrusage(RUSAGE_CHILDREN, &ru) == 0)
+    ADD(ru);
+}
 
-      {
-        struct stat st;
-        struct statvfs stv;
-        if (stat(".", &st) == 0)
-          ADD(st);
-        if (stat("/", &st) == 0)
-          ADD(st);
-        if (statvfs(".", &stv) == 0)
-          ADD(stv);
-        if (statvfs("/", &stv) == 0)
-          ADD(stv);
-      }
+  {
+  struct stat st;
+  struct statvfs stv;
+  if (stat(".", &st) == 0)
+    ADD(st);
+  if (stat("/", &st) == 0)
+    ADD(st);
+  if (statvfs(".", &stv) == 0)
+    ADD(stv);
+  if (statvfs("/", &stv) == 0)
+    ADD(stv);
+}
 
 #ifdef USE_SYSCTL
-      for (i = 0; i < MIB_LIST_LEN; ++i)
-        {
-          u8 tmp[1024];
-          size_t n = sizeof(tmp);
-          int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
-          if (r < 0 || n > sizeof(tmp))
-            continue;
-          ADD_CHUNK(tmp, n);
-        }
+  for (i = 0; i < MIB_LIST_LEN; ++i)
+    {
+  u8 tmp[1024];
+  size_t n = sizeof(tmp);
+  int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
+  if (r < 0 || n > sizeof(tmp))
+    continue;
+  ADD_CHUNK(tmp, n);
+}
 #endif
-      /* XXXX try some mmap trickery like libressl does */
-    }
+  /* XXXX try some mmap trickery like libressl does */
+}
 
 #undef ADD
 
   OTTERY_DIGEST(out, buf, sizeof(buf));
 
-  TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
+TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
 
-  memwipe(buf, sizeof(buf));
-  return OTTERY_DIGEST_LEN;
+memwipe(buf, sizeof(buf));
+return OTTERY_DIGEST_LEN;
 }
 #else
 #define ottery_getentropy_fallback_kludge_OUTLEN 0
@@ -664,17 +664,17 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 #endif
 
 #define SOURCE_LEN(name) (ottery_getentropy_ ## name ## _OUTLEN)
-#define OTTERY_ENTROPY_MAXLEN     \
-  (SOURCE_LEN(rdrand) +           \
-   SOURCE_LEN(getrandom) +        \
-   SOURCE_LEN(getentropy) +       \
-   SOURCE_LEN(cryptgenrandom) +   \
-   SOURCE_LEN(dev_urandom) +      \
-   SOURCE_LEN(dev_hwrandom) +     \
-   SOURCE_LEN(egd) +              \
-   SOURCE_LEN(proc_uuid) +        \
-   SOURCE_LEN(linux_sysctl) +     \
-   SOURCE_LEN(bsd_sysctl) +       \
+#define OTTERY_ENTROPY_MAXLEN                   \
+  (SOURCE_LEN(rdrand) +                         \
+   SOURCE_LEN(getrandom) +                      \
+   SOURCE_LEN(getentropy) +                     \
+   SOURCE_LEN(cryptgenrandom) +                 \
+   SOURCE_LEN(dev_urandom) +                    \
+   SOURCE_LEN(dev_hwrandom) +                   \
+   SOURCE_LEN(egd) +                            \
+   SOURCE_LEN(proc_uuid) +                      \
+   SOURCE_LEN(linux_sysctl) +                   \
+   SOURCE_LEN(bsd_sysctl) +                     \
    SOURCE_LEN(fallback_kludge))
 
 #define ID_RDRAND          (1u << 0)
@@ -698,10 +698,10 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 #define FLAG_WEAK   (1u << 0)
 #define FLAG_AVOID  (1u << 1)
 
-#define SOURCE(name, id, group, flags)                                     \
-  { #name, ottery_getentropy_ ## name,                                  \
-    ottery_getentropy_ ## name ## _OUTLEN,                            \
-    (id), (group), (flags) }
+#define SOURCE(name, id, group, flags)          \
+  { #name, ottery_getentropy_ ## name,          \
+      ottery_getentropy_ ## name ## _OUTLEN,    \
+      (id), (group), (flags) }
 static const struct {
   const char *name;
   int (*getentropy_fn)(unsigned char *out);

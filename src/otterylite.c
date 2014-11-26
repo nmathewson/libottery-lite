@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 #include "otterylite.h"
 #include "otterylite-impl.h"
@@ -35,13 +35,13 @@ static int ottery_seeding;
 
 #define LOCK()                                  \
   do {                                          \
-      pthread_mutex_lock(&STATE_FIELD(mutex));    \
-    } while (0)
+    pthread_mutex_lock(&STATE_FIELD(mutex));    \
+  } while (0)
 
 #define UNLOCK()                                \
   do {                                          \
-      pthread_mutex_unlock(&STATE_FIELD(mutex));  \
-    } while (0)
+    pthread_mutex_unlock(&STATE_FIELD(mutex));  \
+  } while (0)
 
 static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
@@ -114,12 +114,12 @@ OTTERY_PUBLIC_FN (teardown)(OTTERY_STATE_ARG_ONLY)
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
-#define INIT()                                                  \
-  do {                                                          \
-      if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)))) {           \
-          OTTERY_PUBLIC_FN(init) (OTTERY_STATE_ARG_OUT);             \
-        }                                                           \
-    } while (0)
+#define INIT()                                          \
+  do {                                                  \
+    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)))) {    \
+      OTTERY_PUBLIC_FN(init) (OTTERY_STATE_ARG_OUT);    \
+    }                                                   \
+  } while (0)
 
 void
 OTTERY_PUBLIC_FN (need_reseed)(OTTERY_STATE_ARG_ONLY)
@@ -129,12 +129,12 @@ OTTERY_PUBLIC_FN (need_reseed)(OTTERY_STATE_ARG_ONLY)
   UNLOCK();
 }
 
-#define CHECK()                                                       \
-  do {                                                                \
-      if (UNLIKELY(RNG->count > RESEED_AFTER_BLOCKS) && !STATE_FIELD(seeding)) { \
-          ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                      \
-        }                                                                 \
-    } while (0)
+#define CHECK()                                                         \
+  do {                                                                  \
+    if (UNLIKELY(RNG->count > RESEED_AFTER_BLOCKS) && !STATE_FIELD(seeding)) { \
+      ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                        \
+    }                                                                   \
+  } while (0)
 
 unsigned
 OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY)

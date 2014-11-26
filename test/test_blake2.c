@@ -30,7 +30,7 @@ test_kat(void)
 #else
         blake2s_kat[i]
 #endif
-      ;
+        ;
       blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0);
 
       if (memcmp(out, expected, BLAKE2_MAX_OUTPUT))

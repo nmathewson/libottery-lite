@@ -48,10 +48,10 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   dumphex(NULL, buf + skip, OUTPUT);
 }
 
-#define X(key, nonce, skip)                                              \
-  do {                                                                 \
-      experiment((const u8*)(key), (const u8*)(nonce), (skip));            \
-    } while (0)
+#define X(key, nonce, skip)                                     \
+  do {                                                          \
+    experiment((const u8*)(key), (const u8*)(nonce), (skip));   \
+  } while (0)
 
 
 int
