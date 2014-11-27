@@ -9,7 +9,9 @@
 #define KEYLEN 40
 #define BLOCKSIZE 64
 #define ROUNDS 20
-#define BUFLEN 4096
+/* subtract BLOCKSIZE so we have some extra space to fit the whole structure
+ * in a single mmaped page. */
+#define BUFLEN (4096 - BLOCKSIZE)
 #define N_BLOCKS (BUFLEN / BLOCKSIZE)
 
 struct ottery_rng {
