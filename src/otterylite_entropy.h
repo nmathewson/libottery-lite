@@ -262,7 +262,7 @@ ottery_getentropy_proc_uuid(unsigned char *out)
 #define ottery_getentropy_proc_uuid_OUTLEN 0
 #endif
 
-#ifdef OTTERY_ENABLE_EGD
+#ifndef OTTERY_DISABLE_EGD
 #define ottery_getentropy_egd_OUTLEN ENTROPY_CHUNK
 static struct sockaddr_storage ottery_egd_sockaddr;
 static int ottery_egd_socklen = -1;

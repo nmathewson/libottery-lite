@@ -11,10 +11,20 @@
 extern "C" {
 #endif
 
-  /*
-    #define OTTERY_STRUCT
-  */
-#define OTTERY_ENABLE_EGD
+
+/*
+  You can configure this with the following public defines:
+
+  XXXX Document these
+*/
+/* #define OTTERY_STRUCT */
+/* #define OTTERY_FUNC_PREFIX */
+/* #define OTTERY_DISABLE_EGD */
+/* #define OTTERY_BE_ARC4RANDOM */
+
+#ifdef OTTERY_BE_ARC4RANDOM
+#define OTTERY_FUNC_PREFIX arc4
+#endif
 
 #ifndef OTTERY_FUNC_PREFIX
 #ifdef OTTERY_STRUCT
@@ -48,15 +58,30 @@ struct ottery_state;
 #define OTTERY_PASTE2__(a, b) OTTERY_PASTE__(a, b)
 #define OTTERY_PUBLIC_FN(name) OTTERY_PASTE2__(OTTERY_FUNC_PREFIX, name)
 
-void OTTERY_PUBLIC_FN (teardown)(OTTERY_STATE_ARG_ONLY);
-void OTTERY_PUBLIC_FN (need_reseed)(OTTERY_STATE_ARG_ONLY);
+#ifdef OTTERY_BE_ARC4RANDOM
+#define OTTERY_PUBLIC_FN2(name) OTTERY_PUBLIC_FN(random_ ## name)
+#else
+#define OTTERY_PUBLIC_FN2(name) OTTERY_PUBLIC_FN(name)
+#endif
+
+#ifdef OTTERY_STRUCT
+void OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY);
+#endif
+
+void OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY);
+void OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY);
+void OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, int n);
 unsigned OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY);
 ottery_u64_t OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY);
 unsigned OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned limit);
 ottery_u64_t OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST ottery_u64_t limit);
-void OTTERY_PUBLIC_FN (random_bytes)(OTTERY_STATE_ARG_FIRST void *out, size_t n);
+void OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *out, size_t n);
 
-#ifdef OTTERY_ENABLE_EGD
+#ifdef OTTERY_BE_ARC4RANDOM
+#define arc4random_stir() ((void)0)
+#endif
+
+#ifndef OTTERY_DISABLE_EGD
 struct sockaddr;
 int OTTERY_PUBLIC_FN (set_egd_address)(const struct sockaddr *sa, int socklen);
 #endif

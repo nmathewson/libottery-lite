@@ -90,7 +90,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 static
 #endif
 void
-OTTERY_PUBLIC_FN (init)(OTTERY_STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
   pthread_mutex_init(&STATE_FIELD(mutex), NULL);
@@ -105,7 +105,7 @@ OTTERY_PUBLIC_FN (init)(OTTERY_STATE_ARG_ONLY)
 }
 
 void
-OTTERY_PUBLIC_FN (teardown)(OTTERY_STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
   pthread_mutex_destroy(&STATE_FIELD(mutex));
@@ -117,12 +117,12 @@ OTTERY_PUBLIC_FN (teardown)(OTTERY_STATE_ARG_ONLY)
 #define INIT()                                          \
   do {                                                  \
     if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)))) {    \
-      OTTERY_PUBLIC_FN(init) (OTTERY_STATE_ARG_OUT);    \
+      OTTERY_PUBLIC_FN2(init) (OTTERY_STATE_ARG_OUT);    \
     }                                                   \
   } while (0)
 
 void
-OTTERY_PUBLIC_FN (need_reseed)(OTTERY_STATE_ARG_ONLY)
+OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
 {
   LOCK();
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
@@ -199,7 +199,7 @@ OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
 }
 
 void
-OTTERY_PUBLIC_FN (random_bytes)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
+OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
 {
   LOCK();
   INIT();
@@ -208,7 +208,37 @@ OTTERY_PUBLIC_FN (random_bytes)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
   UNLOCK();
 }
 
-#ifdef OTTERY_ENABLE_EGD
+void
+OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, int n)
+{
+  if (n <= 0)
+    return;
+  LOCK();
+  INIT();
+  CHECK();
+  {
+    /* XXXX what if we're seeding at the same time? */
+
+    u8 buf[OTTERY_DIGEST_LEN * 2];
+#if OTTERY_DIGEST_LEN > KEYLEN
+    u8 digest[OTTERY_DIGEST_LEN];
+#else
+    unsigned char digest[KEYLEN];
+    memset(digest, 0, sizeof(digest));
+#endif
+    ottery_bytes(RNG, buf, OTTERY_DIGEST_LEN);
+    OTTERY_DIGEST(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
+    OTTERY_DIGEST(digest, buf, sizeof(buf));
+    ottery_setkey(RNG, digest);
+    RNG->count = 0;
+
+    memwipe(digest, sizeof(digest));
+    memwipe(buf, sizeof(buf));
+  }
+  UNLOCK();
+}
+
+#ifndef OTTERY_DISABLE_EGD
 int
 OTTERY_PUBLIC_FN (set_egd_address)(const struct sockaddr *sa, int socklen)
 {

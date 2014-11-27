@@ -24,6 +24,10 @@
 #define STATE_FIELD(fld) (ottery_ ## fld)
 #endif
 
+#ifdef OTTERY_BE_ARC4RANDOM
+/* Suppress system arc4random */
+#endif
+
 #if defined(i386) ||                            \
   defined(__i386) ||                            \
   defined(__x86_64) ||                          \
@@ -38,6 +42,16 @@
   defined(_M_AMD64)
 #define OTTERY_X86_64
 #endif
+#endif
+
+#ifdef OTTERY_BE_ARC4RANDOM
+#undef arc4random_stir
+/* Suppress any declarations of arc4random_foo in the system headers */
+#define arc4random x_system__arc4random
+#define arc4random_uniform x_system__arc4random_uniform
+#define arc4random_bytes x_system__arc4random_buf
+#define arc4random_stir x_system__arc4random_stir
+#define arc4random_addrandom x_system__arc4random_addrandom
 #endif
 
 #include <sys/types.h>
@@ -59,7 +73,7 @@
 #include <linux/random.h>
 #endif
 
-#ifdef OTTERY_ENABLE_EGD
+#ifndef OTTERY_DISABLE_EGD
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
@@ -104,6 +118,16 @@
 #else
 #define UNLIKELY(expr) (expr)
 #define LIKELY(expr) (expr)
+#endif
+
+
+#ifdef OTTERY_BE_ARC4RANDOM
+/* Suppress any declarations of arc4random_foo in the system headers */
+#undef arc4random
+#undef arc4random_uniform
+#undef arc4random_bytes
+#undef arc4random_stir
+#undef arc4random_addrandom
 #endif
 
 typedef unsigned char u8;

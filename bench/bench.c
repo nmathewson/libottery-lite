@@ -30,13 +30,13 @@ main(int c, char **v)
   gettimeofday(&tv_start, NULL);
   for (i = 0; i < N; ++i)
     {
-      ottery_random_bytes(block, 1024);
+      ottery_random_buf(block, 1024);
     }
   gettimeofday(&tv_end, NULL);
   timersub(&tv_end, &tv_start, &tv_diff);
   ns = tv_diff.tv_sec * (uint64_t)1000000000 + tv_diff.tv_usec * 1000;
   ns /= N;
-  printf("%ld ns per call to ottery_random_bytes(1024)\n", (long)ns);
+  printf("%ld ns per call to ottery_random_buf(1024)\n", (long)ns);
 
   return 0;
 }

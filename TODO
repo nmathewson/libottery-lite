@@ -7,10 +7,10 @@ For 1.0
     o ChaCha20 test vectors from libottery
     o Blake2[bs] test vectors from blake2 source
     - Fresh blake2 test vectors with personalization.
-    - Test the streaming rng in 'ottery_bytes'.
+    o Test the streaming rng in 'ottery_bytes'.
     - Test as many entropy sources as possible.
     - "Shallow" tests from libottery.
-    - Actual test driver.
+    o Actual test driver.
 
   o Make make make.
 
@@ -18,13 +18,20 @@ For 1.0
     - Include a 'status' thing.
 
   . Flexible API
-    - Make it able to call itself arc4random
+    o Make it able to call itself arc4random
+
+  o Add an addrandom function
+
+  - Smarter fork handling.
 
   . Support win32; build with mingw32
     - Omit fork detection on win32.
     - windows mutex or critical_section; not pthreads.
+    - osx should have spinlocks.
 
   . Benchmark
+
+  - Fix all XXXX comments
 
   - Detect 32 vs 64
   - Document the code
@@ -38,3 +45,13 @@ For 1.0
 
   o Match glibc coding style more closely
 
+  - Skip tests that aren't expected to work on big-endian systems when
+    on big-endian systems.
+
+Not for 1.1:
+
+  - Split into more files
+
+  - Better arch independence
+
+  - Make more tests pass on big-endian systems

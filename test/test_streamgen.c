@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
   while (1)
     {
-      ottery_random_bytes(buf, 1024);
+      ottery_random_buf(buf, 1024);
       write(1, buf, sizeof(buf));
     }
   return 0;
