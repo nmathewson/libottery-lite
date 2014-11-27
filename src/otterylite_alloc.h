@@ -31,6 +31,46 @@ free_rng_(struct ottery_rng **rng)
   }
 }
 
+#elif _WIN32
+
+static int
+allocate_rng_(struct ottery_rng **rng)
+{
+  HANDLE mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
+                                     NULL, /*attributes*/
+                                     PAGE_READWRITE,
+                                     0, /* High dword of size */
+                                     sizeof(**rng),
+                                     NULL /* name */);
+  if (mapping == NULL)
+    return -1;
+
+  *rng = MapViewOfFile(mapping,
+                       PAGE_EXECUTE_READWRITE,
+                       0, 0, /* offset */
+                       0 /* Extends to end of mapping */);
+
+  CloseHandle(mapping); /* The mapped view holds a reference. */
+
+  if (*rng) {
+    VirtualLock(*rng, sizeof(**rng));
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
+static void
+free_rng_(struct ottery_rng **rng)
+{
+  if (*rng) {
+    memwipe(*rng, sizeof(**rng));
+    VirtualUnlock(*rng, sizeof(**rng)); /* XXX Is this needed */
+    UnmapViewOfFile(*rng);
+    *rng = NULL;
+  }
+}
+
 #else
 
 static int
