@@ -8,7 +8,8 @@ HEADERS = \
 	src/otterylite_wipe.h \
 	src/otterylite_entropy.h \
 	src/otterylite-impl.h \
-	src/otterylite_locking.h
+	src/otterylite_locking.h \
+	src/otterylite_alloc.h
 
 TEST_PROGRAMS = \
 	test/test \

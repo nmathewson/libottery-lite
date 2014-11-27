@@ -11,7 +11,7 @@
 /* Internal configuration options */
 /* XXXX Document these */
 /* #define OTTERY_DISABLE_LOCKING */
-
+/* #define OTTERY_RNG_NO_HEAP */
 
 #define TRACE(x) printf x
 /* #define TRACE(x) */
@@ -19,14 +19,20 @@
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_OUT state
 #define COMMA ,
-#define RNG (&(state)->rng)
+#define RNG_ST ((state)->rng)
 #define STATE_FIELD(fld) (state->fld)
 #define FUNC_PREFIX ottery_st_
 #else
 #define OTTERY_STATE_ARG_OUT
 #define COMMA
-#define RNG (&ottery_rng)
 #define STATE_FIELD(fld) (ottery_ ## fld)
+#define RNG_ST (ottery_rng)
+#endif
+
+#ifdef OTTERY_RNG_NO_HEAP
+#define RNG (&(RNG_ST))
+#else
+#define RNG RNG_ST
 #endif
 
 #if defined(i386) ||                            \

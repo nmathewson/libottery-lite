@@ -13,6 +13,7 @@
 #include "otterylite_digest.h"
 #include "otterylite_entropy.h"
 #include "otterylite_locking.h"
+#include "otterylite_alloc.h"
 
 #define MAGIC 0x6f747472u
 #define RESEED_AFTER_BLOCKS 2048
@@ -31,7 +32,7 @@ struct ottery_state {
   DECLARE_LOCK(mutex)
   unsigned magic;
   int seeding;
-  struct ottery_rng rng;
+  DECLARE_RNG(rng);
 };
 #define LOCK()                                  \
   do {                                          \
@@ -44,7 +45,7 @@ struct ottery_state {
 #else
 DECLARE_INITIALIZED_LOCK(static, ottery_mutex)
 static unsigned ottery_magic;
-static struct ottery_rng ottery_rng;
+static DECLARE_RNG(ottery_rng);
 static int ottery_seeding;
 #define LOCK()                                  \
   do {                                          \
@@ -109,7 +110,8 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
-  memset(RNG, 0, sizeof(*RNG));
+  if (ALLOCATE_RNG(RNG) < 0)
+    abort();
 
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
@@ -123,7 +125,7 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 #ifdef OTTERY_STRUCT
   DESTROY_LOCK(&STATE_FIELD(mutex));
 #endif
-  memset(RNG, 0, sizeof(*RNG));
+  FREE_RNG(RNG);
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
