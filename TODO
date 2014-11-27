@@ -11,31 +11,6 @@ For 1.0
     - make egd code compile on windows.
   o Make make make.
   o Match glibc coding style more closely
-  . Unit tests
-    o ChaCha20 test vectors from libottery
-    o Blake2[bs] test vectors from blake2 source
-    - Fresh blake2 test vectors with personalization.
-    o Test the streaming rng in 'ottery_bytes'.
-    - Test as many entropy sources as possible.
-    - "Shallow" tests from libottery.
-    o Actual test driver.
-    - Tests for fork handling!
-
-. Better API
-    - Include a 'status' thing.
-  . Benchmark
-
-  . Flexible API
-
-  - Dedication notice and header on all files.
-
-  - Smarter fork handling.
-
-  - Fix all XXXX comments
-
-  - Document the code
-  - Document the approach
-
   o Better allocation
     o use mmap like openbsd likes to use.
     o use mlock.
@@ -44,18 +19,47 @@ For 1.0
     o Use MAP_INHERIT_ZERO
     o use minherit({VM_,INHERIT_NONE}) otherwise
 
-  - Support atfork stuff, just in case.
+  o Early unit tests
+    o ChaCha20 test vectors from libottery
+    o Blake2[bs] test vectors from blake2 source
+    o Test the streaming rng in 'ottery_bytes'.
+    o Actual test driver.
+    - Fresh blake2 test vectors with personalization.
+
+  . Better API
+    - Include a 'status' thing.
+  . Benchmark
+    - Include const-time checking
+
+  - Smarter fork handling.
+    - Support atfork stuff, just in case.
+    - Fix redundant atfork calls
+    - Avoid getpid() checks when INHERIT_ZERO is in use.
+
+  . Flexible API
+
+  - Later unit tests
+    - Test as many entropy sources as possible.
+    - Test entropy dispatcher
+    - "Shallow" tests from libottery.
+    - Tests for fork handling!
+
+  - Fix all XXXX comments
+
+  - Document the code
+  - Document the approach
+
+  - Dedication notice and header on all files.
 
   - Skip tests that aren't expected to work on big-endian systems when
     on big-endian systems.
 
   - Re-run uncrustify and emacs indent
 
-  - Avoid getpid() checks when INHERIT_ZERO is in use.
 
 Probably not for 1.0:
 
-  - Spinlocks for fast-yield cases
+  - Spinlocks for fast-yield cases?
 
 Not for 1.0
 
