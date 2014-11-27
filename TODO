@@ -49,16 +49,17 @@ For 1.0
   - Re-run uncrustify and emacs indent
 
 
+Probably not for 1.0:
 
-Not for 1.0:
+  - Spinlocks for fast-yield cases
+
+Not for 1.0
 
   - Split into more files
 
-  - Better arch independence
+  - Better arch independence in code
 
   - Make more tests pass on big-endian systems
-
-  - Spinlocks for fast-yield cases
 
   - Actually match glibc style.
 
