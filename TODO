@@ -39,6 +39,8 @@ For 1.0
     o use mlock.
 
   - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT.
+    - Use MAP_INHERIT_ZERO
+    - use minherit({VM_,INHERIT_NONE}) otherwise
 
   - Support atfork stuff, just in case.
 
@@ -64,3 +66,9 @@ Not for 1.0
   - Actually match glibc style.
 
   - Sometimes use blake2s?
+
+  - Avoid getpid() checks when INHERIT_ZERO is in use.
+
+  - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
+
+
