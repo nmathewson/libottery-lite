@@ -27,22 +27,29 @@ struct ottery_state {
   int seeding;
   struct ottery_rng rng;
 };
+#define LOCK()                                  \
+  do {                                          \
+    GET_LOCK(&STATE_FIELD(mutex));              \
+  } while (0)
+#define UNLOCK()                                \
+  do {                                          \
+    RELEASE_LOCK(&STATE_FIELD(mutex));       \
+  } while (0)
 #else
 DECLARE_INITIALIZED_LOCK(static, ottery_mutex)
 static unsigned ottery_magic;
 static struct ottery_rng ottery_rng;
 static int ottery_seeding;
-#endif
-
 #define LOCK()                                  \
   do {                                          \
-    GET_LOCK(&STATE_FIELD(mutex));              \
+    GET_STATIC_LOCK(ottery_mutex);              \
   } while (0)
-
 #define UNLOCK()                                \
   do {                                          \
-    RELEASE_LOCK(&STATE_FIELD(mutex));       \
+    RELEASE_STATIC_LOCK(ottery_mutex);          \
   } while (0)
+#endif
+
 
 static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
