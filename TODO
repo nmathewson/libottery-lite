@@ -3,6 +3,14 @@ For 1.0
   o Support more platforms in entropy gathering
   o Cleanup function
   o Namespace the public functions.
+  o Add an addrandom function
+  o Make it able to call itself arc4random
+  . Win32
+    o Omit fork detection on win32.
+    o windows mutex or critical_section; not pthreads.
+    - make egd code compile on windows.
+  o Make make make.
+  o Match glibc coding style more closely
   . Unit tests
     o ChaCha20 test vectors from libottery
     o Blake2[bs] test vectors from blake2 source
@@ -11,31 +19,18 @@ For 1.0
     - Test as many entropy sources as possible.
     - "Shallow" tests from libottery.
     o Actual test driver.
-
-  o Make make make.
-
   . Better API
     - Include a 'status' thing.
+  . Benchmark
 
   . Flexible API
-    o Make it able to call itself arc4random
-
-  o Add an addrandom function
 
   - Dedication notice and header on all files.
 
   - Smarter fork handling.
 
-  . Support win32; build with mingw32
-    o Omit fork detection on win32.
-    o windows mutex or critical_section; not pthreads.
-    - make egd code compile on windows.
-
-  . Benchmark
-
   - Fix all XXXX comments
 
-  - Detect 32 vs 64
   - Document the code
   - Document the approach
 
@@ -45,12 +40,15 @@ For 1.0
 
   - Support atfork stuff, just in case.
 
-  o Match glibc coding style more closely
 
   - Skip tests that aren't expected to work on big-endian systems when
     on big-endian systems.
 
-Not for 1.1:
+  - Re-run uncrustify and emacs indent
+
+
+
+Not for 1.0:
 
   - Split into more files
 
@@ -59,3 +57,7 @@ Not for 1.1:
   - Make more tests pass on big-endian systems
 
   - Spinlocks for fast-yield cases
+
+  - Actually match glibc style.
+
+  - Sometimes use blake2s?
