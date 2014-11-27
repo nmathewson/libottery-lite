@@ -73,12 +73,31 @@ free_rng_(struct ottery_rng **rng)
 
 #else
 
+#define USING_MMAP
+
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
   *rng = mmap(NULL, sizeof(**rng),
               PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
               -1, 0);
+  if (NULL == *rng)
+    return -1;
+
+#if defined(INHERIT_ZERO)
+  if (minherit(*rng, sizeof(**rng), INHERIT_ZERO) < 0) {
+    munmap(*rng, sizeof(**rng));
+    *rng = NULL;
+    return -1;
+  }
+#elif defined(INHERIT_NONE)
+  if (minherit(*rng, sizeof(**rng), INHERIT_NONE) < 0) {
+    munmap(*rng, sizeof(**rng));
+    *rng = NULL;
+    return -1;
+  }
+#endif
+
   if (*rng) {
     mlock(*rng, sizeof(**rng));
     return 0;

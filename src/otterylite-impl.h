@@ -142,5 +142,12 @@
 #undef arc4random_addrandom
 #endif
 
+#if !defined(INHERIT_NONE) && defined(VM_INHERIT_NONE)
+#define INHERIT_NONE VM_INHERIT_NONE
+#endif
+#if !defined(INHERIT_ZERO) && defined(VM_INHERIT_ZERO)
+#define INHERIT_ZERO VM_INHERIT_ZERO
+#endif
+
 typedef unsigned char u8;
 #endif

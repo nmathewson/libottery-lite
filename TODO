@@ -19,7 +19,9 @@ For 1.0
     - Test as many entropy sources as possible.
     - "Shallow" tests from libottery.
     o Actual test driver.
-  . Better API
+    - Tests for fork handling!
+
+. Better API
     - Include a 'status' thing.
   . Benchmark
 
@@ -34,22 +36,22 @@ For 1.0
   - Document the code
   - Document the approach
 
-  . Better allocation
+  o Better allocation
     o use mmap like openbsd likes to use.
     o use mlock.
 
-  - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT.
-    - Use MAP_INHERIT_ZERO
-    - use minherit({VM_,INHERIT_NONE}) otherwise
+  o Support MAP_INHERIT_ZERO / MAP_NO_INHERIT.
+    o Use MAP_INHERIT_ZERO
+    o use minherit({VM_,INHERIT_NONE}) otherwise
 
   - Support atfork stuff, just in case.
-
 
   - Skip tests that aren't expected to work on big-endian systems when
     on big-endian systems.
 
   - Re-run uncrustify and emacs indent
 
+  - Avoid getpid() checks when INHERIT_ZERO is in use.
 
 Probably not for 1.0:
 
@@ -67,8 +69,5 @@ Not for 1.0
 
   - Sometimes use blake2s?
 
-  - Avoid getpid() checks when INHERIT_ZERO is in use.
-
   - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
-
 

@@ -16,6 +16,7 @@
 #include "otterylite_alloc.h"
 
 #define MAGIC 0x6f747472u
+#define RNG_MAGIC 0x00480A01 /*ohai*/
 #define RESEED_AFTER_BLOCKS 2048
 
 #ifdef _WIN32
@@ -110,8 +111,11 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
+  /* This leaks memory postfork */
   if (ALLOCATE_RNG(RNG) < 0)
     abort();
+
+  RNG->magic = RNG_MAGIC;
 
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
@@ -129,9 +133,16 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
+#if defined(USING_MMAP) && defined(INHERIT_ZERO)
+/* If we really have inherit_zero, then we can */
+#define RNG_MAGIC_OKAY (RNG->magic == RNG_MAGIC)
+#else
+#define RNG_MAGIC_OKAY 1
+#endif
+
 #define INIT()                                          \
   do {                                                  \
-    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)))) {    \
+    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic) || !RNG_MAGIC_OKAY))) { \
       OTTERY_PUBLIC_FN2(init) (OTTERY_STATE_ARG_OUT);    \
     }                                                   \
   } while (0)

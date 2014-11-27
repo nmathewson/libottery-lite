@@ -15,6 +15,7 @@
 #define N_BLOCKS (BUFLEN / BLOCKSIZE)
 
 struct ottery_rng {
+  unsigned magic;
   unsigned idx;
   unsigned count;
   unsigned char buf[BUFLEN];
