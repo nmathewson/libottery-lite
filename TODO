@@ -27,8 +27,9 @@ For 1.0
   - Smarter fork handling.
 
   . Support win32; build with mingw32
-    - Omit fork detection on win32.
-    - windows mutex or critical_section; not pthreads.
+    o Omit fork detection on win32.
+    o windows mutex or critical_section; not pthreads.
+    - make egd code compile on windows.
 
   . Benchmark
 

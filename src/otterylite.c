@@ -17,8 +17,14 @@
 #define MAGIC 0x6f747472u
 #define RESEED_AFTER_BLOCKS 2048
 
-#define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ getpid())
-#define MAGIC_OKAY(m) ((m == (MAGIC ^ getpid())))
+#ifdef _WIN32
+#define ottery_getpid() 0
+#else
+#define ottery_getpid() getpid()
+#endif
+
+#define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ ottery_getpid())
+#define MAGIC_OKAY(m) ((m == (MAGIC ^ ottery_getpid())))
 
 #ifdef OTTERY_STRUCT
 struct ottery_state {
@@ -109,7 +115,7 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
 
-  STATE_FIELD(magic) = MAGIC ^ getpid();
+  STATE_FIELD(magic) = MAGIC ^ ottery_getpid();
 }
 
 void
