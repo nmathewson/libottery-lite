@@ -8,6 +8,11 @@
 #ifndef OTTERYLITE_IMPL_H_INCLUDED
 #define OTTERYLITE_IMPL_H_INCLUDED
 
+/* Internal configuration options */
+/* XXXX Document these */
+/* #define OTTERY_DISABLE_LOCKING */
+
+
 #define TRACE(x) printf x
 /* #define TRACE(x) */
 
@@ -22,10 +27,6 @@
 #define COMMA
 #define RNG (&ottery_rng)
 #define STATE_FIELD(fld) (ottery_ ## fld)
-#endif
-
-#ifdef OTTERY_BE_ARC4RANDOM
-/* Suppress system arc4random */
 #endif
 
 #if defined(i386) ||                            \

@@ -12,6 +12,7 @@
 #include "otterylite_rng.h"
 #include "otterylite_digest.h"
 #include "otterylite_entropy.h"
+#include "otterylite_locking.h"
 
 #define MAGIC 0x6f747472u
 #define RESEED_AFTER_BLOCKS 2048
@@ -21,13 +22,13 @@
 
 #ifdef OTTERY_STRUCT
 struct ottery_state {
-  pthread_mutex_t mutex;
+  DECLARE_LOCK(mutex)
   unsigned magic;
   int seeding;
   struct ottery_rng rng;
 };
 #else
-static pthread_mutex_t ottery_mutex = PTHREAD_MUTEX_INITIALIZER;
+DECLARE_INITIALIZED_LOCK(static, ottery_mutex)
 static unsigned ottery_magic;
 static struct ottery_rng ottery_rng;
 static int ottery_seeding;
@@ -35,12 +36,12 @@ static int ottery_seeding;
 
 #define LOCK()                                  \
   do {                                          \
-    pthread_mutex_lock(&STATE_FIELD(mutex));    \
+    GET_LOCK(&STATE_FIELD(mutex));              \
   } while (0)
 
 #define UNLOCK()                                \
   do {                                          \
-    pthread_mutex_unlock(&STATE_FIELD(mutex));  \
+    RELEASE_LOCK(&STATE_FIELD(mutex));       \
   } while (0)
 
 static int
@@ -93,7 +94,7 @@ void
 OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
-  pthread_mutex_init(&STATE_FIELD(mutex), NULL);
+  INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
   memset(RNG, 0, sizeof(*RNG));
@@ -108,7 +109,7 @@ void
 OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
-  pthread_mutex_destroy(&STATE_FIELD(mutex));
+  DESTROY_LOCK(&STATE_FIELD(mutex));
 #endif
   memset(RNG, 0, sizeof(*RNG));
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));

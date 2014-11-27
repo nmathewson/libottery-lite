@@ -22,12 +22,13 @@ For 1.0
 
   o Add an addrandom function
 
+  - Dedication notice and header on all files.
+
   - Smarter fork handling.
 
   . Support win32; build with mingw32
     - Omit fork detection on win32.
     - windows mutex or critical_section; not pthreads.
-    - osx should have spinlocks.
 
   . Benchmark
 
@@ -55,3 +56,5 @@ Not for 1.1:
   - Better arch independence
 
   - Make more tests pass on big-endian systems
+
+  - Spinlocks for fast-yield cases
