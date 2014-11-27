@@ -4,6 +4,18 @@
 
 #include <sys/time.h>
 
+#ifndef timersub
+#  define timersub(a,b,c)                               \
+  do {                                                  \
+    (c)->tv_sec = (a)->tv_sec - (b)->tv_sec;            \
+    (c)->tv_usec = (a)->tv_usec - (b)->tv_usec;         \
+    if ((c)->tv_usec < 0) {                             \
+      (c)->tv_usec += 1000000;                          \
+      --(c)->tv_sec;                                    \
+    }                                                   \
+  } while (0)
+#endif
+
 int
 main(int c, char **v)
 {
