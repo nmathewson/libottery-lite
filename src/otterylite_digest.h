@@ -5,9 +5,10 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
-#define WORDBITS 32
+#define BLAKE2_WORDBITS 64
 
-#if WORDBITS >= 64
+#if BLAKE2_WORDBITS == 64
+/* Here are the definitions for blake2b */
 typedef uint64_t word_t;
 #define U64(n) n ## ull
 #define BLAKE2_IV0 U64(0x6a09e667f3bcc908)
@@ -28,7 +29,8 @@ typedef uint64_t word_t;
 #define ROT3 16
 #define ROT4 63
 #else
-  typedef uint32_t word_t;
+/* And here are the definitions for blake2s */
+typedef uint32_t word_t;
 #define BLAKE2_IV0 0x6a09e667
 #define BLAKE2_IV1 0xbb67ae85
 #define BLAKE2_IV2 0x3c6ef372

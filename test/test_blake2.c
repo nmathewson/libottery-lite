@@ -21,13 +21,12 @@ test_kat(void *arg)
 
   for (i = 0; i < ITERATIONS; ++i)
     {
-      const u8 * expected =
-#if WORDBITS >= 64
-        blake2b_kat[i]
+#if BLAKE2_WORDBITS == 64
+      const u8 *expected = blake2b_kat[i];
 #else
-        blake2s_kat[i]
+      const u8 *expected = blake2s_kat[i];
 #endif
-        ;
+
       tt_int_op(BLAKE2_MAX_OUTPUT, ==,
                 blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0));
 
