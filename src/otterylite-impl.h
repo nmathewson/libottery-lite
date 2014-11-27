@@ -99,7 +99,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
 #include <mach/mach_time.h>
-#else
+#elif !defined(WIN32)
 #include <ucontext.h>
 #endif
 
