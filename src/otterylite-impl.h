@@ -12,6 +12,7 @@
 /* XXXX Document these */
 /* #define OTTERY_DISABLE_LOCKING */
 /* #define OTTERY_RNG_NO_HEAP */
+/* #define OTTERY_RNG_NO_MMAP */
 
 #define TRACE(x) printf x
 /* #define TRACE(x) */
@@ -96,6 +97,10 @@
 #include <sys/socket.h>
 #endif
 
+#if !defined(_WIN32) && !defined(OTTERY_RNG_NO_MMAP)
+#include <sys/mman.h>
+#endif
+
 #ifdef __APPLE__
 #include <netinet/in.h>
 #include <sys/socketvar.h>
@@ -126,7 +131,6 @@
 #define UNLIKELY(expr) (expr)
 #define LIKELY(expr) (expr)
 #endif
-
 
 #ifdef OTTERY_BE_ARC4RANDOM
 /* We suppressed any declarations of arc4random_foo in the system headers,

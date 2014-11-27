@@ -8,6 +8,12 @@
 
 #else
 
+#define ALLOCATE_RNG(p) allocate_rng_(&(p))
+#define FREE_RNG(p) free_rng_(&(p))
+#define DECLARE_RNG(name) struct ottery_rng *name;
+
+#ifdef OTTERY_RNG_NO_MMAP
+
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
@@ -24,9 +30,35 @@ free_rng_(struct ottery_rng **rng)
     *rng = NULL;
   }
 }
-#define ALLOCATE_RNG(p) allocate_rng_(&(p))
-#define FREE_RNG(p) free_rng_(&(p))
-#define DECLARE_RNG(name) struct ottery_rng *name;
+
+#else
+
+static int
+allocate_rng_(struct ottery_rng **rng)
+{
+  *rng = mmap(NULL, sizeof(**rng),
+              PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+              -1, 0);
+  if (*rng) {
+    mlock(*rng, sizeof(**rng));
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
+static void
+free_rng_(struct ottery_rng **rng)
+{
+  if (*rng) {
+    memwipe(*rng, sizeof(**rng));
+    munlock(*rng, sizeof(**rng)); /* XXXX is this necessary? */
+    munmap(*rng, sizeof(**rng));
+    *rng = NULL;
+  }
+}
+
+#endif
 
 #endif
 

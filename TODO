@@ -34,7 +34,9 @@ For 1.0
   - Document the code
   - Document the approach
 
-  - Better allocation; use mmap like openbsd likes to use.
+  . Better allocation
+    o use mmap like openbsd likes to use.
+    o use mlock.
 
   - Support MAP_INHERIT_ZERO / MAP_NO_INHERIT.
 
