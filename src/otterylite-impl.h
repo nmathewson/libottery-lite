@@ -129,7 +129,8 @@
 
 
 #ifdef OTTERY_BE_ARC4RANDOM
-/* Suppress any declarations of arc4random_foo in the system headers */
+/* We suppressed any declarations of arc4random_foo in the system headers,
+ * but now we can undo that. */
 #undef arc4random
 #undef arc4random_uniform
 #undef arc4random_bytes
