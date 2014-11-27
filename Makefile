@@ -36,7 +36,7 @@ tests: $(TEST_PROGRAMS)
 benchmarks: $(BENCH_PROGRAMS)
 
 test/tinytest/tinytest.o: test/tinytest/tinytest.c
-	$(CC) $(TEST_CFLAGS) $< -o $@
+	$(CC) $(TEST_CFLAGS) -c $< -o $@
 
 test/test: test/test_main.c test/test_blake2.c test/test_chacha.c test/test_rng_core.c $(HEADERS) test/tinytest/tinytest.o
 	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@
@@ -63,5 +63,5 @@ dieharder: ./test/test_streamgen
 	./test/test_streamgen --yes-really | dieharder -g 200 -a
 
 clean:
-	rm -f *.o */*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output received_output
+	rm -f *.o */*.o */*/*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output received_output
 
