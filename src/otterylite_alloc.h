@@ -98,12 +98,8 @@ allocate_rng_(struct ottery_rng **rng)
   }
 #endif
 
-  if (*rng) {
-    mlock(*rng, sizeof(**rng));
-    return 0;
-  } else {
-    return -1;
-  }
+  mlock(*rng, sizeof(**rng));
+  return 0;
 }
 
 static void
