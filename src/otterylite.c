@@ -56,19 +56,18 @@ static int ottery_seeding;
   } while (0)
 #endif
 
+#if OTTERY_DIGEST_LEN < KEYLEN
+/* If we ever need to use a 32-byte digest, we can pad it or stretch it
+ * or something */
+#error "We need a digest that is longer then the key we mean to use."
+#endif
 
 static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 {
   int n;
   unsigned char entropy[KEYLEN + OTTERY_ENTROPY_MAXLEN];
-
-#if OTTERY_DIGEST_LEN > KEYLEN
   unsigned char digest[OTTERY_DIGEST_LEN];
-#else
-  unsigned char digest[KEYLEN];
-  memset(digest, 0, sizeof(digest));
-#endif
 
   ottery_bytes(RNG, entropy, KEYLEN);
 
@@ -234,12 +233,8 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
     /* XXXX what if we're seeding at the same time? */
 
     u8 buf[OTTERY_DIGEST_LEN * 2];
-#if OTTERY_DIGEST_LEN > KEYLEN
     u8 digest[OTTERY_DIGEST_LEN];
-#else
-    unsigned char digest[KEYLEN];
-    memset(digest, 0, sizeof(digest));
-#endif
+
     ottery_bytes(RNG, buf, OTTERY_DIGEST_LEN);
     OTTERY_DIGEST(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
     OTTERY_DIGEST(digest, buf, sizeof(buf));
