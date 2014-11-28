@@ -150,13 +150,13 @@ test_fork_handling(void *arg)
   (void)arg;
 
 #ifndef OTTERY_STRUCT
-  tt_int_op(ottery_init_counter, ==, 0);
+  tt_int_op(ottery_seed_counter, ==, 0);
 #endif
 
   INIT_STATE();
 
   OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, 64);
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
 
   if ((d->child = fork())) {
     IN_PARENT(d);
@@ -171,13 +171,13 @@ test_fork_handling(void *arg)
     tt_int_op(ottery_fork_count, ==, 1);
 #endif
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 32);
-    tt_int_op(STATE_FIELD(init_counter), ==, 2);
+    tt_int_op(STATE_FIELD(seed_counter), ==, 2);
     tt_int_op(RNG->idx, ==, 32);
     write(d->pipefds[1], buf2, 32);
 
     /* Make sure we only reinit once! */
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 32);
-    tt_int_op(STATE_FIELD(init_counter), ==, 2);
+    tt_int_op(STATE_FIELD(seed_counter), ==, 2);
 
     FORK_OK(d);
     exit(0);
@@ -185,7 +185,7 @@ test_fork_handling(void *arg)
   tt_int_op(32, ==, read(d->pipefds[0], buf2, 32));
 
   tt_mem_op(buf, !=, buf2, 32);
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
 
  end:
   RELEASE_STATE();

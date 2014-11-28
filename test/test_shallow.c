@@ -143,12 +143,12 @@ test_manual_reseed(void *arg)
   INIT_STATE();
 
   OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, sizeof(buf));
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
 
   OTTERY_PUBLIC_FN2(need_reseed)(OTTERY_STATE_ARG_OUT);
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
   OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
-  tt_int_op(STATE_FIELD(init_counter), ==, 2);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 2);
   tt_int_op(RNG->idx, ==, sizeof(unsigned));
 
  end:
@@ -169,9 +169,9 @@ test_auto_reseed(void *arg)
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, sizeof(buf));
     /* printf("i=%d, count=%d\n", i, (int) RNG->count); */
     if (i <= blocks) {
-      tt_int_op(STATE_FIELD(init_counter), ==, 1);
+      tt_int_op(STATE_FIELD(seed_counter), ==, 1);
     } else {
-      tt_int_op(STATE_FIELD(init_counter), ==, 2);
+      tt_int_op(STATE_FIELD(seed_counter), ==, 2);
     }
   }
 
@@ -189,7 +189,7 @@ test_shallow_status_1(void *arg)
 #ifdef OTTERY_STRUCT
   state = calloc(1, sizeof(struct ottery_state));
 #endif
-  tt_int_op(STATE_FIELD(init_counter), ==, 0);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 0);
 
   status = OTTERY_PUBLIC_FN2(status)(OTTERY_STATE_ARG_OUT);
 
@@ -199,7 +199,7 @@ test_shallow_status_1(void *arg)
                         status));
   }
 
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
 
  end:
   RELEASE_STATE();
@@ -217,7 +217,7 @@ test_shallow_status_2(void *arg)
   /* This time, check the status after it's initialized */
   OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
 
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
   status = OTTERY_PUBLIC_FN2(status)(OTTERY_STATE_ARG_OUT);
 
   tt_int_op(status, >=, 1);
@@ -226,7 +226,7 @@ test_shallow_status_2(void *arg)
                         status));
   }
 
-  tt_int_op(STATE_FIELD(init_counter), ==, 1);
+  tt_int_op(STATE_FIELD(seed_counter), ==, 1);
 
  end:
   RELEASE_STATE();
