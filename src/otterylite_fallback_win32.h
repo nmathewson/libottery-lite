@@ -15,25 +15,27 @@ load_windows_library(const TCHAR *library_name)
 static int
 ottery_getentropy_fallback_kludge(u8 *out)
 {
-  unsigned char buf[4096], *cp = buf;
+  struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
   int iter;
-  uint64_t bytes_added = 0;
+  int iter;
   HMODULE netapi32 = NULL;
   NET_API_STATUS (*netfree_fn)(LPVOID) = NULL;
 
+  fallback_entropy_accumulator_init(accumulator);
+
   {
-    ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
-    ADD_FN_ADDR(printf);
-    ADD_ADDR(&iter);
+    FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
+    FBENT_ADD_FN_ADDR(printf);
+    FBENT_ADD_ADDR(&iter);
   }
   {
     MEMORYSTATUSEX m;
     DWORD dw = GetCurrentProcessId();
-    ADD(dw);
+    FBENT_ADD(dw);
     dw = GetCurrentThreadId();
-    ADD(dw);
+    FBENT_ADD(dw);
     GlobalMemoryStatusEx(&m);
-    ADD(m);
+    FBENT_ADD(m);
   }
   {
     LPTCH env = GetEnvironmentStrings();
@@ -41,17 +43,17 @@ ottery_getentropy_fallback_kludge(u8 *out)
     /* This is double-nul-terminated. Ick. */
     while (strlen(end_of_env))
       end_of_env += strlen(end_of_env)+1;
-    ADD_CHUNK(env, end_of_env - env);
+    FBENT_ADD_CHUNK(env, end_of_env - env);
   }
   {
     HW_PROFILE_INFO hwp;
     GetCurrentHwProfile(&hwp);
-    ADD(hwp);
+    FBENT_ADD(hwp);
   }
   {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
-    ADD(si);
+    FBENT_ADD(si);
   }
   /* Also see: VirtualQuery, VirtualQueryEx, Raw memory.
 
@@ -73,20 +75,20 @@ ottery_getentropy_fallback_kludge(u8 *out)
       he.dwSize = sizeof(he);
 
       for (ok = Heap32ListFirst(snap, &hl); ok; ok = Heap32ListNext(snap, &hl)) {
-        ADD(hl);
+        FBENT_ADD(hl);
         for (ok2 = Heap32First(&he, hl.th32ProcessID, hl.th32HeapID); ok2;
              ok2 = Heap32Next(&he)) {
-          ADD(he);
+          FBENT_ADD(he);
         }
       }
       for (ok = Process32First(snap, &pwe); ok; ok = Process32Next(snap, &pwe)) {
-        ADD(pwe);
+        FBENT_ADD(pwe);
       }
       for (ok = Module32First(snap, &me); ok; ok = Module32Next(snap, &me)) {
-        ADD(me);
+        FBENT_ADD(me);
       }
       for (ok = Thread32First(snap, &te); ok; ok = Thread32Next(snap, &te)) {
-        ADD(te);
+        FBENT_ADD(te);
       }
       CloseHandle(snap);
     }
@@ -115,7 +117,7 @@ ottery_getentropy_fallback_kludge(u8 *out)
         if (res != NO_ERROR)
           goto done_getadapters;
 
-        ADD_CHUNK(addrs, size);
+        FBENT_ADD_CHUNK(addrs, size);
       }
     done_getadapters:
       if (addrs)
@@ -133,11 +135,11 @@ ottery_getentropy_fallback_kludge(u8 *out)
     if (servergetinfo_fn && netfree_fn) {
       LPBYTE b=NULL;
       if (servergetinfo_fn(NULL, 100, &b) == NERR_Success) {
-        ADD_CHUNK(b, sizeof(SERVER_INFO_100));
+        FBENT_ADD_CHUNK(b, sizeof(SERVER_INFO_100));
         netfree_fn(b);
       }
       if (servergetinfo_fn(NULL, 101, &b) == NERR_Success) {
-        ADD_CHUNK(b, sizeof(SERVER_INFO_101));
+        FBENT_ADD_CHUNK(b, sizeof(SERVER_INFO_101));
         netfree_fn(b);
       }
     }
@@ -151,9 +153,9 @@ ottery_getentropy_fallback_kludge(u8 *out)
       QueryPerformanceCounter(&pc);
       GetSystemTimePreciseAsFileTime(&ft);
       ms = GetTickCount();
-      ADD(pc);
-      ADD(ft);
-      ADD(ms);
+      FBENT_ADD(pc);
+      FBENT_ADD(ft);
+      FBENT_ADD(ms);
     }
     if (netapi32 != NULL) {
       NET_API_STATUS (*statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
@@ -161,11 +163,11 @@ ottery_getentropy_fallback_kludge(u8 *out)
       if (statsget_fn && netfree_fn) {
         LPBYTE b = NULL;
         if (statsget_fn(NULL, L"LanmanWorkstation", 0, 0, &b) == NERR_Success) {
-          ADD_CHUNK(b, sizeof(STAT_WORKSTATION_0));
+          FBENT_ADD_CHUNK(b, sizeof(STAT_WORKSTATION_0));
           netfree_fn(b);
         }
         if (statsget_fn(NULL, L"LanmanServer", 0, 0, &b) == NERR_Success) {
-          ADD_CHUNK(b, sizeof(STAT_SERVER_0));
+          FBENT_ADD_CHUNK(b, sizeof(STAT_SERVER_0));
           netfree_fn(b);
         }
       }
@@ -177,13 +179,8 @@ ottery_getentropy_fallback_kludge(u8 *out)
       Sleep(1);
   }
 
-  blake2_noendian(out, ENTROPY_CHUNK, buf, sizeof(buf), 0x101010, 0);
-
-  TRACE(("I looked at %I64u bytes\n", (unsigned __int64)bytes_added));
-
   if (netapi32)
     CloseHandle(netapi32);
 
-  memwipe(buf, sizeof(buf));
-  return ENTROPY_CHUNK;
+  return fallback_entropy_accumulator_get_output(accumulator, out);
 }

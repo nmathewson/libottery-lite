@@ -33,7 +33,8 @@ static const int clock_ids[] = {
 };
 #define N_CLOCK_IDS (sizeof(clock_ids) / sizeof(clock_ids[0]))
 
-#define MIB(mib) { mib_ ## mib, (sizeof(mib_ ## mib) / sizeof(mib_ ## mib[0])) }
+#define MIBLIST_ENTRY(mib) \
+  { mib_ ## mib, (sizeof(mib_ ## mib) / sizeof(mib_ ## mib[0])) }
 
 #ifdef __APPLE__
 static const int mib_files[] = { CTL_KERN, KERN_FILE };
@@ -57,16 +58,16 @@ static const struct {
   const int *mib;
   int miblen;
 } miblist[] = {
-  MIB(files),
-  MIB(procs),
-  MIB(vnode),
-  MIB(inet_tcp),
-  MIB(inet_udp),
-  MIB(inet_ip),
-  MIB(inet6_tcp),
-  MIB(inet6_udp),
-  MIB(inet6_ip),
-  MIB(loadavg),
+  MIBLIST_ENTRY(files),
+  MIBLIST_ENTRY(procs),
+  MIBLIST_ENTRY(vnode),
+  MIBLIST_ENTRY(inet_tcp),
+  MIBLIST_ENTRY(inet_udp),
+  MIBLIST_ENTRY(inet_ip),
+  MIBLIST_ENTRY(inet6_tcp),
+  MIBLIST_ENTRY(inet6_udp),
+  MIBLIST_ENTRY(inet6_ip),
+  MIBLIST_ENTRY(loadavg),
 };
 #define USE_SYSCTL
 #endif
@@ -75,80 +76,89 @@ static const struct {
 #define MIB_LIST_LEN (sizeof(miblist) / sizeof(miblist[0]))
 #endif
 
+static void
+fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
+                                      const char *fname)
+{
+  unsigned char tmp[1024];
+  int fd;
+  int n;
+  fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+  if (fd < 0)
+    return;
+
+  while (1) {
+    n = read(fd, tmp, sizeof(tmp));
+    if (n <= 0)
+      break;
+    fallback_entropy_accumulator_add_chunk(fbe, tmp, n);
+  }
+}
+
 static int
 ottery_getentropy_fallback_kludge(unsigned char *out)
 {
-  unsigned char buf[4096], *cp=buf;
+  struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
   int iter, i;
-  uint64_t bytes_added = 0;
 
-  memset(buf, 0, sizeof(buf));
+  fallback_entropy_accumulator_init(accumulator);
 
-#define ADD_FILE(fname)                                         \
-  do {                                                          \
-    unsigned char tmp[1024];                                    \
-    int fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);    \
-    int n;                                                      \
-    if (fd >= 0) {                                              \
-      while (1) {                                               \
-        n = read(fd, tmp, sizeof(tmp));                         \
-        if (n <= 0)                                             \
-          break;                                                \
-        ADD_CHUNK(tmp, n);                                      \
-      }                                                         \
-      close(fd);                                                \
-    }                                                           \
-  } while (0)
+#define FBENT_ADD_FILE(fname)                                   \
+  fallback_entropy_accumulator_add_file(accumulator, (fname))
 
   (void)i;
 
   {
   pid_t pid;
   pid = getppid();
-  ADD(pid);
+  FBENT_ADD(pid);
   pid = getpid();
-  ADD(pid);
+  FBENT_ADD(pid);
   pid = getpgid(0);
-  ADD(pid);
-}
+  FBENT_ADD(pid);
+  }
   {
   long hostid = gethostid();
-  ADD(hostid);
+  FBENT_ADD(hostid);
 }
+#ifdef __APPLE__
+  FBENT_ADD_FILE("/var/run/utmpx");
+  FBENT_ADD_FILE("/var/run/resolv.conf");
+#endif
 #ifdef __linux__
-  ADD_FILE("/proc/cmdline");
-  ADD_FILE("/proc/iomem");
-  ADD_FILE("/proc/keys");
-  ADD_FILE("/proc/modules");
-  ADD_FILE("/proc/mounts");
-  ADD_FILE("/proc/net/unix");
-  ADD_FILE("/proc/self/cmdline");
-  ADD_FILE("/proc/self/environ");
-  ADD_FILE("/proc/self/stack");
-  ADD_FILE("/proc/scsi/device_info");
-  ADD_FILE("/proc/version");
-  ADD_FILE("/proc/kallsyms");
+  FBENT_ADD_FILE("/proc/cmdline");
+  FBENT_ADD_FILE("/proc/iomem");
+  FBENT_ADD_FILE("/proc/keys");
+  FBENT_ADD_FILE("/proc/modules");
+  FBENT_ADD_FILE("/proc/mounts");
+  FBENT_ADD_FILE("/proc/net/unix");
+  FBENT_ADD_FILE("/proc/self/cmdline");
+  FBENT_ADD_FILE("/proc/self/environ");
+  FBENT_ADD_FILE("/proc/self/stack");
+  FBENT_ADD_FILE("/proc/scsi/device_info");
+  FBENT_ADD_FILE("/proc/version");
+  FBENT_ADD_FILE("/proc/kallsyms");
   {
   char fname_buf[64];
   for (i = 0; i < 32; ++i)
     {
   int n = snprintf(fname_buf, sizeof(fname_buf), "/proc/irc/%d/spurious", i);
   if (n > 0 && n < (int)sizeof(fname_buf))
-    ADD_FILE(fname_buf);
+    FBENT_ADD_FILE(fname_buf);
 }
 }
 #endif
 
-  ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
-  ADD_FN_ADDR(socket);
-  ADD_FN_ADDR(printf);
-  ADD_ADDR(&iter);
+  FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
+  FBENT_ADD_FN_ADDR(socket);
+  FBENT_ADD_FN_ADDR(printf);
+  FBENT_ADD_ADDR(&iter);
 
   for (iter = 0; iter < 8; ++iter)
     {
   struct timeval tv;
   if (gettimeofday(&tv, NULL) == 0)
-    ADD(tv);
+    FBENT_ADD(tv);
 
 #ifdef CLOCK_MONOTONIC
   {
@@ -158,7 +168,7 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   struct timespec ts;
   if (clock_gettime(clock_ids[i], &ts) == 0)
     {
-  ADD(ts);
+  FBENT_ADD(ts);
   clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 }
 }
@@ -170,43 +180,43 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   for (i = 0; i < 16; ++i)
     {
   cpuid_(i, regs);
-  ADD(regs);
+  FBENT_ADD(regs);
 }
 }
 #endif
 #ifdef __MACH__
   {
   uint64_t t = mach_absolute_time();
-  ADD(t);
+  FBENT_ADD(t);
 }
 #endif
 #ifndef __APPLE__
   {
   ucontext_t uc;
   if (getcontext(&uc) == 0)
-    ADD(uc);
+    FBENT_ADD(uc);
 }
 #endif
 #ifdef __linux__
-  ADD_FILE("/proc/diskstats");
-  ADD_FILE("/proc/interrupts");
-  ADD_FILE("/proc/loadavg");
-  ADD_FILE("/proc/locks");
-  ADD_FILE("/proc/meminfo");
-  ADD_FILE("/proc/net/dev");
-  ADD_FILE("/proc/net/udp");
-  ADD_FILE("/proc/net/tcp");
-  ADD_FILE("/proc/pagetypeinfo");
-  ADD_FILE("/proc/sched_debug");
-  ADD_FILE("/proc/self/stat");
-  ADD_FILE("/proc/self/statm");
-  ADD_FILE("/proc/self/syscall");
-  ADD_FILE("/proc/stat");
-  ADD_FILE("/proc/sysvipc/shm");
-  ADD_FILE("/proc/timer_list");
-  ADD_FILE("/proc/uptime");
-  ADD_FILE("/proc/vmstat");
-  ADD_FILE("/proc/zoneinfo");
+  FBENT_ADD_FILE("/proc/diskstats");
+  FBENT_ADD_FILE("/proc/interrupts");
+  FBENT_ADD_FILE("/proc/loadavg");
+  FBENT_ADD_FILE("/proc/locks");
+  FBENT_ADD_FILE("/proc/meminfo");
+  FBENT_ADD_FILE("/proc/net/dev");
+  FBENT_ADD_FILE("/proc/net/udp");
+  FBENT_ADD_FILE("/proc/net/tcp");
+  FBENT_ADD_FILE("/proc/pagetypeinfo");
+  FBENT_ADD_FILE("/proc/sched_debug");
+  FBENT_ADD_FILE("/proc/self/stat");
+  FBENT_ADD_FILE("/proc/self/statm");
+  FBENT_ADD_FILE("/proc/self/syscall");
+  FBENT_ADD_FILE("/proc/stat");
+  FBENT_ADD_FILE("/proc/sysvipc/shm");
+  FBENT_ADD_FILE("/proc/timer_list");
+  FBENT_ADD_FILE("/proc/uptime");
+  FBENT_ADD_FILE("/proc/vmstat");
+  FBENT_ADD_FILE("/proc/zoneinfo");
 #endif
 
 #ifdef CLOCK_MONOTONIC
@@ -219,22 +229,22 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   {
   struct rusage ru;
   if (getrusage(RUSAGE_SELF, &ru) == 0)
-    ADD(ru);
+    FBENT_ADD(ru);
   if (getrusage(RUSAGE_CHILDREN, &ru) == 0)
-    ADD(ru);
-}
+    FBENT_ADD(ru);
+  }
 
   {
   struct stat st;
   struct statvfs stv;
   if (stat(".", &st) == 0)
-    ADD(st);
+    FBENT_ADD(st);
   if (stat("/", &st) == 0)
-    ADD(st);
+    FBENT_ADD(st);
   if (statvfs(".", &stv) == 0)
-    ADD(stv);
+    FBENT_ADD(stv);
   if (statvfs("/", &stv) == 0)
-    ADD(stv);
+    FBENT_ADD(stv);
 }
 
 #ifdef USE_SYSCTL
@@ -245,19 +255,11 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
   if (r < 0 || n > sizeof(tmp))
     continue;
-  ADD_CHUNK(tmp, n);
+  FBENT_ADD_CHUNK(tmp, n);
 }
 #endif
   /* XXXX try some mmap trickery like libressl does */
 }
 
-#undef ADD
-
-  blake2_noendian(out, ENTROPY_CHUNK, buf, sizeof(buf), 0x101010, 0);
-
-  TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
-
-  memwipe(buf, sizeof(buf));
-  return ENTROPY_CHUNK;
+  return fallback_entropy_accumulator_get_output(accumulator, out);
 }
-
