@@ -28,10 +28,36 @@
 #define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ ottery_getpid())
 #define MAGIC_OKAY(m) ((m == (MAGIC ^ ottery_getpid())))
 
+#if defined(OTTERY_DISABLE_LOCKING) || defined(_WIN32)
+/* no locking or no forking means no pthread_atfork. */
+#define install_atfork_handler() ((void)0)
+#else
+#define USING_ATFORK
+static unsigned ottery_atfork_handler_installed;
+static volatile /* ???? */ unsigned ottery_fork_count;
+static void ottery_child_atfork_handler(void)
+{
+  /* Is this necessary, or can we just ++ ????*/
+  __sync_fetch_and_add(&ottery_fork_count, 1);
+}
+static void
+install_atfork_handler(void)
+{
+  if (!ottery_atfork_handler_installed) {
+    /* Is this necessary, or can we just set it to 1 ???? */
+    if (__sync_bool_compare_and_swap(&ottery_atfork_handler_installed, 0, 1)) {
+      if (pthread_atfork(NULL, NULL, ottery_child_atfork_handler))
+        abort();
+    }
+  }
+}
+#endif
+
 #ifdef OTTERY_STRUCT
 struct ottery_state {
   DECLARE_LOCK(mutex)
   unsigned magic;
+  unsigned forkcount;
   int seeding;
   int entropy_status;
   unsigned init_counter;
@@ -106,6 +132,28 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   return 0;
 }
 
+#if defined(USING_MMAP) && defined(INHERIT_ZERO)
+/* If we really have inherit_zero, then we can avoid messing with pids
+ * and atfork completely. */
+#define RNG_MAGIC_OKAY() (RNG->magic == RNG_MAGIC)
+#define NEED_REINIT ( !RNG_MAGIC_OKAY() )
+#else
+
+#if !defined(USING_ATFORK)
+#define FORK_COUNT_INCREASED() 0
+#define RESET_FORK_COUNT() ((void)0)
+#elif defined(OTTERY_STRUCT)
+#define FORK_COUNT_INCREASED() (state->forkcount != ottery_fork_count)
+#define RESET_FORK_COUNT() (state->forkcount = ottery_fork_count);
+#else
+#define FORK_COUNT_INCREASED() (ottery_fork_count != 0)
+#define RESET_FORK_COUNT() (ottery_fork_count = 0)
+#endif
+
+#define NEED_REINIT ( !MAGIC_OKAY(STATE_FIELD(magic)) || \
+                      FORK_COUNT_INCREASED() )
+#endif
+
 #ifndef OTTERY_STRUCT
 static
 #endif
@@ -117,6 +165,8 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
+  install_atfork_handler();
+
   /* XXXX This leaks memory postfork unless we are using INHERIT_NONE */
   if (ALLOCATE_RNG(RNG) < 0)
     abort();
@@ -126,6 +176,7 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
 
+  RESET_FORK_COUNT();
   STATE_FIELD(magic) = MAGIC ^ ottery_getpid();
   STATE_FIELD(init_counter)++;
 }
@@ -139,14 +190,6 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
   FREE_RNG(RNG);
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
-
-#if defined(USING_MMAP) && defined(INHERIT_ZERO)
-/* If we really have inherit_zero, then we can */
-#define RNG_MAGIC_OKAY() (RNG->magic == RNG_MAGIC)
-#define NEED_REINIT ( !RNG_MAGIC_OKAY() )
-#else
-#define NEED_REINIT ( !MAGIC_OKAY(STATE_FIELD(magic)) )
-#endif
 
 #define INIT()                                           \
   do {                                                   \

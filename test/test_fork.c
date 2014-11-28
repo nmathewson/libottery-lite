@@ -155,14 +155,25 @@ test_fork_handling(void *arg)
 
   if ((d->child = fork())) {
     IN_PARENT(d);
+#ifdef USING_ATFORK
+    tt_int_op(ottery_fork_count, ==, 0);
+#endif
     OTTERY_PUBLIC_FN(random_buf)(buf, 32);
     tt_int_op(RNG->idx, ==, 96);
   } else {
     in_child = 1;
+#ifdef USING_ATFORK
+    tt_int_op(ottery_fork_count, ==, 1);
+#endif
     OTTERY_PUBLIC_FN(random_buf)(buf2, 32);
     tt_int_op(ottery_init_counter, ==, 2);
     tt_int_op(RNG->idx, ==, 32);
     write(d->pipefds[1], buf2, 32);
+
+    /* Make sure we only reinit once! */
+    OTTERY_PUBLIC_FN(random_buf)(buf2, 32);
+    tt_int_op(ottery_init_counter, ==, 2);
+
     FORK_OK(d);
     exit(0);
   }
