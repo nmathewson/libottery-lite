@@ -24,10 +24,11 @@ For 1.0
     o Blake2[bs] test vectors from blake2 source
     o Test the streaming rng in 'ottery_bytes'.
     o Actual test driver.
-    - Fresh blake2 test vectors with personalization.
+    o Fresh blake2 test vectors with personalization.
 
   . Better API
     - Include a 'status' thing.
+
   . Benchmark
     - Include const-time checking
 
