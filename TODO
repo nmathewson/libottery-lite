@@ -56,6 +56,8 @@ For 1.0
 
   - Dedication notice and header on all files.
 
+  - actually run the unit tests on windows
+
   - Skip tests that aren't expected to work on big-endian systems when
     on big-endian systems.
 

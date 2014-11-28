@@ -76,7 +76,7 @@ ottery_getentropy_rdrand(unsigned char *output)
   int i;
 
   if (!cpuid_says_rdrand_supported_())
-    return -1; /* RDRAND not supported. */
+    return -2; /* RDRAND not supported. */
   for (i = 0; i < ENTROPY_CHUNK / 4; ++i, output += 4)
     {
       if (rdrand_((uint32_t*)output) < 0)
@@ -116,14 +116,14 @@ ottery_getrandom_(void *out, size_t n, unsigned flags)
       if (r == (int)n)
         return n;
     } while (r == -EINTR);
+  if (r == -ENOSYS)
+    return -2;
   return -1;
 }
 static int
 ottery_getentropy_getrandom(unsigned char *out)
 {
-  if (ottery_getrandom_(out, ENTROPY_CHUNK, 0) != ENTROPY_CHUNK)
-    return -1;
-  return ENTROPY_CHUNK;
+  return ottery_getrandom_(out, ENTROPY_CHUNK, 0);
 }
 #else
 #define ottery_getentropy_getrandom NULL
@@ -269,7 +269,7 @@ ottery_getentropy_egd(unsigned char *out)
   int result = -1, n_read = 0;
 
   if (ottery_egd_socklen < 0)
-    return -1;
+    return -2;
 
   sock = socket(ottery_egd_sockaddr.ss_family, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (sock == INVALID_SOCKET)
@@ -312,17 +312,19 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
 {
   int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
   int n_read = 0, i;
+  char buf[74];
 
   memset(out, 0, 74);
   for (i = 0; i < 2; ++i)
     {
       size_t n = 37;
-      int r = sysctl(mib, 3, out, &n, NULL, 0);
+      int r = sysctl(mib, 3, buf, &n, NULL, 0);
       if (r < 0 || n > 37)
         return -1;
       n_read += n;
     }
-  return n_read;
+  blake2_noendian(out, ENTROPY_CHUNK, buf, n_read, 444, 1234567);
+  return ENTROPY_CHUNK;
 }
 #else
 #define ottery_getentropy_linux_sysctl NULL
