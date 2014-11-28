@@ -28,7 +28,9 @@ static struct testgroup_t groups[] = {
   { "blake2/", blake2_tests },
   { "chacha_dump/" , chacha_testvectors_tests },
   { "entropy/", entropy_tests },
+#ifndef _WIN32
   { "fork/", fork_tests },
+#endif
   { "rng_core/", rng_core_tests },
   END_OF_GROUPS
 };

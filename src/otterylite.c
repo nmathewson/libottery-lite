@@ -113,11 +113,11 @@ void
 OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
-  /* This is wrong to do postfork */
+  /* This is wrong to do postfork XXXX */
   INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
-  /* This leaks memory postfork unless we are using INHERIT_NONE */
+  /* XXXX This leaks memory postfork unless we are using INHERIT_NONE */
   if (ALLOCATE_RNG(RNG) < 0)
     abort();
 
@@ -142,16 +142,17 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 
 #if defined(USING_MMAP) && defined(INHERIT_ZERO)
 /* If we really have inherit_zero, then we can */
-#define RNG_MAGIC_OKAY (RNG->magic == RNG_MAGIC)
+#define RNG_MAGIC_OKAY() (RNG->magic == RNG_MAGIC)
+#define NEED_REINIT ( !RNG_MAGIC_OKAY() )
 #else
-#define RNG_MAGIC_OKAY 1
+#define NEED_REINIT ( !MAGIC_OKAY(STATE_FIELD(magic)) )
 #endif
 
-#define INIT()                                          \
-  do {                                                  \
-    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)) || !RNG_MAGIC_OKAY)) { \
+#define INIT()                                           \
+  do {                                                   \
+    if (UNLIKELY( NEED_REINIT )) {                       \
       OTTERY_PUBLIC_FN2(init) (OTTERY_STATE_ARG_OUT);    \
-    }                                                   \
+    }                                                    \
   } while (0)
 
 void

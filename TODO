@@ -34,10 +34,10 @@ For 1.0
 
   o Fallback RNG for windows.
 
-  - Smarter fork handling.
+  . Smarter fork handling.
     - Support atfork stuff, just in case.
     - Fix redundant atfork calls
-    - Avoid getpid() checks when INHERIT_ZERO is in use.
+    o Avoid getpid() checks when INHERIT_ZERO is in use.
 
   . Flexible API
 
@@ -46,6 +46,7 @@ For 1.0
     - Test entropy dispatcher
     - "Shallow" tests from libottery.
     - Tests for fork handling!
+    - Make the tests pass when built with state.
 
   - Turn more defines into inlines.
 
