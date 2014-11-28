@@ -260,7 +260,7 @@ OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
 uint64_t
 OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
 {
-  const uint64_t divisor = UINT_MAX / upper;
+  const uint64_t divisor = UINT64_MAX / upper;
   uint64_t result;
 
   LOCK();
