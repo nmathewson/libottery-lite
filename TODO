@@ -42,7 +42,7 @@ For 1.0
   . Flexible API
 
   - Later unit tests
-    - Test as many entropy sources as possible.
+    . Test as many entropy sources as possible.
     - Test entropy dispatcher
     - "Shallow" tests from libottery.
     - Tests for fork handling!

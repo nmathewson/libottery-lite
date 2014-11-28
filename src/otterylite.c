@@ -34,6 +34,7 @@ struct ottery_state {
   unsigned magic;
   int seeding;
   int entropy_status;
+  unsigned init_counter;
   DECLARE_RNG(rng);
 };
 #define LOCK()                                  \
@@ -50,6 +51,7 @@ static unsigned ottery_magic;
 static DECLARE_RNG(ottery_rng);
 static int ottery_seeding;
 static int ottery_entropy_status;
+static unsigned ottery_init_counter;
 #define LOCK()                                  \
   do {                                          \
     GET_STATIC_LOCK(ottery_mutex);              \
@@ -111,10 +113,11 @@ void
 OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 {
 #ifdef OTTERY_STRUCT
+  /* This is wrong to do postfork */
   INIT_LOCK(&STATE_FIELD(mutex));
 #endif
 
-  /* This leaks memory postfork */
+  /* This leaks memory postfork unless we are using INHERIT_NONE */
   if (ALLOCATE_RNG(RNG) < 0)
     abort();
 
@@ -124,6 +127,7 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
     abort();
 
   STATE_FIELD(magic) = MAGIC ^ ottery_getpid();
+  STATE_FIELD(init_counter)++;
 }
 
 void
@@ -145,7 +149,7 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 
 #define INIT()                                          \
   do {                                                  \
-    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic) || !RNG_MAGIC_OKAY))) { \
+    if (UNLIKELY(!MAGIC_OKAY(STATE_FIELD(magic)) || !RNG_MAGIC_OKAY)) { \
       OTTERY_PUBLIC_FN2(init) (OTTERY_STATE_ARG_OUT);    \
     }                                                   \
   } while (0)
