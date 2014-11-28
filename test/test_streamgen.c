@@ -66,8 +66,8 @@ int main(int argc, char **argv)
     case_buf:
       while (1)
         {
-          ottery_random_buf(buf, 1024);
-          write(1, buf, sizeof(buf));
+          ottery_random_buf(buf, n);
+          write(1, buf, n);
         }
       break;
     case 3:
