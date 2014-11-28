@@ -255,7 +255,7 @@ test_entropy_dispatcher(void *arg)
   tt_int_op(0, ==,
             ottery_getentropy_impl(buf, &status, test_sources, N));
   tt_assert(iszero(buf, sizeof(buf)));
-  tt_int_op(status, ==, 0);
+  tt_int_op(status, ==, -1);
 
   /* Have everything truncated. */
   memset(buf, 0, sizeof(buf));

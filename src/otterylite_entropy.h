@@ -442,7 +442,9 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
       TRACE(("source %s gave us %d\n", sources[i].name, n));
     }
 
-  if (! have_a_full_output)
+  if (outp - out < ENTROPY_CHUNK)
+    *status_out = -1;
+  else if (! have_a_full_output)
     *status_out = 0;
   else if (!have_strong)
     *status_out = 1;
