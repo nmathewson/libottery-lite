@@ -98,10 +98,10 @@ static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 {
   int n, new_status=0;
-  unsigned char entropy[OTTERY_KEYLEN + OTTERY_ENTROPY_MAXLEN];
+  unsigned char entropy[OTTERY_DIGEST_LEN*2 + OTTERY_ENTROPY_MAXLEN];
   unsigned char digest[OTTERY_DIGEST_LEN];
 
-  ottery_bytes(RNG_PTR, entropy, OTTERY_KEYLEN);
+  ottery_bytes(RNG_PTR, entropy, OTTERY_DIGEST_LEN);
 
   STATE_FIELD(seeding) = 1;
   RNG_PTR->count = 0;
@@ -111,7 +111,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   /* Release the lock in this section, since it can take a while to get
    * entropy. */
 
-  n = ottery_getentropy(entropy + OTTERY_KEYLEN, &new_status);
+  n = ottery_getentropy(entropy + OTTERY_DIGEST_LEN, &new_status);
 
   if (release_lock)
     LOCK();
@@ -120,7 +120,11 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
     return -1;
   }
 
-  ottery_digest(digest, entropy, n + OTTERY_KEYLEN);
+  /* We do this again here in case more entropy was added in the meantime
+   * using ottery_addrandom */
+  ottery_bytes(RNG_PTR, entropy + n + OTTERY_DIGEST_LEN, OTTERY_DIGEST_LEN);
+
+  ottery_digest(digest, entropy, n + OTTERY_DIGEST_LEN*2);
 
   STATE_FIELD(entropy_status) = new_status;
   STATE_FIELD(seeding) = 0;
@@ -329,13 +333,11 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
   INIT();
   CHECK();
   {
-    /* XXXX what if we're seeding at the same time? */
-
     u8 buf[OTTERY_DIGEST_LEN * 2];
     u8 digest[OTTERY_DIGEST_LEN];
 
     ottery_bytes(RNG_PTR, buf, OTTERY_DIGEST_LEN);
-    ottery_digest(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
+    ottery_digest(buf + OTTERY_DIGEST_LEN, inp, n);
     ottery_digest(digest, buf, sizeof(buf));
     ottery_setkey(RNG_PTR, digest);
     RNG_PTR->count = 0;
