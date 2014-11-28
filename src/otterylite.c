@@ -15,7 +15,7 @@
 #include "otterylite_locking.h"
 #include "otterylite_alloc.h"
 
-#define MAGIC 0x6f747472u
+#define OTTERY_MAGIC 0x6f747472u
 #define RNG_MAGIC 0x00480A01 /*ohai*/
 #define RESEED_AFTER_BLOCKS 2048
 
@@ -25,8 +25,8 @@
 #define ottery_getpid() getpid()
 #endif
 
-#define MAGIC_MAKE_INVALID(m) ((m) = 0 ^ ottery_getpid())
-#define MAGIC_OKAY(m) ((m == (MAGIC ^ ottery_getpid())))
+#define OTTERY_MAGIC_MAKE_INVALID(m) ((m) = 0 ^ ottery_getpid())
+#define OTTERY_MAGIC_OKAY(m) ((m == (OTTERY_MAGIC ^ ottery_getpid())))
 
 #if defined(OTTERY_DISABLE_LOCKING) || defined(_WIN32)
 /* no locking or no forking means no pthread_atfork. */
@@ -151,7 +151,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 #define RESET_FORK_COUNT() (ottery_fork_count = 0)
 #endif
 
-#define NEED_REINIT ( !MAGIC_OKAY(STATE_FIELD(magic)) || \
+#define NEED_REINIT ( !OTTERY_MAGIC_OKAY(STATE_FIELD(magic)) || \
                       FORK_COUNT_INCREASED() )
 #endif
 
@@ -178,7 +178,7 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
     abort();
 
   RESET_FORK_COUNT();
-  STATE_FIELD(magic) = MAGIC ^ ottery_getpid();
+  STATE_FIELD(magic) = OTTERY_MAGIC ^ ottery_getpid();
 }
 
 void
@@ -188,7 +188,7 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
   DESTROY_LOCK(&STATE_FIELD(mutex));
 #endif
   FREE_RNG(RNG_PTR);
-  MAGIC_MAKE_INVALID(STATE_FIELD(magic));
+  OTTERY_MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
 #define INIT()                                           \
@@ -202,7 +202,7 @@ void
 OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
 {
   LOCK();
-  MAGIC_MAKE_INVALID(STATE_FIELD(magic));
+  OTTERY_MAGIC_MAKE_INVALID(STATE_FIELD(magic));
   UNLOCK();
 }
 
