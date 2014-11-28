@@ -159,7 +159,7 @@ ottery_getentropy_device_(unsigned char *out, int len,
                           unsigned need_mode_flags)
 {
   int fd;
-  int r, output = 0, remain = len;
+  int r, output = -1, remain = len;
   struct stat st;
 
   fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
@@ -169,6 +169,7 @@ ottery_getentropy_device_(unsigned char *out, int len,
     goto out;
   if ((st.st_mode & need_mode_flags) != need_mode_flags)
     goto out;
+  output = 0;
   while (remain)
     {
       r = read(fd, out, remain);

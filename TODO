@@ -44,6 +44,7 @@ For 1.0
   - Later unit tests
     . Test as many entropy sources as possible.
       o easy tests
+      o Generic urandom reader.
       - egd tests
       - failing-case tests, where possible.
     - Test entropy dispatcher
