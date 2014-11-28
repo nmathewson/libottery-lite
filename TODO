@@ -41,7 +41,7 @@ For 1.0
 
   . Flexible API
 
-  . Later unit tests
+  o Later unit tests
     o Test as many entropy sources as possible.
       o easy tests
       o Generic urandom reader.
@@ -49,23 +49,26 @@ For 1.0
     o "Shallow" tests from libottery.
     o Tests for fork handling!
     o Make the tests pass when built with state.
-    . As full coverage as possible
+    o As full coverage as possible
     o Smarter stream-generation tests
 
   o Turn more defines into functions.
 
   o Clean up state macros.
 
-  . Fix all XXXX comments
+  o Fix all XXXX comments
+
+
+  - Document the code
+  - Document the approach
+  - Dedication notice and header on all files.
+
+  - Seek external review.
 
   - Even later tests:
     - egd tests
     . failing-case tests, where possible.
-
-  - Document the code
-  - Document the approach
-
-  - Dedication notice and header on all files.
+    - even better coverage
 
   - actually run the unit tests on windows
   - actually run the unit tests on *bsd
