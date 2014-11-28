@@ -47,7 +47,7 @@ For 1.0
       o Generic urandom reader.
       - egd tests
       - failing-case tests, where possible.
-    - Test entropy dispatcher
+    o Test entropy dispatcher
     - "Shallow" tests from libottery.
     o Tests for fork handling!
     - Make the tests pass when built with state.

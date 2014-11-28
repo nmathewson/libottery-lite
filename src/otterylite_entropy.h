@@ -383,7 +383,7 @@ ottery_getentropy_bsd_sysctl(unsigned char *out)
 #define SOURCE(name, id, group, flags)          \
   { #name, ottery_getentropy_ ## name,          \
       (id), (group), (flags) }
-static const struct {
+static const struct entropy_source {
   const char *name;
   int (*getentropy_fn)(unsigned char *out);
   unsigned id;
@@ -408,34 +408,41 @@ static const struct {
 #define OTTERY_ENTROPY_MAXLEN (ENTROPY_CHUNK * N_ENTROPY_SOURCES)
 
 static int
-ottery_getentropy(unsigned char *out, int *status_out)
+ottery_getentropy_impl(unsigned char *out, int *status_out,
+                       const struct entropy_source * const sources,
+                       int n_sources)
 {
   int i, n;
   unsigned char *outp = out;
   int have_strong = 0;
-  unsigned have_groups = 0, have_sources = 0;
+  unsigned have_groups = 0, have_sources = 0, have_a_full_output = 0;
 
-  memset(out, 0, OTTERY_ENTROPY_MAXLEN);
+  memset(out, 0, ENTROPY_CHUNK * n_sources);
 
-  for (i = 0; i < (int)N_ENTROPY_SOURCES; ++i)
+  for (i = 0; i < n_sources; ++i)
     {
-      if (NULL == entropy_sources[i].getentropy_fn)
+      if (NULL == sources[i].getentropy_fn)
         continue;
       /* assert(outp - out < OTTERY_ENTROPY_MAXLEN - ENTROPY_CHUNK); */
-      if (have_strong && (entropy_sources[i].flags & FLAG_AVOID))
+      if (have_strong && (sources[i].flags & FLAG_AVOID))
         continue;
-      n = entropy_sources[i].getentropy_fn(outp);
+      if ((have_groups & sources[i].group) == sources[i].group)
+        continue;
+      n = sources[i].getentropy_fn(outp);
       if (n < 0)
         continue;
       outp += n;
-      if (n >= ENTROPY_CHUNK && 0 == (entropy_sources[i].flags & FLAG_WEAK))
+      if (n != ENTROPY_CHUNK)
+        continue;
+      have_a_full_output = 1;
+      if (0 == (sources[i].flags & FLAG_WEAK))
         have_strong = 1;
-      have_groups |= entropy_sources[i].group;
-      have_sources |= entropy_sources[i].id;
-      TRACE(("source %s gave us %d\n", entropy_sources[i].name, n));
+      have_groups |= sources[i].group;
+      have_sources |= sources[i].id;
+      TRACE(("source %s gave us %d\n", sources[i].name, n));
     }
 
-  if (outp - out == 0)
+  if (! have_a_full_output)
     *status_out = 0;
   else if (!have_strong)
     *status_out = 1;
@@ -443,4 +450,11 @@ ottery_getentropy(unsigned char *out, int *status_out)
     *status_out = 2;
 
   return outp - out;
+}
+
+static int
+ottery_getentropy(unsigned char *out, int *status_out)
+{
+  return ottery_getentropy_impl(out, status_out,
+                                entropy_sources, (int)N_ENTROPY_SOURCES);
 }
