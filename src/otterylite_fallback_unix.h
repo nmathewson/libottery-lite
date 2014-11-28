@@ -127,6 +127,16 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
   (void)i;
 
+#ifdef __APPLE__
+  {
+    struct timespec ts = {0, 10*1000*1000 };
+    uuid_t id;
+    if (0 == gethostuuid(id, &ts)) {
+      FBENT_ADD(id);
+    }
+  }
+#endif
+
   {
   pid_t pid;
   pid = getppid();
