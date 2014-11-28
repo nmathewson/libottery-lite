@@ -334,3 +334,11 @@ OTTERY_PUBLIC_FN2 (status)(OTTERY_STATE_ARG_ONLY)
   UNLOCK();
   return r;
 }
+
+#ifdef OTTERY_STRUCT
+size_t
+OTTERY_PUBLIC_FN2 (state_size)(void)
+{
+  return sizeof(struct ottery_state);
+}
+#endif
