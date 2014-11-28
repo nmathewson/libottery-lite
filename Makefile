@@ -7,6 +7,9 @@ HEADERS = \
 	src/otterylite.h \
 	src/otterylite_wipe.h \
 	src/otterylite_entropy.h \
+	src/otterylite_fallback.h \
+	src/otterylite_fallback_unix.h \
+	src/otterylite_fallback_win32.h \
 	src/otterylite-impl.h \
 	src/otterylite_locking.h \
 	src/otterylite_alloc.h
