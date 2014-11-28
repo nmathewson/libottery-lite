@@ -24,8 +24,12 @@ as "lol".
 Current status
 --------------
 
-Libottery-lite compiles and runs for me on Linux 3.17.  It has no tests yet.
-It has no documentation yet.  Don't use it.
+Libottery-lite compiles and runs for me on Linux 3.17 and OSX 10.10.  It
+cross-compiles with mingw, but I haven't run the tests there yet.
+
+There hasn't been any code review.
+
+Don't use it yet.
 
 WARNING WARNING WARNING
 -----------------------
@@ -78,6 +82,8 @@ Don't, yet.
 
 Details
 -------
+
+
 
 We collect entropy from all the available high-entropy sources, compress it
 with Blake2b or Blake2s, and use that for the key and IV of a ChaCha20

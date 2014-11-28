@@ -169,7 +169,7 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
 #endif
     ;
 
-#ifndef OTTERY_STRUCT
+#ifdef OTTERY_STRUCT
   if (!postfork)
     INIT_LOCK(&STATE_FIELD(mutex));
 #endif
