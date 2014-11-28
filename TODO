@@ -50,13 +50,13 @@ For 1.0
     o Tests for fork handling!
     o Make the tests pass when built with state.
     . As full coverage as possible
-    - Smarter stream-generation tests
+    o Smarter stream-generation tests
 
-  - Turn more defines into functions.
+  o Turn more defines into functions.
 
-  - Clean up state macros.
+  o Clean up state macros.
 
-  - Fix all XXXX comments
+  . Fix all XXXX comments
 
   - Even later tests:
     - egd tests
