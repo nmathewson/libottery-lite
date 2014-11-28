@@ -453,17 +453,17 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 #define ADD_CHUNK(chunk, len)                   \
   do {                                          \
     if (cp - buf + OTTERY_DIGEST_LEN > 4096) {  \
-      OTTERY_DIGEST(buf, buf, sizeof(buf));     \
+      ottery_digest(buf, buf, sizeof(buf));     \
       cp = buf + OTTERY_DIGEST_LEN;             \
     }                                           \
     bytes_added += (len);                       \
-    OTTERY_DIGEST(cp, (chunk), (len));          \
+    ottery_digest(cp, (chunk), (len));          \
     cp += OTTERY_DIGEST_LEN;                    \
   } while (0)
 #define ADD(object)                             \
   do {                                          \
     if (cp - buf + sizeof(object) > 4096) {     \
-      OTTERY_DIGEST(buf, buf, sizeof(buf));     \
+      ottery_digest(buf, buf, sizeof(buf));     \
       cp = buf + OTTERY_DIGEST_LEN;             \
     }                                           \
     bytes_added += sizeof(object);              \
@@ -651,7 +651,7 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
 #undef ADD
 
-  OTTERY_DIGEST(out, buf, sizeof(buf));
+  ottery_digest(out, buf, sizeof(buf));
 
 TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
 

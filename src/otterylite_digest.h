@@ -174,14 +174,15 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
 }
 
 #define OTTERY_DIGEST_LEN BLAKE2_MAX_OUTPUT
-#define OTTERY_DIGEST(out, inp, inplen)                         \
-  do {                                                          \
-    int blake_output;                                           \
-    blake_output = blake2_noendian((out), BLAKE2_MAX_OUTPUT,    \
-                                   (inp), (inplen),             \
-                                   OTTERY_PERSONALIZATION_1,    \
-                                   OTTERY_PERSONALIZATION_2);   \
-    if (blake_output != BLAKE2_MAX_OUTPUT)                      \
-      abort();                                                  \
-  } while (0)
 
+static void
+ottery_digest(u8 *out, const u8 *inp, size_t inplen)
+{
+  int blake_output;
+  blake_output = blake2_noendian(out, BLAKE2_MAX_OUTPUT,
+                                 inp, inplen,
+                                 OTTERY_PERSONALIZATION_1,
+                                 OTTERY_PERSONALIZATION_2);
+  if (blake_output != BLAKE2_MAX_OUTPUT)
+    abort();
+}

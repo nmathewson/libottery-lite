@@ -45,6 +45,8 @@ For 1.0
     - "Shallow" tests from libottery.
     - Tests for fork handling!
 
+  - Turn more defines into inlines.
+
   - Fix all XXXX comments
 
   - Document the code

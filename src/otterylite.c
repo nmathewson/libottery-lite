@@ -89,7 +89,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   if (n < OTTERY_ENTROPY_MINLEN)
     return -1;
 
-  OTTERY_DIGEST(digest, entropy, n + KEYLEN);
+  ottery_digest(digest, entropy, n + KEYLEN);
 
   STATE_FIELD(seeding) = 0;
   ottery_setkey(RNG, digest);
@@ -249,8 +249,8 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
     u8 digest[OTTERY_DIGEST_LEN];
 
     ottery_bytes(RNG, buf, OTTERY_DIGEST_LEN);
-    OTTERY_DIGEST(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
-    OTTERY_DIGEST(digest, buf, sizeof(buf));
+    ottery_digest(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
+    ottery_digest(digest, buf, sizeof(buf));
     ottery_setkey(RNG, digest);
     RNG->count = 0;
 

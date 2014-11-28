@@ -112,7 +112,7 @@ test_blake2b_vectors(void *arg)
     TT_BLATHER(("Testing %d: %s", i, BLAKE2B_VECTORS[i].string));
 
     blake2_noendian(hash, 64, (void*)BLAKE2B_VECTORS[i].string, len, 0, 0);
-    OTTERY_DIGEST(hashp, (void*)BLAKE2B_VECTORS[i].string, len);
+    ottery_digest(hashp, (void*)BLAKE2B_VECTORS[i].string, len);
 
     tt_mem_op(hash, ==, BLAKE2B_VECTORS[i].hash, 64);
     tt_mem_op(hashp, ==, BLAKE2B_VECTORS[i].personalized_hash, 64);
