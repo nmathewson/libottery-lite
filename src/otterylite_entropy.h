@@ -219,6 +219,7 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
   int r;
 
   TRY("/dev/hwrandom");
+  TRY("/dev/hw_random");
   return -1;
 }
 #undef TRY
@@ -306,7 +307,6 @@ ottery_getentropy_egd(unsigned char *out)
 #endif
 
 #if defined(__linux__)
-#define ottery_getentropy_linux_sysctl_OUTLEN (37 * 2)
 static int
 ottery_getentropy_linux_sysctl(unsigned char *out)
 {
@@ -314,16 +314,18 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
   int n_read = 0, i;
   char buf[74];
 
-  memset(out, 0, 74);
+  memset(buf, 0, 74);
   for (i = 0; i < 2; ++i)
     {
       size_t n = 37;
       int r = sysctl(mib, 3, buf, &n, NULL, 0);
-      if (r < 0 || n > 37)
+      if (r < 0 && errno == ENOSYS)
+        return -2;
+      else if (r < 0 || n > 37)
         return -1;
       n_read += n;
     }
-  blake2_noendian(out, ENTROPY_CHUNK, buf, n_read, 444, 1234567);
+  blake2_noendian(out, ENTROPY_CHUNK, (u8*)buf, n_read, 444, 1234567);
   return ENTROPY_CHUNK;
 }
 #else

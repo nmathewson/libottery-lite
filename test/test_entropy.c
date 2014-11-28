@@ -63,7 +63,7 @@ static struct testcase_t entropy_tests[] = {
   ENTROPY(dev_hwrandom, OT_ENT_IFFY),
   ENTROPY(egd, 0),
   ENTROPY(proc_uuid, 0),
-  ENTROPY(linux_sysctl, OT_ENT_IFFY),
+  ENTROPY(linux_sysctl, 0),
   ENTROPY(bsd_sysctl, 0),
   ENTROPY(fallback_kludge, 0),
   END_OF_TESTCASES
