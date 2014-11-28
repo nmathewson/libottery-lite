@@ -43,12 +43,15 @@ For 1.0
 
   - Later unit tests
     . Test as many entropy sources as possible.
+      o easy tests
+      - egd tests
+      - failing-case tests, where possible.
     - Test entropy dispatcher
     - "Shallow" tests from libottery.
     o Tests for fork handling!
     - Make the tests pass when built with state.
 
-  - Turn more defines into inlines.
+  - Turn more defines into functions.
 
   - Fix all XXXX comments
 
@@ -58,6 +61,7 @@ For 1.0
   - Dedication notice and header on all files.
 
   - actually run the unit tests on windows
+  - actually run the unit tests on *bsd
 
   - Skip tests that aren't expected to work on big-endian systems when
     on big-endian systems.

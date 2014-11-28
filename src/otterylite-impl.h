@@ -15,8 +15,8 @@
 /* #define OTTERY_RNG_NO_MMAP */
 /* #define OTTERY_DISABLE_FALLBACK_RNG */
 
-#define TRACE(x) printf x
-/* #define TRACE(x) */
+/* #define TRACE(x) printf x */
+#define TRACE(x)
 
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_OUT state
