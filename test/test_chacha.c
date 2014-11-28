@@ -22,7 +22,7 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
 {
   const unsigned OUTPUT = 512;
   u8 buf[MAXSKIP + OUTPUT];
-  u8 k[KEYLEN];
+  u8 k[OTTERY_KEYLEN];
   unsigned n = skip + OUTPUT;
 
   tt_int_op(n, <=, sizeof(buf));
@@ -31,7 +31,7 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   memcpy(k, key, 32);
   memcpy(k + 32, nonce, 8);
 
-  chacha20_blocks(k, n / BLOCKSIZE, buf);
+  chacha20_blocks(k, n / CHACHA_BLOCKSIZE, buf);
 
   puts("================================================================");
   dumphex("   key", key, 32);

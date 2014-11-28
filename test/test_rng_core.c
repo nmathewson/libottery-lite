@@ -2,8 +2,8 @@
 static void
 test_rng_core_construction_short(void *arg)
 {
-  u8 key[KEYLEN] = "test written on I-95 on 26 Nov 2015fnord";
-  u8 stream[BUFLEN * 2];
+  u8 key[OTTERY_KEYLEN] = "test written on I-95 on 26 Nov 2015fnord";
+  u8 stream[OTTERY_BUFLEN * 2];
   struct ottery_rng rng;
   u8 tmp[128];
   u8 *streamp = stream;
@@ -11,8 +11,8 @@ test_rng_core_construction_short(void *arg)
   uint64_t ones = 0, zeros = ~(uint64_t)0, t;
 
   ottery_setkey(&rng, key);
-  chacha20_blocks(key, BUFLEN / 64, stream);
-  chacha20_blocks(stream + BUFLEN - KEYLEN, BUFLEN / 64, stream + BUFLEN - KEYLEN);
+  chacha20_blocks(key, OTTERY_BUFLEN / 64, stream);
+  chacha20_blocks(stream + OTTERY_BUFLEN - OTTERY_KEYLEN, OTTERY_BUFLEN / 64, stream + OTTERY_BUFLEN - OTTERY_KEYLEN);
 
   tt_assert(! iszero(rng.buf, 7500));
 
@@ -35,10 +35,10 @@ test_rng_core_construction_short(void *arg)
 
     i += 13;
 
-    if (i < BUFLEN - KEYLEN) {
+    if (i < OTTERY_BUFLEN - OTTERY_KEYLEN) {
       tt_assert(iszero(rng.buf, i));
     } else {
-      tt_assert(iszero(rng.buf, i - (BUFLEN - KEYLEN)));
+      tt_assert(iszero(rng.buf, i - (OTTERY_BUFLEN - OTTERY_KEYLEN)));
     }
   }
 
@@ -56,8 +56,8 @@ static void
 test_rng_core_construction_long(void *arg)
 {
   const int nbufs = 30;
-  u8 *stream = malloc((BUFLEN-KEYLEN) * nbufs + KEYLEN), *streamp;
-  u8 key[KEYLEN] = "ottery:!THE NEW DANCE REMIX!1!ha1l3r15.", *keyp;
+  u8 *stream = malloc((OTTERY_BUFLEN-OTTERY_KEYLEN) * nbufs + OTTERY_KEYLEN), *streamp;
+  u8 key[OTTERY_KEYLEN] = "ottery:!THE NEW DANCE REMIX!1!ha1l3r15.", *keyp;
   u8 *tmp = malloc(5003);
   int i;
   struct ottery_rng rng;
@@ -72,16 +72,16 @@ test_rng_core_construction_long(void *arg)
 
   streamp = stream;
   for (i = 0; i < nbufs; ++i) {
-    chacha20_blocks(key, BUFLEN / 64, streamp);
-    tt_assert(!iszero(streamp + BUFLEN - 16, 16));
-    keyp = streamp + BUFLEN - KEYLEN;
-    memcpy(key, keyp, KEYLEN);
-    memset(keyp, 0, KEYLEN);
+    chacha20_blocks(key, OTTERY_BUFLEN / 64, streamp);
+    tt_assert(!iszero(streamp + OTTERY_BUFLEN - 16, 16));
+    keyp = streamp + OTTERY_BUFLEN - OTTERY_KEYLEN;
+    memcpy(key, keyp, OTTERY_KEYLEN);
+    memset(keyp, 0, OTTERY_KEYLEN);
     streamp = keyp;
   }
 
   streamlen = streamp - stream;
-  tt_int_op(streamlen, ==, (BUFLEN - KEYLEN) * nbufs);
+  tt_int_op(streamlen, ==, (OTTERY_BUFLEN - OTTERY_KEYLEN) * nbufs);
 
   streamp = stream;
 

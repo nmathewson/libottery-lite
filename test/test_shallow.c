@@ -160,7 +160,7 @@ test_auto_reseed(void *arg)
 {
   int i = 0;
   u8 buf[2500];
-  const unsigned count = (BUFLEN - KEYLEN) * RESEED_AFTER_BLOCKS;
+  const unsigned count = (OTTERY_BUFLEN - OTTERY_KEYLEN) * RESEED_AFTER_BLOCKS;
   const unsigned blocks = (count+sizeof(buf)-1) / sizeof(buf);
   DECLARE_STATE();
   INIT_STATE();
@@ -238,7 +238,7 @@ test_shallow_addrandom(void *arg)
   u8 buf[600] = "708901345660";
   u8 b2[OTTERY_DIGEST_LEN*2];
   u8 newkey[OTTERY_DIGEST_LEN];
-  u8 next[BLOCKSIZE];
+  u8 next[CHACHA_BLOCKSIZE];
 
   unsigned u;
 

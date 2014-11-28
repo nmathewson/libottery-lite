@@ -16,6 +16,7 @@ memwipe(volatile void *p, size_t n)
 
   while (n--)
     *cp++ = 0;
+
   asm volatile ("" : : : "memory"); /* for good measure. *//* XXXX needless.*/
 }
 #endif

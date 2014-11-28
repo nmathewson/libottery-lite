@@ -88,7 +88,7 @@ static unsigned ottery_seed_counter;
   } while (0)
 #endif
 
-#if OTTERY_DIGEST_LEN < KEYLEN
+#if OTTERY_DIGEST_LEN < OTTERY_KEYLEN
 /* If we ever need to use a 32-byte digest, we can pad it or stretch it
  * or something */
 #error "We need a digest that is longer then the key we mean to use."
@@ -98,10 +98,10 @@ static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 {
   int n, new_status=0;
-  unsigned char entropy[KEYLEN + OTTERY_ENTROPY_MAXLEN];
+  unsigned char entropy[OTTERY_KEYLEN + OTTERY_ENTROPY_MAXLEN];
   unsigned char digest[OTTERY_DIGEST_LEN];
 
-  ottery_bytes(RNG, entropy, KEYLEN);
+  ottery_bytes(RNG, entropy, OTTERY_KEYLEN);
 
   STATE_FIELD(seeding) = 1;
   RNG->count = 0;
@@ -111,7 +111,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   /* Release the lock in this section, since it can take a while to get
    * entropy. */
 
-  n = ottery_getentropy(entropy + KEYLEN, &new_status);
+  n = ottery_getentropy(entropy + OTTERY_KEYLEN, &new_status);
 
   if (release_lock)
     LOCK();
@@ -119,7 +119,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   if (n < OTTERY_ENTROPY_MINLEN)
     return -1;
 
-  ottery_digest(digest, entropy, n + KEYLEN);
+  ottery_digest(digest, entropy, n + OTTERY_KEYLEN);
 
   STATE_FIELD(entropy_status) = new_status;
   STATE_FIELD(seeding) = 0;
