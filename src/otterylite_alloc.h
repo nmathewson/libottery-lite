@@ -65,7 +65,7 @@ free_rng_(struct ottery_rng **rng)
 {
   if (*rng) {
     memwipe(*rng, sizeof(**rng));
-    VirtualUnlock(*rng, sizeof(**rng)); /* XXX Is this needed */
+    VirtualUnlock(*rng, sizeof(**rng)); /* ???? Is this needed */
     UnmapViewOfFile(*rng);
     *rng = NULL;
   }
@@ -109,7 +109,7 @@ free_rng_(struct ottery_rng **rng)
 {
   if (*rng) {
     memwipe(*rng, sizeof(**rng));
-    munlock(*rng, sizeof(**rng)); /* XXXX is this necessary? */
+    munlock(*rng, sizeof(**rng)); /* ???? is this necessary? */
     munmap(*rng, sizeof(**rng));
     *rng = NULL;
   }

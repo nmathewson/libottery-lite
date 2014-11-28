@@ -26,7 +26,10 @@
   EnterCriticalSection(lock)
 #define RELEASE_LOCK(lock) \
   LeaveCriticalSection(lock)
-/* XXXX Get some review on this */
+/* ???? Get some review on this; the only thing I'm really sure about
+   ???? when it comes to atomic operations is that they're harder
+   ???? than you think.
+ */
 #define CHECK_LOCK_INITIALIZED(lock)                                    \
   do {                                                                  \
     if (UNLIKELY(! lock ## _initialized )) {                            \

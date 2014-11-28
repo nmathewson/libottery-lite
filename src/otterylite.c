@@ -199,7 +199,7 @@ static int
 ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
 {
   int postfork;
-  /* XXXX audit this carefully */
+  /* ???? audit this carefully */
 #ifdef _WIN32
   postfork = 0;
 #elif USING_INHERIT_ZERO

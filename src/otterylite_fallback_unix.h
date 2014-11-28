@@ -298,7 +298,7 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   FBENT_ADD_CHUNK(tmp, n);
 }
 #endif
-  /* XXXX try some mmap trickery like libressl does */
+  /* FFFF try some mmap trickery like libressl does */
 }
 
   return fallback_entropy_accumulator_get_output(accumulator, out);
