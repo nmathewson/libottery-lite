@@ -33,6 +33,7 @@ struct ottery_state {
   DECLARE_LOCK(mutex)
   unsigned magic;
   int seeding;
+  int entropy_status;
   DECLARE_RNG(rng);
 };
 #define LOCK()                                  \
@@ -48,6 +49,7 @@ DECLARE_INITIALIZED_LOCK(static, ottery_mutex)
 static unsigned ottery_magic;
 static DECLARE_RNG(ottery_rng);
 static int ottery_seeding;
+static int ottery_entropy_status;
 #define LOCK()                                  \
   do {                                          \
     GET_STATIC_LOCK(ottery_mutex);              \
@@ -67,7 +69,7 @@ static int ottery_seeding;
 static int
 ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 {
-  int n;
+  int n, new_status=0;
   unsigned char entropy[KEYLEN + OTTERY_ENTROPY_MAXLEN];
   unsigned char digest[OTTERY_DIGEST_LEN];
 
@@ -81,7 +83,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   /* Release the lock in this section, since it can take a while to get
    * entropy. */
 
-  n = ottery_getentropy(entropy + KEYLEN);
+  n = ottery_getentropy(entropy + KEYLEN, &new_status);
 
   if (release_lock)
     LOCK();
@@ -91,6 +93,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 
   ottery_digest(digest, entropy, n + KEYLEN);
 
+  STATE_FIELD(entropy_status) = new_status;
   STATE_FIELD(seeding) = 0;
   ottery_setkey(RNG, digest);
   RNG->count = 0;
@@ -272,3 +275,14 @@ OTTERY_PUBLIC_FN (set_egd_address)(const struct sockaddr *sa, int socklen)
 }
 #endif
 
+int
+OTTERY_PUBLIC_FN2 (status)(OTTERY_STATE_ARG_ONLY)
+{
+  int r;
+  LOCK();
+  INIT(); /* but never abort. XXXX */
+  CHECK(); /* But never abort XXXXX */
+  r = STATE_FIELD(entropy_status);
+  UNLOCK();
+  return r;
+}

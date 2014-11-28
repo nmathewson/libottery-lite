@@ -71,6 +71,7 @@ void OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY);
 void OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY);
 void OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY);
 void OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, int n);
+int OTTERY_PUBLIC_FN2 (status)(OTTERY_STATE_ARG_ONLY);
 unsigned OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY);
 ottery_u64_t OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY);
 unsigned OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned limit);

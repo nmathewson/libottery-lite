@@ -395,7 +395,7 @@ static const struct {
   SOURCE(proc_uuid, ID_PROC_UUID, GROUP_DEVICE, FLAG_AVOID),
   SOURCE(linux_sysctl, ID_LINUX_SYSCTL, GROUP_SYSCALL, FLAG_AVOID),
   SOURCE(bsd_sysctl, ID_BSD_SYSCTL, GROUP_SYSCALL, 0),
-  SOURCE(fallback_kludge, ID_FALLBACK_KLUDGE, GROUP_KLUDGE, FLAG_AVOID)
+  SOURCE(fallback_kludge, ID_FALLBACK_KLUDGE, GROUP_KLUDGE, FLAG_AVOID|FLAG_WEAK)
 };
 
 #define N_ENTROPY_SOURCES (sizeof(entropy_sources) / sizeof(entropy_sources[0]))
@@ -403,7 +403,7 @@ static const struct {
 #define OTTERY_ENTROPY_MAXLEN (ENTROPY_CHUNK * N_ENTROPY_SOURCES)
 
 static int
-ottery_getentropy(unsigned char *out)
+ottery_getentropy(unsigned char *out, int *status_out)
 {
   int i, n;
   unsigned char *outp = out;
@@ -429,6 +429,13 @@ ottery_getentropy(unsigned char *out)
       have_sources |= entropy_sources[i].id;
       TRACE(("source %s gave us %d\n", entropy_sources[i].name, n));
     }
+
+  if (outp - out == 0)
+    *status_out = 0;
+  else if (!have_strong)
+    *status_out = 1;
+  else
+    *status_out = 2;
 
   return outp - out;
 }
