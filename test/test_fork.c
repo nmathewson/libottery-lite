@@ -164,7 +164,7 @@ test_fork_handling(void *arg)
     tt_int_op(ottery_fork_count, ==, 0);
 #endif
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, 32);
-    tt_int_op(RNG->idx, ==, 96);
+    tt_int_op(RNG_PTR->idx, ==, 96);
   } else {
     in_child = 1;
 #ifdef USING_ATFORK
@@ -172,7 +172,7 @@ test_fork_handling(void *arg)
 #endif
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 32);
     tt_int_op(STATE_FIELD(seed_counter), ==, 2);
-    tt_int_op(RNG->idx, ==, 32);
+    tt_int_op(RNG_PTR->idx, ==, 32);
     write(d->pipefds[1], buf2, 32);
 
     /* Make sure we only reinit once! */

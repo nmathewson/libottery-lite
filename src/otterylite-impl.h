@@ -21,20 +21,20 @@
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_OUT state
 #define COMMA ,
-#define RNG_ST ((state)->rng)
+#define RNG_STRUCT ((state)->rng)
 #define STATE_FIELD(fld) (state->fld)
 #define FUNC_PREFIX ottery_st_
 #else
 #define OTTERY_STATE_ARG_OUT
 #define COMMA
 #define STATE_FIELD(fld) (ottery_ ## fld)
-#define RNG_ST (ottery_rng)
+#define RNG_STRUCT (ottery_rng)
 #endif
 
 #ifdef OTTERY_RNG_NO_HEAP
-#define RNG (&(RNG_ST))
+#define RNG_PTR (&(RNG_STRUCT))
 #else
-#define RNG RNG_ST
+#define RNG_PTR RNG_STRUCT
 #endif
 
 #if defined(i386) ||                            \

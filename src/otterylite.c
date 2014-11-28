@@ -101,10 +101,10 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   unsigned char entropy[OTTERY_KEYLEN + OTTERY_ENTROPY_MAXLEN];
   unsigned char digest[OTTERY_DIGEST_LEN];
 
-  ottery_bytes(RNG, entropy, OTTERY_KEYLEN);
+  ottery_bytes(RNG_PTR, entropy, OTTERY_KEYLEN);
 
   STATE_FIELD(seeding) = 1;
-  RNG->count = 0;
+  RNG_PTR->count = 0;
 
   if (release_lock)
     UNLOCK();
@@ -123,8 +123,8 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 
   STATE_FIELD(entropy_status) = new_status;
   STATE_FIELD(seeding) = 0;
-  ottery_setkey(RNG, digest);
-  RNG->count = 0;
+  ottery_setkey(RNG_PTR, digest);
+  RNG_PTR->count = 0;
   ++STATE_FIELD(seed_counter);
 
   memwipe(digest, sizeof(digest));
@@ -136,7 +136,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 #if defined(USING_MMAP) && defined(INHERIT_ZERO)
 /* If we really have inherit_zero, then we can avoid messing with pids
  * and atfork completely. */
-#define RNG_MAGIC_OKAY() (RNG->magic == RNG_MAGIC)
+#define RNG_MAGIC_OKAY() (RNG_PTR->magic == RNG_MAGIC)
 #define NEED_REINIT ( !RNG_MAGIC_OKAY() )
 #else
 
@@ -169,10 +169,10 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   install_atfork_handler();
 
   /* XXXX This leaks memory postfork unless we are using INHERIT_NONE */
-  if (ALLOCATE_RNG(RNG) < 0)
+  if (ALLOCATE_RNG(RNG_PTR) < 0)
     abort();
 
-  RNG->magic = RNG_MAGIC;
+  RNG_PTR->magic = RNG_MAGIC;
 
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
@@ -187,7 +187,7 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 #ifdef OTTERY_STRUCT
   DESTROY_LOCK(&STATE_FIELD(mutex));
 #endif
-  FREE_RNG(RNG);
+  FREE_RNG(RNG_PTR);
   MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
@@ -208,7 +208,7 @@ OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
 
 #define CHECK()                                                         \
   do {                                                                  \
-    if (UNLIKELY(RNG->count > RESEED_AFTER_BLOCKS) && !STATE_FIELD(seeding)) { \
+    if (UNLIKELY(RNG_PTR->count > RESEED_AFTER_BLOCKS) && !STATE_FIELD(seeding)) { \
       ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                        \
     }                                                                   \
   } while (0)
@@ -221,7 +221,7 @@ OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY)
   LOCK();
   INIT();
   CHECK();
-  ottery_bytes(RNG, &result, sizeof(result));
+  ottery_bytes(RNG_PTR, &result, sizeof(result));
   UNLOCK();
   return result;
 }
@@ -234,7 +234,7 @@ OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY)
   LOCK();
   INIT();
   CHECK();
-  ottery_bytes(RNG, &result, sizeof(result));
+  ottery_bytes(RNG_PTR, &result, sizeof(result));
   UNLOCK();
   return result;
 }
@@ -250,7 +250,7 @@ OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
   CHECK();
   do
     {
-      ottery_bytes(RNG, &result, sizeof(result));
+      ottery_bytes(RNG_PTR, &result, sizeof(result));
       result /= divisor;
     } while (result >= upper);
   UNLOCK();
@@ -268,7 +268,7 @@ OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
   CHECK();
   do
     {
-      ottery_bytes(RNG, &result, sizeof(result));
+      ottery_bytes(RNG_PTR, &result, sizeof(result));
       result /= divisor;
     } while (result >= upper);
   UNLOCK();
@@ -281,7 +281,7 @@ OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
   LOCK();
   INIT();
   CHECK();
-  ottery_bytes(RNG, output, n);
+  ottery_bytes(RNG_PTR, output, n);
   UNLOCK();
 }
 
@@ -299,11 +299,11 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
     u8 buf[OTTERY_DIGEST_LEN * 2];
     u8 digest[OTTERY_DIGEST_LEN];
 
-    ottery_bytes(RNG, buf, OTTERY_DIGEST_LEN);
+    ottery_bytes(RNG_PTR, buf, OTTERY_DIGEST_LEN);
     ottery_digest(buf + OTTERY_DIGEST_LEN, inp, n); /* XXXX could overflow */
     ottery_digest(digest, buf, sizeof(buf));
-    ottery_setkey(RNG, digest);
-    RNG->count = 0;
+    ottery_setkey(RNG_PTR, digest);
+    RNG_PTR->count = 0;
 
     memwipe(digest, sizeof(digest));
     memwipe(buf, sizeof(buf));

@@ -149,7 +149,7 @@ test_manual_reseed(void *arg)
   tt_int_op(STATE_FIELD(seed_counter), ==, 1);
   OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
   tt_int_op(STATE_FIELD(seed_counter), ==, 2);
-  tt_int_op(RNG->idx, ==, sizeof(unsigned));
+  tt_int_op(RNG_PTR->idx, ==, sizeof(unsigned));
 
  end:
   RELEASE_STATE();
@@ -167,7 +167,7 @@ test_auto_reseed(void *arg)
 
   for (i = 0; i < blocks+50; ++i) {
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, sizeof(buf));
-    /* printf("i=%d, count=%d\n", i, (int) RNG->count); */
+    /* printf("i=%d, count=%d\n", i, (int) RNG_PTR->count); */
     if (i <= blocks) {
       tt_int_op(STATE_FIELD(seed_counter), ==, 1);
     } else {
@@ -249,28 +249,28 @@ test_shallow_addrandom(void *arg)
   INIT_STATE();
 
   OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
-  tt_int_op(RNG->idx, ==, sizeof(unsigned));
+  tt_int_op(RNG_PTR->idx, ==, sizeof(unsigned));
   OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
-  tt_int_op(RNG->idx, ==, sizeof(unsigned)*2);
+  tt_int_op(RNG_PTR->idx, ==, sizeof(unsigned)*2);
 
   /* Reconstruct the key we'll see */
-  memcpy(b2, RNG->buf + RNG->idx, OTTERY_DIGEST_LEN);
+  memcpy(b2, RNG_PTR->buf + RNG_PTR->idx, OTTERY_DIGEST_LEN);
   ottery_digest(b2+OTTERY_DIGEST_LEN, buf, sizeof(buf));
   ottery_digest(newkey, b2, sizeof(b2));
 
   chacha20_blocks(newkey, 1, next);
 
   OTTERY_PUBLIC_FN2(addrandom)(OTTERY_STATE_ARG_OUT COMMA buf, sizeof(buf));
-  tt_int_op(RNG->idx, ==, 0);
+  tt_int_op(RNG_PTR->idx, ==, 0);
 
   u = OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
 
   tt_mem_op(&u, ==, next, 4);
 
   /* And let's make sure this is a no-op */
-  tt_int_op(RNG->idx, ==, sizeof(unsigned));
+  tt_int_op(RNG_PTR->idx, ==, sizeof(unsigned));
   OTTERY_PUBLIC_FN2(addrandom)(OTTERY_STATE_ARG_OUT COMMA buf, -1);
-  tt_int_op(RNG->idx, ==, sizeof(unsigned));
+  tt_int_op(RNG_PTR->idx, ==, sizeof(unsigned));
 
  end:
   RELEASE_STATE();
