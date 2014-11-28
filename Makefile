@@ -16,6 +16,7 @@ HEADERS = \
 
 TEST_PROGRAMS = \
 	test/test \
+        test/test_st \
 	test/test_streamgen
 
 BENCH_PROGRAMS = \
@@ -26,6 +27,8 @@ COMMON_CFLAGS = -I ./src -Wall
 CFLAGS = $(COMMON_CFLAGS) -O3
 
 TEST_CFLAGS = $(COMMON_CFLAGS) --coverage -g -I test/tinytest
+# XXXX figure out how to make coverage work here too.
+TEST_CFLAGS2 = $(COMMON_CFLAGS) -g -I test/tinytest
 
 CC=gcc
 
@@ -42,8 +45,13 @@ benchmarks: $(BENCH_PROGRAMS)
 test/tinytest/tinytest.o: test/tinytest/tinytest.c
 	$(CC) $(TEST_CFLAGS) -c $< -o $@
 
-test/test: test/test_main.c test/test_blake2.c test/test_chacha.c test/test_entropy.c test/test_fork.c test/test_rng_core.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
+TEST_DEPS = test/test_main.c test/test_blake2.c test/test_chacha.c test/test_entropy.c test/test_fork.c test/test_rng_core.c test/test_shallow.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
+
+test/test: $(TEST_DEPS)
 	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@
+
+test/test_st: $(TEST_DEPS)
+	$(CC) $(TEST_CFLAGS2) -DOTTERY_STRUCT test/tinytest/tinytest.c $< -o $@
 
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
 	$(CC) $(CFLAGS) $< src/otterylite.o -o $@

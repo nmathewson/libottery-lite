@@ -78,6 +78,10 @@ unsigned OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned limit
 ottery_u64_t OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST ottery_u64_t limit);
 void OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *out, size_t n);
 
+#ifdef OTTERY_STRUCT
+size_t OTTERY_PUBLIC_FN2 (state_size)(void);
+#endif
+
 #ifdef OTTERY_BE_ARC4RANDOM
 #define arc4random_stir() ((void)0)
 #endif

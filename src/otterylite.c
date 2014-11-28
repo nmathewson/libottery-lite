@@ -60,7 +60,7 @@ struct ottery_state {
   unsigned forkcount;
   int seeding;
   int entropy_status;
-  unsigned init_counter;
+  unsigned init_counter; /*XXXX rename */
   DECLARE_RNG(rng);
 };
 #define LOCK()                                  \
@@ -77,7 +77,7 @@ static unsigned ottery_magic;
 static DECLARE_RNG(ottery_rng);
 static int ottery_seeding;
 static int ottery_entropy_status;
-static unsigned ottery_init_counter;
+static unsigned ottery_init_counter; /* XXXX rename */
 #define LOCK()                                  \
   do {                                          \
     GET_STATIC_LOCK(ottery_mutex);              \
@@ -125,6 +125,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   STATE_FIELD(seeding) = 0;
   ottery_setkey(RNG, digest);
   RNG->count = 0;
+  ++STATE_FIELD(init_counter);
 
   memwipe(digest, sizeof(digest));
   memwipe(entropy, sizeof(entropy));
@@ -178,7 +179,6 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 
   RESET_FORK_COUNT();
   STATE_FIELD(magic) = MAGIC ^ ottery_getpid();
-  STATE_FIELD(init_counter)++;
 }
 
 void

@@ -9,6 +9,7 @@
 
 /test/test
 /test/test_chacha
+/test/test_st
 /test/test_streamgen
 /bench/bench
 

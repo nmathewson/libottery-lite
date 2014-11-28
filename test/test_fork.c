@@ -84,8 +84,7 @@ test_fork_backend_inherit_zero(void *arg)
 {
   /* Let's make sure INHERIT_ZERO works */
 
-    struct fork_test_data *d = arg;
-  /* Let's make sure INHERIT_NONE works */
+  struct fork_test_data *d = arg;
   char *cp ;
   cp = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
   tt_assert(cp);
@@ -146,33 +145,39 @@ test_fork_handling(void *arg)
   struct fork_test_data *d = arg;
   u8 buf[64], buf2[32];
   int in_child = 0;
+  DECLARE_STATE();
+
   (void)arg;
 
+#ifndef OTTERY_STRUCT
   tt_int_op(ottery_init_counter, ==, 0);
+#endif
 
-  OTTERY_PUBLIC_FN(random_buf)(buf, 64);
-  tt_int_op(ottery_init_counter, ==, 1);
+  INIT_STATE();
+
+  OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, 64);
+  tt_int_op(STATE_FIELD(init_counter), ==, 1);
 
   if ((d->child = fork())) {
     IN_PARENT(d);
 #ifdef USING_ATFORK
     tt_int_op(ottery_fork_count, ==, 0);
 #endif
-    OTTERY_PUBLIC_FN(random_buf)(buf, 32);
+    OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, 32);
     tt_int_op(RNG->idx, ==, 96);
   } else {
     in_child = 1;
 #ifdef USING_ATFORK
     tt_int_op(ottery_fork_count, ==, 1);
 #endif
-    OTTERY_PUBLIC_FN(random_buf)(buf2, 32);
-    tt_int_op(ottery_init_counter, ==, 2);
+    OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 32);
+    tt_int_op(STATE_FIELD(init_counter), ==, 2);
     tt_int_op(RNG->idx, ==, 32);
     write(d->pipefds[1], buf2, 32);
 
     /* Make sure we only reinit once! */
-    OTTERY_PUBLIC_FN(random_buf)(buf2, 32);
-    tt_int_op(ottery_init_counter, ==, 2);
+    OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 32);
+    tt_int_op(STATE_FIELD(init_counter), ==, 2);
 
     FORK_OK(d);
     exit(0);
@@ -180,9 +185,10 @@ test_fork_handling(void *arg)
   tt_int_op(32, ==, read(d->pipefds[0], buf2, 32));
 
   tt_mem_op(buf, !=, buf2, 32);
-  tt_int_op(ottery_init_counter, ==, 1);
+  tt_int_op(STATE_FIELD(init_counter), ==, 1);
 
  end:
+  RELEASE_STATE();
   if (in_child) {
     FORK_FAIL(d);
     exit(0);
