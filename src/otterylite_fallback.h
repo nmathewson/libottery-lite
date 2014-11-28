@@ -1,6 +1,4 @@
 
-#define ottery_getentropy_fallback_kludge_OUTLEN OTTERY_DIGEST_LEN
-
 #define ADD_CHUNK(chunk, len)                   \
   do {                                          \
     if (cp - buf + OTTERY_DIGEST_LEN > 4096) {  \

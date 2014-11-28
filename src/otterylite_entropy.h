@@ -19,7 +19,6 @@
 #endif
 
 #if defined(OTTERY_X86)
-#define ottery_getentropy_rdrand_OUTLEN ENTROPY_CHUNK
 #define RDRAND_MAXATTEMPTS 32
 static int
 rdrand_ll_(uint32_t *therand)
@@ -88,11 +87,9 @@ ottery_getentropy_rdrand(unsigned char *output)
 
 #else
 #define ottery_getentropy_rdrand NULL
-#define ottery_getentropy_rdrand_OUTLEN 0
 #endif
 
 #if ((defined(__OpenBSD__) && OpenBSD >= 201411 /* 5.6 */))
-#define ottery_getentropy_getentropy_OUTLEN ENTROPY_CHUNK
 static int
 ottery_getentropy_getentropy(unsigned char *out)
 {
@@ -100,11 +97,9 @@ ottery_getentropy_getentropy(unsigned char *out)
 }
 #else
 #define ottery_getentropy_getentropy NULL
-#define ottery_getentropy_getentropy_OUTLEN 0
 #endif
 
 #if defined(__linux__) && defined(__NR_getrandom)
-#define ottery_getentropy_getrandom_OUTLEN ENTROPY_CHUNK
 static int
 ottery_getrandom_ll_(void *out, size_t n, unsigned flags)
 {
@@ -132,11 +127,9 @@ ottery_getentropy_getrandom(unsigned char *out)
 }
 #else
 #define ottery_getentropy_getrandom NULL
-#define ottery_getentropy_getrandom_OUTLEN 0
 #endif
 
 #if defined(_WIN32)
-#define ottery_getentropy_cryptgenrandom_OUTLEN ENTROPY_CHUNK
 static int
 ottery_getentropy_cryptgenrandom(unsigned char *out)
 {
@@ -146,10 +139,10 @@ ottery_getentropy_cryptgenrandom(unsigned char *out)
   if (!CryptAcquireContext(&h, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
     return -1;
 
-  if (!CryptGenRandom(h, ottery_getentropy_cryptgenrandom_OUTLEN, out))
+  if (!CryptGenRandom(h, ENTROPY_CHUNK, out))
     goto out;
 
-  n = ottery_getentropy_cryptgenrandom_OUTLEN;
+  n = ENTROPY_CHUNK;
 
  out:
   CryptReleaseContext(h, 0);
@@ -157,12 +150,9 @@ ottery_getentropy_cryptgenrandom(unsigned char *out)
 }
 #else
 #define ottery_getentropy_cryptgenrandom NULL
-#define ottery_getentropy_cryptgenrandom_OUTLEN 0
 #endif
 
 #ifndef _WIN32
-#define ottery_getentropy_dev_urandom_OUTLEN ENTROPY_CHUNK
-#define ottery_getentropy_dev_hwrandom_OUTLEN ENTROPY_CHUNK
 static int
 ottery_getentropy_device_(unsigned char *out, int len,
                           const char *fname,
@@ -235,35 +225,35 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
 #else
 #define ottery_getentropy_dev_urandom NULL
 #define ottery_getentropy_dev_hwrandom NULL
-#define ottery_getentropy_dev_urandom_OUTLEN 0
-#define ottery_getentropy_dev_hwrandom_OUTLEN 0
 #endif
 
 #ifdef __linux__
-#define ottery_getentropy_proc_uuid_OUTLEN (37 * 2)
 static int
 ottery_getentropy_proc_uuid(unsigned char *out)
 {
   int n = 0, r, i;
+  u8 buf[37 * 2], *cp = buf;
 
+  memset(buf, 0, sizeof(buf));
   /* Each call yields 37 bytes, containing 16 actual bytes of entropy. Make
    * two calls to get 32 bytes of entropy. */
   for (i = 0; i < 2; ++i)
     {
-      r = ottery_getentropy_device_(out, 37, "/proc/sys/kernel/random/uuid", 0);
+      r = ottery_getentropy_device_(cp, 37, "/proc/sys/kernel/random/uuid", 0);
       if (r < 0)
         return -1;
       n += r;
+      cp += r;
     }
-  return n;
+  blake2_noendian(out, ENTROPY_CHUNK, buf, n, 909090, 1010101);
+  memwipe(buf, sizeof(buf));
+  return ENTROPY_CHUNK;
 }
 #else
 #define ottery_getentropy_proc_uuid NULL
-#define ottery_getentropy_proc_uuid_OUTLEN 0
 #endif
 
 #ifndef OTTERY_DISABLE_EGD
-#define ottery_getentropy_egd_OUTLEN ENTROPY_CHUNK
 static struct sockaddr_storage ottery_egd_sockaddr;
 static int ottery_egd_socklen = -1;
 #ifndef _WIN32
@@ -313,7 +303,6 @@ ottery_getentropy_egd(unsigned char *out)
 #undef SOCKET
 #else
 #define ottery_getentropy_egd NULL
-#define ottery_getentropy_egd_OUTLEN 0
 #endif
 
 #if defined(__linux__)
@@ -337,11 +326,9 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
 }
 #else
 #define ottery_getentropy_linux_sysctl NULL
-#define ottery_getentropy_linux_sysctl_OUTLEN 0
 #endif
 
 #if defined(CTL_KERN) && defined(KERN_ARND)
-#define ottery_getentropy_bsd_sysctl_OUTLEN ENTROPY_CHUNK
 static int
 ottery_getentropy_bsd_sysctl(unsigned char *out)
 {
@@ -359,29 +346,13 @@ ottery_getentropy_bsd_sysctl(unsigned char *out)
 }
 #else
 #define ottery_getentropy_bsd_sysctl NULL
-#define ottery_getentropy_bsd_sysctl_OUTLEN 0
 #endif
 
 #if !defined(OTTERY_DISABLE_FALLBACK_RNG)
 #include "otterylite_fallback.h"
 #else
-#define ottery_getentropy_fallback_kludge_OUTLEN 0
 #define ottery_getentropy_fallback_kludge NULL
 #endif /* OTTERY_DISABLE_FALLBACK_RNG */
-
-#define SOURCE_LEN(name) (ottery_getentropy_ ## name ## _OUTLEN)
-#define OTTERY_ENTROPY_MAXLEN                   \
-  (SOURCE_LEN(rdrand) +                         \
-   SOURCE_LEN(getrandom) +                      \
-   SOURCE_LEN(getentropy) +                     \
-   SOURCE_LEN(cryptgenrandom) +                 \
-   SOURCE_LEN(dev_urandom) +                    \
-   SOURCE_LEN(dev_hwrandom) +                   \
-   SOURCE_LEN(egd) +                            \
-   SOURCE_LEN(proc_uuid) +                      \
-   SOURCE_LEN(linux_sysctl) +                   \
-   SOURCE_LEN(bsd_sysctl) +                     \
-   SOURCE_LEN(fallback_kludge))
 
 #define ID_RDRAND          (1u << 0)
 #define ID_GETRANDOM       (1u << 1)
@@ -406,12 +377,10 @@ ottery_getentropy_bsd_sysctl(unsigned char *out)
 
 #define SOURCE(name, id, group, flags)          \
   { #name, ottery_getentropy_ ## name,          \
-      ottery_getentropy_ ## name ## _OUTLEN,    \
       (id), (group), (flags) }
 static const struct {
   const char *name;
   int (*getentropy_fn)(unsigned char *out);
-  int output_len;
   unsigned id;
   unsigned group;
   unsigned flags;
@@ -431,6 +400,8 @@ static const struct {
 
 #define N_ENTROPY_SOURCES (sizeof(entropy_sources) / sizeof(entropy_sources[0]))
 
+#define OTTERY_ENTROPY_MAXLEN (ENTROPY_CHUNK * N_ENTROPY_SOURCES)
+
 static int
 ottery_getentropy(unsigned char *out)
 {
@@ -445,6 +416,7 @@ ottery_getentropy(unsigned char *out)
     {
       if (NULL == entropy_sources[i].getentropy_fn)
         continue;
+      /* assert(outp - out < OTTERY_ENTROPY_MAXLEN - ENTROPY_CHUNK); */
       if (have_strong && (entropy_sources[i].flags & FLAG_AVOID))
         continue;
       n = entropy_sources[i].getentropy_fn(outp);

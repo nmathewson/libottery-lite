@@ -176,7 +176,8 @@ ottery_getentropy_fallback_kludge(u8 *out)
     else
       Sleep(1);
   }
-  ottery_digest(out, buf, sizeof(buf));
+
+  blake2_noendian(out, ENTROPY_CHUNK, buf, sizeof(buf), 0x101010, 0);
 
   TRACE(("I looked at %I64u bytes\n", (unsigned __int64)bytes_added));
 
@@ -184,5 +185,5 @@ ottery_getentropy_fallback_kludge(u8 *out)
     CloseHandle(netapi32);
 
   memwipe(buf, sizeof(buf));
-  return OTTERY_DIGEST_LEN;
+  return ENTROPY_CHUNK;
 }

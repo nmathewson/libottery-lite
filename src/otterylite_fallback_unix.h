@@ -253,11 +253,11 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 
 #undef ADD
 
-  ottery_digest(out, buf, sizeof(buf));
+  blake2_noendian(out, ENTROPY_CHUNK, buf, sizeof(buf), 0x101010, 0);
 
-TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
+  TRACE(("I looked at %llu bytes\n", (unsigned long long)bytes_added));
 
-memwipe(buf, sizeof(buf));
-return OTTERY_DIGEST_LEN;
+  memwipe(buf, sizeof(buf));
+  return ENTROPY_CHUNK;
 }
 
