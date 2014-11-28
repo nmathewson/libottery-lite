@@ -17,7 +17,6 @@ ottery_getentropy_fallback_kludge(u8 *out)
 {
   struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
   int iter;
-  int iter;
   HMODULE netapi32 = NULL;
   NET_API_STATUS (*netfree_fn)(LPVOID) = NULL;
 
