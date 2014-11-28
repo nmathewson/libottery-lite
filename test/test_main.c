@@ -4,6 +4,10 @@
 #include "tinytest.h"
 #include "tinytest_macros.h"
 
+#ifndef _WIN32
+#include <sys/wait.h>
+#endif
+
 static int iszero(u8 *, size_t);
 
 #define OT_ENT_IFFY TT_FIRST_USER_FLAG
