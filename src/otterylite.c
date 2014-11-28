@@ -229,7 +229,7 @@ OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY)
 uint64_t
 OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY)
 {
-  unsigned result;
+  uint64_t result;
 
   LOCK();
   INIT();
