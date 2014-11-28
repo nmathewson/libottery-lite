@@ -1,23 +1,22 @@
 
-#define ADD_CHUNK(chunk, len)                   \
-  do {                                          \
-    if (cp - buf + OTTERY_DIGEST_LEN > 4096) {  \
-      ottery_digest(buf, buf, sizeof(buf));     \
-      cp = buf + OTTERY_DIGEST_LEN;             \
-    }                                           \
-    bytes_added += (len);                       \
-    ottery_digest(cp, (void*)(chunk), (len));   \
-    cp += OTTERY_DIGEST_LEN;                    \
+#define ADD_CHUNK(chunk, len_)                                  \
+  do {                                                          \
+    size_t len = (len_);                                        \
+    size_t addbytes = len > 128 ? OTTERY_DIGEST_LEN : len;      \
+    if (cp - buf + addbytes > 4096) {                           \
+      ottery_digest(buf, buf, sizeof(buf));                     \
+      cp = buf + OTTERY_DIGEST_LEN;                             \
+    }                                                           \
+    bytes_added += len;                                         \
+    if (len > 128)                                              \
+      ottery_digest(cp, (void*)(chunk), len);                   \
+    else                                                        \
+      memcpy(buf, chunk, len);                                  \
+    cp += addbytes;                                             \
   } while (0)
 #define ADD(object)                             \
   do {                                          \
-    if (cp - buf + sizeof(object) > 4096) {     \
-      ottery_digest(buf, buf, sizeof(buf));     \
-      cp = buf + OTTERY_DIGEST_LEN;             \
-    }                                           \
-    bytes_added += sizeof(object);              \
-    memcpy(buf, &object, sizeof(object));       \
-    cp += sizeof(object);                       \
+    ADD_CHUNK(&(object), sizeof(object));       \
   } while (0)
 #define ADD_ADDR(ptr)                           \
   do {                                          \
