@@ -13,6 +13,7 @@
 /* #define OTTERY_DISABLE_LOCKING */
 /* #define OTTERY_RNG_NO_HEAP */
 /* #define OTTERY_RNG_NO_MMAP */
+/* #define OTTERY_DISABLE_FALLBACK_RNG */
 
 #define TRACE(x) printf x
 /* #define TRACE(x) */
@@ -95,6 +96,13 @@
 #include <sys/statvfs.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#endif
+
+#if defined(_WIN32) && !defined(OTTERY_DISABLE_FALLBACK_RNG)
+#include <tchar.h>
+#include <tlhelp32.h>
+#include <iphlpapi.h>
+#include <lm.h>
 #endif
 
 #if !defined(_WIN32) && !defined(OTTERY_RNG_NO_MMAP)

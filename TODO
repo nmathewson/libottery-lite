@@ -5,10 +5,10 @@ For 1.0
   o Namespace the public functions.
   o Add an addrandom function
   o Make it able to call itself arc4random
-  . Win32
+  o Win32
     o Omit fork detection on win32.
     o windows mutex or critical_section; not pthreads.
-    - make egd code compile on windows.
+    o make egd code compile on windows.
   o Make make make.
   o Match glibc coding style more closely
   o Better allocation
@@ -31,6 +31,8 @@ For 1.0
 
   . Benchmark
     - Include const-time checking
+
+  o Fallback RNG for windows.
 
   - Smarter fork handling.
     - Support atfork stuff, just in case.
