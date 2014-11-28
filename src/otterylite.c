@@ -214,6 +214,7 @@ ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
 void
 OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
 {
+  memset(state, 0, sizeof(*state));
   if (ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
 }
