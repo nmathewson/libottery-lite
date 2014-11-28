@@ -116,8 +116,9 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   if (release_lock)
     LOCK();
 
-  if (n < OTTERY_ENTROPY_MINLEN)
+  if (n < OTTERY_ENTROPY_MINLEN) {
     return -1;
+  }
 
   ottery_digest(digest, entropy, n + OTTERY_KEYLEN);
 
@@ -177,6 +178,7 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
   install_atfork_handler();
 
   RNG_PTR->magic = RNG_MAGIC;
+  STATE_FIELD(entropy_status) = -2;
 
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0) {
     FREE_RNG(RNG_PTR);
@@ -189,7 +191,7 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
   return 0;
 }
 
-static void
+static int
 ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
 {
   int postfork;
@@ -201,7 +203,7 @@ ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
 #else
   postfork = STATE_FIELD(magic) && FORK_COUNT_INCREASED();
 #endif
-  ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA postfork);
+  return ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA postfork);
 }
 
 #ifdef OTTERY_STRUCT
@@ -225,8 +227,9 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 
 #define INIT()                                           \
   do {                                                   \
-    if (UNLIKELY( NEED_REINIT )) {                       \
-      ottery_handle_reinit(OTTERY_STATE_ARG_OUT);        \
+  if (UNLIKELY( NEED_REINIT )) {                         \
+    if (ottery_handle_reinit(OTTERY_STATE_ARG_OUT) < 0)  \
+      abort();                                           \
     }                                                    \
   } while (0)
 
@@ -360,8 +363,14 @@ OTTERY_PUBLIC_FN2 (status)(OTTERY_STATE_ARG_ONLY)
 {
   int r;
   LOCK();
-  INIT(); /* but never abort. XXXX */
-  CHECK(); /* But never abort XXXXX */
+  /* This would ordinarily abort, but this function is special. */
+  if (NEED_REINIT) {
+    if (ottery_handle_reinit(OTTERY_STATE_ARG_OUT) < 0) {
+      UNLOCK();
+      return -2;
+    }
+  }
+  CHECK();
   r = STATE_FIELD(entropy_status);
   UNLOCK();
   return r;
