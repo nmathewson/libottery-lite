@@ -85,12 +85,14 @@ allocate_rng_(struct ottery_rng **rng)
     return -1;
 
 #if defined(INHERIT_ZERO)
+#define USING_INHERIT_ZERO
   if (minherit(*rng, sizeof(**rng), INHERIT_ZERO) < 0) {
     munmap(*rng, sizeof(**rng));
     *rng = NULL;
     return -1;
   }
 #elif defined(INHERIT_NONE)
+#define USING_INHERIT_NONE
   if (minherit(*rng, sizeof(**rng), INHERIT_NONE) < 0) {
     munmap(*rng, sizeof(**rng));
     *rng = NULL;

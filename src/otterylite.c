@@ -133,7 +133,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
   return 0;
 }
 
-#if defined(USING_MMAP) && defined(INHERIT_ZERO)
+#if defined(USING_INHERIT_ZERO)
 /* If we really have inherit_zero, then we can avoid messing with pids
  * and atfork completely. */
 #define RNG_MAGIC_OKAY() (RNG_PTR->magic == RNG_MAGIC)
@@ -155,31 +155,63 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
                       FORK_COUNT_INCREASED() )
 #endif
 
-#ifndef OTTERY_STRUCT
-static
-#endif
-void
-OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
+static int
+ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
 {
-#ifdef OTTERY_STRUCT
-  /* This is wrong to do postfork XXXX */
-  INIT_LOCK(&STATE_FIELD(mutex));
+  const int should_reallocate = !postfork
+#ifdef USING_INHERIT_NONE
+    || 1
 #endif
+    ;
+
+#ifndef OTTERY_STRUCT
+  if (!postfork)
+    INIT_LOCK(&STATE_FIELD(mutex));
+#endif
+
+  if (should_reallocate) {
+    if (ALLOCATE_RNG(RNG_PTR) < 0)
+      return -1;
+  }
 
   install_atfork_handler();
 
-  /* XXXX This leaks memory postfork unless we are using INHERIT_NONE */
-  if (ALLOCATE_RNG(RNG_PTR) < 0)
-    abort();
-
   RNG_PTR->magic = RNG_MAGIC;
 
-  if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
-    abort();
+  if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0) {
+    FREE_RNG(RNG_PTR);
+    RNG_PTR = NULL;
+    return -1;
+  }
 
   RESET_FORK_COUNT();
   STATE_FIELD(magic) = OTTERY_MAGIC ^ ottery_getpid();
+  return 0;
 }
+
+static void
+ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
+{
+  int postfork;
+  /* XXXX audit this carefully */
+#ifdef _WIN32
+  postfork = 0;
+#elif USING_INHERIT_ZERO
+  postfork = STATE_FIELD(magic) && RNG_PTR && RNG_PTR->magic == 0;
+#else
+  postfork = STATE_FIELD(magic) && FORK_COUNT_INCREASED();
+#endif
+  ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA postfork);
+}
+
+#ifdef OTTERY_STRUCT
+void
+OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
+{
+  if (ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
+    abort();
+}
+#endif
 
 void
 OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
@@ -194,7 +226,7 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 #define INIT()                                           \
   do {                                                   \
     if (UNLIKELY( NEED_REINIT )) {                       \
-      OTTERY_PUBLIC_FN2(init) (OTTERY_STATE_ARG_OUT);    \
+      ottery_handle_reinit(OTTERY_STATE_ARG_OUT);        \
     }                                                    \
   } while (0)
 
