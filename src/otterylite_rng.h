@@ -23,9 +23,6 @@ struct ottery_rng {
   unsigned char buf[OTTERY_BUFLEN];
 };
 
-#define ROTL32(x, n)                            \
-  (((x) << (n)) | ((x) >> (32 - (n))))
-
 #define CHACHA_QUARTER_ROUND(a, b, c, d)        \
   do {                                          \
     a += b;                                     \
@@ -87,7 +84,6 @@ chacha20_blocks(const unsigned char key[OTTERY_KEYLEN], int n_blocks,
   memwipe(y, sizeof(y));
 }
 
-#undef ROTATE
 #undef CHACHA_QUARTER_ROUND
 
 static void

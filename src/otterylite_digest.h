@@ -9,7 +9,7 @@
 
 #if BLAKE2_WORDBITS == 64
 /* Here are the definitions for blake2b */
-typedef uint64_t word_t;
+typedef uint64_t blake2_word_t;
 #define U64(n) n ## ull
 #define BLAKE2_IV0 U64(0x6a09e667f3bcc908)
 #define BLAKE2_IV1 U64(0xbb67ae8584caa73b)
@@ -19,18 +19,18 @@ typedef uint64_t word_t;
 #define BLAKE2_IV5 U64(0x9b05688c2b3e6c1f)
 #define BLAKE2_IV6 U64(0x1f83d9abfb41bd6b)
 #define BLAKE2_IV7 U64(0x5be0cd19137e2179)
-#define ROT(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
+#define BLAKE2_ROT(x,n) ROTR64((x),(n))
 #define OTTERY_PERSONALIZATION_1 U64(0x4f74746572792042)
 #define OTTERY_PERSONALIZATION_2 U64(0x6c616b6532622121)
 #define BLAKE2_BLOCKSIZE 128
 #define BLAKE2_ROUNDS 12
-#define ROT1 32
-#define ROT2 24
-#define ROT3 16
-#define ROT4 63
+#define BLAKE2_ROT1 32
+#define BLAKE2_ROT2 24
+#define BLAKE2_ROT3 16
+#define BLAKE2_ROT4 63
 #else
 /* And here are the definitions for blake2s */
-typedef uint32_t word_t;
+typedef uint32_t blake2_word_t;
 #define BLAKE2_IV0 0x6a09e667
 #define BLAKE2_IV1 0xbb67ae85
 #define BLAKE2_IV2 0x3c6ef372
@@ -39,15 +39,15 @@ typedef uint32_t word_t;
 #define BLAKE2_IV5 0x9b05688c
 #define BLAKE2_IV6 0x1f83d9ab
 #define BLAKE2_IV7 0x5be0cd19
-#define ROT(x, n)  (((x) >> (n)) | ((x) << (32 - (n))))
+#define BLAKE2_ROT(x, n)  ROTR32((x),(n))
 #define OTTERY_PERSONALIZATION_1 0x6c6f6c62
 #define OTTERY_PERSONALIZATION_2 0x6c6b3273
 #define BLAKE2_BLOCKSIZE 64
 #define BLAKE2_ROUNDS 10
-#define ROT1 16
-#define ROT2 12
-#define ROT3 8
-#define ROT4 7
+#define BLAKE2_ROT1 16
+#define BLAKE2_ROT2 12
+#define BLAKE2_ROT3 8
+#define BLAKE2_ROT4 7
 #endif
 
 #define BLAKE2_MAX_OUTPUT (BLAKE2_BLOCKSIZE / 2)
@@ -57,13 +57,13 @@ typedef uint32_t word_t;
 #define BLAKE2_G(a, b, c, d, round, idx)                \
   do {                                                  \
     a += b + m[blake2_sigma[round][2 * idx]];           \
-    d = ROT(d ^ a, ROT1);                               \
+    d = BLAKE2_ROT(d ^ a, BLAKE2_ROT1);                 \
     c += d;                                             \
-    b = ROT(b ^ c, ROT2);                               \
+    b = BLAKE2_ROT(b ^ c, BLAKE2_ROT2);                 \
     a += b + m[blake2_sigma[round][2 * idx + 1]];       \
-    d = ROT(d ^ a, ROT3);                               \
+    d = BLAKE2_ROT(d ^ a, BLAKE2_ROT3);                 \
     c += d;                                             \
-    b = ROT(b ^ c, ROT4);                               \
+    b = BLAKE2_ROT(b ^ c, BLAKE2_ROT4);                 \
   } while (0)
 
 #define BLAKE2_ROUND(round)                             \
@@ -95,12 +95,12 @@ static const u8 blake2_sigma[12][16] = {
 
 /* This is not quite blake2, since it doesn't do endianness conversion. */
 static int
-blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
-                word_t personalization_0, word_t personalization_1)
+blake2_noendian(u8 *output, int output_len, const u8 *input, blake2_word_t input_len,
+                blake2_word_t personalization_0, blake2_word_t personalization_1)
 {
-  word_t h[8];
-  word_t counter; /* Too short for standard usage; fine for us. */
-  word_t m[16], v[16];
+  blake2_word_t h[8];
+  blake2_word_t counter; /* Too short for standard usage; fine for us. */
+  blake2_word_t m[16], v[16];
 
   if (output_len > BLAKE2_MAX_OUTPUT || output_len <= 0)
     return -1;
@@ -122,8 +122,8 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
 
   do
     {
-      word_t f0;
-      word_t inc;
+      blake2_word_t f0;
+      blake2_word_t inc;
       int i;
 
       if (input_len > sizeof(m))
@@ -136,7 +136,7 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, word_t input_len,
         {
           memset(m, 0, sizeof(m));
           memcpy(m, input, input_len);
-          f0 = ~(word_t)0;
+          f0 = ~(blake2_word_t)0;
           inc = input_len;
         }
 
