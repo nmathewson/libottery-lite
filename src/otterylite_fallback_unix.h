@@ -76,22 +76,39 @@ static const struct {
 #define MIB_LIST_LEN (sizeof(miblist) / sizeof(miblist[0]))
 #endif
 
+#ifndef SEEK_END
+#define SEEK_END 2
+#endif
+
 static void
 fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
-                                      const char *fname)
+                                      const char *fname,
+                                      size_t tailbytes)
 {
   unsigned char tmp[1024];
   int fd;
   int n;
+  size_t max_to_read = 1024*1024;
+  struct stat st;
   fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
   if (fd < 0)
     return;
+  if (fstat(fd, &st) == 0) {
+    fallback_entropy_accumulator_add_chunk(fbe, &st, sizeof(st));
+  }
+  if (tailbytes) {
+    lseek(fd, 2, 0-(ssize_t)tailbytes);
+    max_to_read = tailbytes;
+  }
 
   while (1) {
     n = read(fd, tmp, sizeof(tmp));
     if (n <= 0)
       break;
     fallback_entropy_accumulator_add_chunk(fbe, tmp, n);
+    if (n >= max_to_read)
+      break;
+    max_to_read -= n;
   }
 }
 
@@ -104,7 +121,9 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   fallback_entropy_accumulator_init(accumulator);
 
 #define FBENT_ADD_FILE(fname)                                   \
-  fallback_entropy_accumulator_add_file(accumulator, (fname))
+  fallback_entropy_accumulator_add_file(accumulator, (fname), 0)
+#define FBENT_ADD_FILE_TAIL(fname, bytes)                               \
+  fallback_entropy_accumulator_add_file(accumulator, (fname), (bytes))
 
   (void)i;
 
@@ -117,6 +136,17 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   pid = getpgid(0);
   FBENT_ADD(pid);
   }
+  FBENT_ADD_FILE_TAIL("/var/log/system.log", 16384);
+  FBENT_ADD_FILE_TAIL("/var/log/cron.log", 16384);
+  FBENT_ADD_FILE_TAIL("/var/log/messages", 16384);
+  FBENT_ADD_FILE_TAIL("/var/log/secure", 16384);
+  FBENT_ADD_FILE_TAIL("/var/log/lastlog", 8192);
+  FBENT_ADD_FILE_TAIL("/var/log/wtmp", 8192);
+
+#ifdef __APPLE__
+  FBENT_ADD_FILE_TAIL("/var/log/appfirewall.log", 16384);
+  FBENT_ADD_FILE_TAIL("/var/log/wifi.log", 16384);
+#endif
   {
   long hostid = gethostid();
   FBENT_ADD(hostid);
