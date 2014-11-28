@@ -45,8 +45,6 @@ struct ottery_state;
 
 #ifdef _MSC_VER
 #define ottery_u64_t unsigned __int64
-#elif defined(__GNUC__XXX)
-#define ottery_u64_t unsigned long long
 #else
 #include <stdint.h>
 #define ottery_u64_t uint64_t
