@@ -43,54 +43,54 @@ static const int clock_ids[] = {
 };
 #define N_CLOCK_IDS (sizeof(clock_ids) / sizeof(clock_ids[0]))
 
-#define MIBLIST_ENTRY(mib) \
-  { mib_ ## mib, (sizeof(mib_ ## mib) / sizeof(mib_ ## mib[0])) }
+#ifndef __linux__
+#define USING_SYSCTL
 
-#ifdef __APPLE__
-/* FFFF Do non-apples have these sysctl mibs too?
-   FFFF mib lists for more platforms.
+#define MIB2(a,b)         { 2, { a, b, 0, 0, 0, 0 } }
+#define MIB3(a,b,c)       { 3, { a, b, c, 0, 0, 0 } }
+#define MIB4(a,b,c,d)     { 4, { a, b, c, d, 0, 0 } }
+#define MIB5(a,b,c,d,e)   { 5, { a, b, c, d, e, 0 } }
+#define MIB6(a,b,c,d,e,f) { 6, { a, b, c, d, e, f } }
+
+/* FFFF mib lists for more platforms.
  */
 /*
   Here are a bunch of things we can ask sysctl about.
  */
-static const int mib_files[] = { CTL_KERN, KERN_FILE }; /* X */
-static const int mib_procs[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-static const int mib_vnode[] = { CTL_KERN, KERN_VNODE }; /* X  */
-static const int mib_inet_tcp[] =
-  { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
-static const int mib_inet_udp[] =
-  { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
-static const int mib_inet_ip[] =
-  { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
-static const int mib_inet6_tcp[] =
-  { CTL_NET, PF_INET6, IPPROTO_TCP, IPV6CTL_STATS }; /* X */
-static const int mib_inet6_udp[] =
-  { CTL_NET, PF_INET6, IPPROTO_UDP, IPV6CTL_STATS }; /* X */
-static const int mib_inet6_ip[] =
-  { CTL_NET, PF_INET6, IPPROTO_IP, IPV6CTL_STATS }; /*X*/
-static const int mib_loadavg[] =
-  { CTL_VM, VM_LOADAVG };
 static const struct {
-  const int *mib;
   int miblen;
+  const int mib[6];
 } miblist[] = {
-  MIBLIST_ENTRY(files),
-  MIBLIST_ENTRY(procs),
-  MIBLIST_ENTRY(vnode),
-  MIBLIST_ENTRY(inet_tcp),
-  MIBLIST_ENTRY(inet_udp),
-  MIBLIST_ENTRY(inet_ip),
-  MIBLIST_ENTRY(inet6_tcp),
-  MIBLIST_ENTRY(inet6_udp),
-  MIBLIST_ENTRY(inet6_ip),
-  MIBLIST_ENTRY(loadavg),
+#if defined(CTL_KERN)
+#  if defined(KERN_FILE)
+  MIB2( CTL_KERN, KERN_FILE ),
+#  endif
+#  if defined(KERN_PROC) && defined (KERN_PROC_ALL)
+  MIB3( CTL_KERN, KERN_PROC, KERN_PROC_ALL ),
+#  endif
+#  if defined(KERN_VNODE)
+  MIB2( CTL_KERN, KERN_VNODE ), /* X  */
+#  endif
+#endif
+#if defined(CTL_NET)
+  MIB4( CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS ),
+  MIB4( CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS ),
+  MIB4( CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS ),
+#  if defined(PF_INET6)
+  MIB4( CTL_NET, PF_INET6, IPPROTO_TCP, IPV6CTL_STATS ), /* X */
+  MIB4( CTL_NET, PF_INET6, IPPROTO_UDP, IPV6CTL_STATS ), /* X */
+  MIB4( CTL_NET, PF_INET6, IPPROTO_IP, IPV6CTL_STATS ), /*X*/
+#  endif
+#endif
+#if defined(CTL_VM)
+#  if defined(VM_LOADAVG)
+  MIB2( CTL_VM, VM_LOADAVG ),
+#  endif
+#endif
 };
-#define USE_SYSCTL
-#endif
 
-#ifdef USE_SYSCTL
 #define MIB_LIST_LEN (sizeof(miblist) / sizeof(miblist[0]))
-#endif
+#endif /* !__linux__ */
 
 /*
   Read the contents of 'fname' into 'fbe'.  If 'tailbytes' is nonzero, read
