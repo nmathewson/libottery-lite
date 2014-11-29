@@ -339,6 +339,8 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
 static int
 ottery_getentropy_proc_uuid(unsigned char *out)
 {
+  /* ???? Verify that this actually uses urandom. */
+  /* XXXX Use three, just in case. */
   int n = 0, r, i;
   u8 buf[37 * 2], *cp = buf;
 

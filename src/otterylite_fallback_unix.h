@@ -5,6 +5,10 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
+/*
+  Here are a bunch of things we can ask clock_gettime() about.  There probably
+  isn't more than a bit of entropy in each, but we can hope.
+ */
 static const int clock_ids[] = {
 #ifdef CLOCK_MONOTONIC
   CLOCK_MONOTONIC,
@@ -43,6 +47,12 @@ static const int clock_ids[] = {
   { mib_ ## mib, (sizeof(mib_ ## mib) / sizeof(mib_ ## mib[0])) }
 
 #ifdef __APPLE__
+/* FFFF Do non-apples have these sysctl mibs too?
+   FFFF mib lists for more platforms.
+ */
+/*
+  Here are a bunch of things we can ask sysctl about.
+ */
 static const int mib_files[] = { CTL_KERN, KERN_FILE };
 static const int mib_procs[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
 static const int mib_vnode[] = { CTL_KERN, KERN_VNODE };
@@ -82,10 +92,10 @@ static const struct {
 #define MIB_LIST_LEN (sizeof(miblist) / sizeof(miblist[0]))
 #endif
 
-#ifndef SEEK_END
-#define SEEK_END 2
-#endif
-
+/*
+  Read the contents of 'fname' into 'fbe'.  If 'tailbytes' is nonzero, read
+  only the last 'tailbytes' bytes of the file.  Never read more than 1MB.
+ */
 static void
 fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
                                       const char *fname,
@@ -123,6 +133,16 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
 #define FBENT_ADD_FILE_TAIL(fname, bytes)                               \
   fallback_entropy_accumulator_add_file(accumulator, (fname), (bytes))
 
+/*
+  Poll less-volatile kludgy entropy sources into 'accumulator'.
+
+  This stuff doesn't change enough over the couse of a second that it's worth
+  polling more than once.
+
+  Here we use a mixture of things that are (we hope) hard to predict for
+  somebody not running locally on the same host, and things that should be
+  hard for *anyone* to predict.
+ */
 static void
 ottery_getentropy_fallback_kludge_nonvolatile(
                      struct fallback_entropy_accumulator *accumulator)
@@ -131,7 +151,8 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
 #ifdef __APPLE__
   {
-    struct timespec ts = {0, 10*1000*1000 };
+    /* This isn't volatile at all. */
+    struct timespec ts = {0, 10*1000*1000 }; /* Give up after 10 ms */
     uuid_t id;
     if (0 == gethostuuid(id, &ts)) {
       FBENT_ADD(id);
@@ -139,35 +160,47 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   }
 #endif
 
+  /*
+     The pid and the current time; what could go wrong?  (Ask the Debian
+     openssl maintainers.
+  */
   {
-  pid_t pid;
-  pid = getppid();
-  FBENT_ADD(pid);
-  pid = getpid();
-  FBENT_ADD(pid);
-  pid = getpgid(0);
-  FBENT_ADD(pid);
+    pid_t pid;
+    pid = getppid();
+    FBENT_ADD(pid);
+    pid = getpid();
+    FBENT_ADD(pid);
+    pid = getpgid(0);
+    FBENT_ADD(pid);
   }
+  /*
+    Try to tail the logs a bit. This is pretty easy to find out if you're on
+    the same host, but not if you're not.
+   */
   FBENT_ADD_FILE_TAIL("/var/log/system.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/cron.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/messages", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/secure", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/lastlog", 8192);
   FBENT_ADD_FILE_TAIL("/var/log/wtmp", 8192);
-
 #ifdef __APPLE__
   FBENT_ADD_FILE_TAIL("/var/log/appfirewall.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/wifi.log", 16384);
 #endif
   {
-  long hostid = gethostid();
-  FBENT_ADD(hostid);
+    /* This isn't volatile at all. */
+    long hostid = gethostid();
+    FBENT_ADD(hostid);
 }
 #ifdef __APPLE__
   FBENT_ADD_FILE("/var/run/utmpx");
   FBENT_ADD_FILE("/var/run/resolv.conf");
 #endif
 #ifdef __linux__
+  /*
+    It's a little weird to be reading from proc at this point; if we
+    have a working proc, how did /proc/sys/kernel/random/uuid fail for us?
+  */
   FBENT_ADD_FILE("/proc/cmdline");
   FBENT_ADD_FILE("/proc/iomem");
   FBENT_ADD_FILE("/proc/keys");
@@ -181,22 +214,26 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   FBENT_ADD_FILE("/proc/version");
   FBENT_ADD_FILE("/proc/kallsyms");
   {
-  char fname_buf[64];
-  for (i = 0; i < 32; ++i)
-    {
-  int n = snprintf(fname_buf, sizeof(fname_buf), "/proc/irc/%d/spurious", i);
-  if (n > 0 && n < (int)sizeof(fname_buf))
-    FBENT_ADD_FILE(fname_buf);
-}
-}
+    char fname_buf[64];
+    for (i = 0; i < 32; ++i)
+      {
+        int n = snprintf(fname_buf, sizeof(fname_buf),
+                         "/proc/irc/%d/spurious", i);
+        if (n > 0 && n < (int)sizeof(fname_buf))
+          FBENT_ADD_FILE(fname_buf);
+      }
+  }
 #endif
 
+  /* Add in addresses from this library, from the socket library (if
+     separate), from libc, and from the stack. */
   FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge_nonvolatile);
   FBENT_ADD_FN_ADDR(socket);
   FBENT_ADD_FN_ADDR(printf);
   FBENT_ADD_ADDR(&i);
 }
 
+/* How many times to run the volatile poll? */
 #define FALLBACK_KLUDGE_ITERATIONS 8
 
 static void
@@ -212,42 +249,43 @@ ottery_getentropy_fallback_kludge_volatile(
 
 #ifdef CLOCK_MONOTONIC
   {
-  struct timespec delay = { 0, 10 };
-  for (i = 0; i < (int)N_CLOCK_IDS; ++i)
-    {
-  struct timespec ts;
-  if (clock_gettime(clock_ids[i], &ts) == 0)
-    {
-  FBENT_ADD(ts);
-  clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
-}
-}
-}
+    struct timespec delay = { 0, 10 };
+    for (i = 0; i < (int)N_CLOCK_IDS; ++i)
+      {
+        struct timespec ts;
+        if (clock_gettime(clock_ids[i], &ts) == 0)
+          {
+            FBENT_ADD(ts);
+            clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
+          }
+      }
+  }
 #endif
 #ifdef OTTERY_X86
   {
-  unsigned regs[4];
-  for (i = 0; i < 16; ++i)
-    {
-  cpuid_(i, regs);
-  FBENT_ADD(regs);
-}
-}
+    unsigned regs[4];
+    for (i = 0; i < 16; ++i)
+      {
+        cpuid_(i, regs);
+        FBENT_ADD(regs);
+      }
+  }
 #endif
 #ifdef __MACH__
   {
-  uint64_t t = mach_absolute_time();
-  FBENT_ADD(t);
-}
+    uint64_t t = mach_absolute_time();
+    FBENT_ADD(t);
+  }
 #endif
 #ifndef __APPLE__
   {
-  ucontext_t uc;
-  if (getcontext(&uc) == 0)
-    FBENT_ADD(uc);
-}
+    ucontext_t uc;
+    if (getcontext(&uc) == 0)
+      FBENT_ADD(uc);
+  }
 #endif
 #ifdef __linux__
+  /* On linux, this can change frequently.  But see notes above. */
   FBENT_ADD_FILE("/proc/diskstats");
   FBENT_ADD_FILE("/proc/interrupts");
   FBENT_ADD_FILE("/proc/loadavg");
@@ -271,57 +309,44 @@ ottery_getentropy_fallback_kludge_volatile(
 
 #ifdef CLOCK_MONOTONIC
   {
-  struct timespec ts = { 0, 100 };
-  clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
-}
+    /* Add a miniscule delay, to try to juice the clocks a little. */
+    struct timespec ts = { 0, 100 };
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+  }
 #endif
 
   {
-  struct rusage ru;
-  if (getrusage(RUSAGE_SELF, &ru) == 0)
-    FBENT_ADD(ru);
-  if (getrusage(RUSAGE_CHILDREN, &ru) == 0)
-    FBENT_ADD(ru);
+    struct rusage ru;
+    if (getrusage(RUSAGE_SELF, &ru) == 0)
+      FBENT_ADD(ru);
+    if (getrusage(RUSAGE_CHILDREN, &ru) == 0)
+      FBENT_ADD(ru);
   }
 
   {
-  struct stat st;
-  struct statvfs stv;
-  if (stat(".", &st) == 0)
-    FBENT_ADD(st);
-  if (stat("/", &st) == 0)
-    FBENT_ADD(st);
-  if (statvfs(".", &stv) == 0)
-    FBENT_ADD(stv);
-  if (statvfs("/", &stv) == 0)
-    FBENT_ADD(stv);
-}
+    struct stat st;
+    struct statvfs stv;
+    if (stat(".", &st) == 0)
+      FBENT_ADD(st);
+    if (stat("/", &st) == 0)
+      FBENT_ADD(st);
+    if (statvfs(".", &stv) == 0)
+      FBENT_ADD(stv);
+    if (statvfs("/", &stv) == 0)
+      FBENT_ADD(stv);
+  }
 
 #ifdef USE_SYSCTL
   for (i = 0; i < MIB_LIST_LEN; ++i)
     {
-  u8 tmp[1024];
-  size_t n = sizeof(tmp);
-  int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
-  if (r < 0 || n > sizeof(tmp))
-    continue;
-  FBENT_ADD_CHUNK(tmp, n);
-}
+      u8 tmp[1024];
+      size_t n = sizeof(tmp);
+      int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
+      if (r < 0 || n > sizeof(tmp))
+        continue;
+      FBENT_ADD_CHUNK(tmp, n);
+    }
 #endif
   /* FFFF try some mmap trickery like libressl does */
 }
 
-static int
-ottery_getentropy_fallback_kludge(u8 *out)
-{
-  int iter;
-
-  struct fallback_entropy_accumulator fbe;
-  fallback_entropy_accumulator_init(&fbe);
-
-  ottery_getentropy_fallback_kludge_nonvolatile(&fbe);
-  for (iter = 0; iter < FALLBACK_KLUDGE_ITERATIONS; ++iter)
-    ottery_getentropy_fallback_kludge_volatile(iter, &fbe);
-
-  return fallback_entropy_accumulator_get_output(&fbe, out);
-}

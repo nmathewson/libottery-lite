@@ -18,20 +18,18 @@ load_windows_library(const TCHAR *library_name)
   return LoadLibrary(path);
 }
 
-static int
-ottery_getentropy_fallback_kludge(u8 *out)
+static void
+ottery_getentropy_fallback_kludge_nonvolatile(
+                                 struct fallback_entropy_accumulator *fbe)
 {
   struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
-  int iter;
   HMODULE netapi32 = NULL;
-  NET_API_STATUS (*netfree_fn)(LPVOID) = NULL;
-
-  fallback_entropy_accumulator_init(accumulator);
 
   {
+    /* From libc, from this library, and from the stack. */
     FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
     FBENT_ADD_FN_ADDR(printf);
-    FBENT_ADD_ADDR(&iter);
+    FBENT_ADD_ADDR(fbe);
   }
   {
     MEMORYSTATUSEX m;
@@ -60,13 +58,15 @@ ottery_getentropy_fallback_kludge(u8 *out)
     GetSystemInfo(&si);
     FBENT_ADD(si);
   }
-  /* Also see: VirtualQuery, VirtualQueryEx, Raw memory.
-
-     ToollhelpCreateSnapshot32
+  /* FFFF Also see: VirtualQuery, VirtualQueryEx, Raw memory.
    */
-  {
-    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
-    if (snap != INVALID_HANDLE_VALUE) {
+
+  HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
+  if (snap != INVALID_HANDLE_VALUE)
+    {
+      /*
+        Walk through the processes, threads, and heaps.
+       */
       PROCESSENTRY32 pwe;
       THREADENTRY32 te;
       MODULEENTRY32 me;
@@ -97,7 +97,7 @@ ottery_getentropy_fallback_kludge(u8 *out)
       }
       CloseHandle(snap);
     }
-  }
+
 
   {
     ULONG (WINAPI *getadapters_fn)(ULONG, ULONG, PVOID, PIP_ADAPTER_ADDRESSES, PULONG);
@@ -135,7 +135,8 @@ ottery_getentropy_fallback_kludge(u8 *out)
   if (netapi32 != NULL) {
     NET_API_STATUS (*servergetinfo_fn)(LPWSTR, DWORD, LPBYTE *)
       = (void*)GetProcAddress(netapi32, "NetServerGetInfo");
-    netfree_fn = (void*)GetProcAddress(netapi32, "NetApiBufferFree");
+    NET_API_STATUS (*netfree_fn)(LPVOID) =
+      (void*)GetProcAddress(netapi32, "NetApiBufferFree");
 
     if (servergetinfo_fn && netfree_fn) {
       LPBYTE b=NULL;
@@ -148,44 +149,51 @@ ottery_getentropy_fallback_kludge(u8 *out)
         netfree_fn(b);
       }
     }
+    CloseHandle(netapi32);
   }
+}
 
-  for (iter = 0; iter < 128; ++iter) {
-    {
-      LARGE_INTEGER pc;
-      FILETIME ft;
-      DWORD ms;
-      QueryPerformanceCounter(&pc);
-      GetSystemTimePreciseAsFileTime(&ft);
-      ms = GetTickCount();
-      FBENT_ADD(pc);
-      FBENT_ADD(ft);
-      FBENT_ADD(ms);
-    }
-    if (netapi32 != NULL) {
-      NET_API_STATUS (*statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
-        = (void*)GetProcAddress(netapi32, "NetStatisticsGet");
-      if (statsget_fn && netfree_fn) {
-        LPBYTE b = NULL;
-        if (statsget_fn(NULL, L"LanmanWorkstation", 0, 0, &b) == NERR_Success) {
-          FBENT_ADD_CHUNK(b, sizeof(STAT_WORKSTATION_0));
-          netfree_fn(b);
-        }
-        if (statsget_fn(NULL, L"LanmanServer", 0, 0, &b) == NERR_Success) {
-          FBENT_ADD_CHUNK(b, sizeof(STAT_SERVER_0));
-          netfree_fn(b);
-        }
+static void
+ottery_getentropy_fallback_kludge_nonvolatile(
+                                 int iter,
+                                 struct fallback_entropy_accumulator *fbe)
+{
+  HMODULE netapi32 = NULL;
+  netapi32 = load_windows_library("netapi32.dll");
+
+  {
+    LARGE_INTEGER pc;
+    FILETIME ft;
+    DWORD ms;
+    QueryPerformanceCounter(&pc);
+    GetSystemTimePreciseAsFileTime(&ft);
+    ms = GetTickCount();
+    FBENT_ADD(pc);
+    FBENT_ADD(ft);
+    FBENT_ADD(ms);
+  }
+  if (netapi32 != NULL) {
+    NET_API_STATUS (*statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
+      = (void*)GetProcAddress(netapi32, "NetStatisticsGet");
+    NET_API_STATUS (*netfree_fn)(LPVOID) =
+      (void*)GetProcAddress(netapi32, "NetApiBufferFree");
+
+    if (statsget_fn && netfree_fn) {
+      LPBYTE b = NULL;
+      if (statsget_fn(NULL, L"LanmanWorkstation", 0, 0, &b) == NERR_Success) {
+        FBENT_ADD_CHUNK(b, sizeof(STAT_WORKSTATION_0));
+        netfree_fn(b);
+      }
+      if (statsget_fn(NULL, L"LanmanServer", 0, 0, &b) == NERR_Success) {
+        FBENT_ADD_CHUNK(b, sizeof(STAT_SERVER_0));
+        netfree_fn(b);
       }
     }
-
-    if (iter % 16)
-      Sleep(0);
-    else
-      Sleep(1);
+    CloseHandle(netapi23);
   }
 
-  if (netapi32)
-    CloseHandle(netapi32);
-
-  return fallback_entropy_accumulator_get_output(accumulator, out);
+  if (iter % 16)
+    Sleep(0);
+  else
+    Sleep(1);
 }

@@ -96,6 +96,21 @@ fallback_entropy_accumulator_add_chunk(
 #include "otterylite_fallback_unix.h"
 #endif
 
+static int
+ottery_getentropy_fallback_kludge(u8 *out)
+{
+  int iter;
+
+  struct fallback_entropy_accumulator fbe;
+  fallback_entropy_accumulator_init(&fbe);
+
+  ottery_getentropy_fallback_kludge_nonvolatile(&fbe);
+  for (iter = 0; iter < FALLBACK_KLUDGE_ITERATIONS; ++iter)
+    ottery_getentropy_fallback_kludge_volatile(iter, &fbe);
+
+  return fallback_entropy_accumulator_get_output(&fbe, out);
+}
+
 #undef FBENT_ADD_CHUNK
 #undef ADD
 #undef FBENT_ADD_FILE

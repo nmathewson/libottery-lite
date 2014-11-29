@@ -211,6 +211,11 @@
 #define INHERIT_ZERO VM_INHERIT_ZERO
 #endif
 
+/* Oldschool unix didn't have a name for SEEK_END */
+#ifndef SEEK_END
+#define SEEK_END 2
+#endif
+
 /* We're going to be saying "unsigned char" a _lot_ */
 typedef unsigned char u8;
 
