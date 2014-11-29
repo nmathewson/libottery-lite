@@ -372,10 +372,11 @@ ottery_getentropy_bsd_sysctl(unsigned char *out)
 #define ID_FALLBACK_KLUDGE (1u << 10)
 
 #define GROUP_HW      (1u << 0)
-#define GROUP_SYSCALL (1u << 1)
-#define GROUP_DEVICE  (1u << 2)
-#define GROUP_EGD     (1u << 3)
-#define GROUP_KLUDGE  (1u << 4)
+#define GROUP_CPU     (1u << 1)
+#define GROUP_SYSCALL (1u << 2)
+#define GROUP_DEVICE  (1u << 3)
+#define GROUP_EGD     (1u << 4)
+#define GROUP_KLUDGE  (1u << 5)
 
 #define FLAG_WEAK   (1u << 0)
 #define FLAG_AVOID  (1u << 1)
@@ -390,12 +391,12 @@ static const struct entropy_source {
   unsigned group;
   unsigned flags;
 } entropy_sources[] = {
-  SOURCE(rdrand, ID_RDRAND, GROUP_HW, FLAG_WEAK),
+  SOURCE(rdrand, ID_RDRAND, GROUP_CPU, FLAG_WEAK),
   SOURCE(getrandom, ID_GETRANDOM, GROUP_SYSCALL, 0),
   SOURCE(getentropy, ID_GETENTROPY, GROUP_SYSCALL, 0),
   SOURCE(cryptgenrandom, ID_CRYPTGENRANDOM, GROUP_SYSCALL, 0),
   SOURCE(dev_urandom, ID_DEV_URANDOM, GROUP_DEVICE, 0),
-  SOURCE(dev_hwrandom, ID_DEV_HWRANDOM, GROUP_DEVICE, 0),
+  SOURCE(dev_hwrandom, ID_DEV_HWRANDOM, GROUP_HW, 0),
   SOURCE(egd, ID_EGD, GROUP_EGD, 0),
   SOURCE(proc_uuid, ID_PROC_UUID, GROUP_DEVICE, FLAG_AVOID),
   SOURCE(linux_sysctl, ID_LINUX_SYSCTL, GROUP_SYSCALL, FLAG_AVOID),
