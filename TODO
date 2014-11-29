@@ -58,14 +58,13 @@ For 1.0
 
   o Fix all XXXX comments
 
-
-  - Document the code
+  o Document the code
   o Document the approach
   o Dedication notice on all files.
 
-  - Seek external review.
+  . Seek external review.
 
-  - Header on all files
+  o Header on all files
 
   - Even later tests:
     - egd tests
@@ -80,6 +79,8 @@ For 1.0
 
 - BEFORE EACH RELEASE:
 
+  - header on all files, dedication on all files.
+  - Fix all XXXX comments
   - Re-run uncrustify and emacs indent
   - Get it building with all the warnings I can
   - Run dieharder tests with all the options.
