@@ -1,3 +1,5 @@
+/* otterylite_alloc.h -- allocation for libottery-lite */
+
 /*
   To the extent possible under law, Nick Mathewson has waived all copyright and
   related or neighboring rights to libottery-lite, using the creative commons
@@ -5,7 +7,15 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
-#ifdef OTTERY_RNG_NO_HEAP
+#ifndef OTTERYLITE_ALLOC_H_INCLUDED
+#define OTTERYLITE_ALLOC_H_INCLUDED
+
+#if defined(OTTERY_RNG_NO_HEAP) && defined(OTTERY_RNG_NO_MMAP)
+
+/*
+  If the RNG is just stored inside the libottery-lite state, then
+  we just need to wipe it on startup and teardown.
+ */
 
 #define ALLOCATE_RNG(p) memset((p), 0, sizeof(*(p)))
 #define FREE_RNG(p) memwipe((p), sizeof(*(p)))
@@ -14,11 +24,20 @@
 
 #else
 
+/*
+  Otherwise, it's a pointer of some kind and we need functions to allocate and
+  free it.
+ */
+
 #define ALLOCATE_RNG(p) allocate_rng_(&(p))
 #define FREE_RNG(p) free_rng_(&(p))
 #define DECLARE_RNG(name) struct ottery_rng *name;
 
 #ifdef OTTERY_RNG_NO_MMAP
+
+/*
+  If it's on the heap, we just calloc and free.
+ */
 
 static int
 allocate_rng_(struct ottery_rng **rng)
@@ -38,6 +57,10 @@ free_rng_(struct ottery_rng **rng)
 }
 
 #elif _WIN32
+
+#define USING_MMAP
+
+/* If we're mmaping it in Windows, this is about the best we can do */
 
 static int
 allocate_rng_(struct ottery_rng **rng)
@@ -78,6 +101,16 @@ free_rng_(struct ottery_rng **rng)
 }
 
 #else
+
+/*
+  On unix, we try to use mlock and minherit to keep the RNG's guts from
+  leaking to swap or to.
+
+  Using mmap has a couple of advantages: First, it ensures that the RNG goes
+  on its own page, so that it's convenient to call mlock and minherit on it.
+  Second, if the kernel is feeling helpful, it will stick the RNG at a
+  hard-to-predict location in the address space.
+*/
 
 #define USING_MMAP
 
@@ -121,7 +154,9 @@ free_rng_(struct ottery_rng **rng)
   }
 }
 
-#endif
+#endif /* Unix mmap */
 
-#endif
+#endif /* heap or mmap */
+
+#endif /* OTTERYLITE_ALLOC_H_INCLUDED */
 

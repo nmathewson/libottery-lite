@@ -1,3 +1,6 @@
+/* otterylite_digest.h -- a partial blake2 implementation for
+   libottery-lite */
+
 /*
   To the extent possible under law, Nick Mathewson has waived all copyright and
   related or neighboring rights to libottery-lite, using the creative commons
@@ -5,6 +8,17 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
+
+/*
+  For more information on the BLAKE2 family, see  https://blake2.net/
+
+  This is only a partial implementation of BLAKE2.  It does not handle
+  big-endian platforms in the same way that a real implementation would.  It
+  doesn't support keyed hashes.  It doesn't support very long messages.  It
+  doesn't handle parallel hashing.
+*/
+
+/* If this is defined to 32, we provide blake2s.  Otherwise, we do blake2b. */
 #define BLAKE2_WORDBITS 64
 
 #if BLAKE2_WORDBITS == 64
@@ -52,8 +66,6 @@ typedef uint32_t blake2_word_t;
 
 #define BLAKE2_MAX_OUTPUT (BLAKE2_BLOCKSIZE / 2)
 
-/* This is not quite Blake2. We assume we're on a little endian platform. */
-
 #define BLAKE2_G(a, b, c, d, round, idx)                \
   do {                                                  \
     a += b + m[blake2_sigma[round][2 * idx]];           \
@@ -93,10 +105,17 @@ static const u8 blake2_sigma[12][16] = {
   { 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3 },
 };
 
-/* This is not quite blake2, since it doesn't do endianness conversion. */
+/*
+  Do a one-pass computation of the BLAKE2 digest of the input_len-byte message
+  at 'input'.  Tweak the hash using the two provided personalization
+  parameters.  Store the output_len-byte result at 'output'.  Return the number
+  of bytes written on success, and -1 on failure.
+ */
 static int
-blake2_noendian(u8 *output, int output_len, const u8 *input, blake2_word_t input_len,
-                blake2_word_t personalization_0, blake2_word_t personalization_1)
+blake2_noendian(u8 *output, int output_len,
+                const u8 *input, blake2_word_t input_len,
+                blake2_word_t personalization_0,
+                blake2_word_t personalization_1)
 {
   blake2_word_t h[8];
   blake2_word_t counter; /* Too short for standard usage; fine for us. */
@@ -168,11 +187,13 @@ blake2_noendian(u8 *output, int output_len, const u8 *input, blake2_word_t input
   memcpy(output, h, output_len);
 
   memwipe(h, sizeof(h));
+  memwipe(m, sizeof(m));
   memwipe(v, sizeof(v));
 
   return (int)output_len;
 }
 
+/* Here we'll define the digest we use for ottery-lite */
 #define OTTERY_DIGEST_LEN BLAKE2_MAX_OUTPUT
 
 static void
