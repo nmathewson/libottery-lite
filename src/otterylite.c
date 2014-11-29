@@ -379,11 +379,8 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
 void
 OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
 {
-  /*
-    XXXX Use count instead.
-  */
   LOCK();
-  OTTERY_MAGIC_MAKE_INVALID(STATE_FIELD(magic));
+  RNG_PTR->count = RESEED_AFTER_BLOCKS + 1;
   UNLOCK();
 }
 
