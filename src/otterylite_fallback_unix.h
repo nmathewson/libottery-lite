@@ -53,9 +53,9 @@ static const int clock_ids[] = {
 /*
   Here are a bunch of things we can ask sysctl about.
  */
-static const int mib_files[] = { CTL_KERN, KERN_FILE };
+static const int mib_files[] = { CTL_KERN, KERN_FILE }; /* X */
 static const int mib_procs[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-static const int mib_vnode[] = { CTL_KERN, KERN_VNODE };
+static const int mib_vnode[] = { CTL_KERN, KERN_VNODE }; /* X  */
 static const int mib_inet_tcp[] =
   { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS };
 static const int mib_inet_udp[] =
@@ -63,11 +63,11 @@ static const int mib_inet_udp[] =
 static const int mib_inet_ip[] =
   { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
 static const int mib_inet6_tcp[] =
-  { CTL_NET, PF_INET6, IPPROTO_TCP, TCPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_TCP, IPV6CTL_STATS }; /* X */
 static const int mib_inet6_udp[] =
-  { CTL_NET, PF_INET6, IPPROTO_UDP, UDPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_UDP, IPV6CTL_STATS }; /* X */
 static const int mib_inet6_ip[] =
-  { CTL_NET, PF_INET6, IPPROTO_IP, IPCTL_STATS };
+  { CTL_NET, PF_INET6, IPPROTO_IP, IPV6CTL_STATS }; /*X*/
 static const int mib_loadavg[] =
   { CTL_VM, VM_LOADAVG };
 static const struct {
@@ -342,8 +342,11 @@ ottery_getentropy_fallback_kludge_volatile(
       u8 tmp[1024];
       size_t n = sizeof(tmp);
       int r = sysctl((int*)miblist[i].mib, miblist[i].miblen, tmp, &n, NULL, 0);
-      if (r < 0 || n > sizeof(tmp))
+      if (r < 0 || n > sizeof(tmp)) {
+        TRACE(("mib %d said %d: %s.\n", i, r, strerror(errno)));
         continue;
+      }
+      TRACE(("mib %d okay; %d bytes\n", i, (int)n));
       FBENT_ADD_CHUNK(tmp, n);
     }
 #endif
