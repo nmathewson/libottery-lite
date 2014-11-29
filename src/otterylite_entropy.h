@@ -622,6 +622,7 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
       have_sources |= sources[i].id;
       TRACE(("source %s gave us %d\n", sources[i].name, n));
     }
+  (void) have_sources; /* Eventually, expose this. FFFFF */
 
   if (outp - out < ENTROPY_CHUNK)
     *status_out = -1; /* Not enough output altogether */

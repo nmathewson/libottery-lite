@@ -129,10 +129,6 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 {
   int i;
 
-  fallback_entropy_accumulator_init(accumulator);
-
-  (void)i;
-
 #ifdef __APPLE__
   {
     struct timespec ts = {0, 10*1000*1000 };

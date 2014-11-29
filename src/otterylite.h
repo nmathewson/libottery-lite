@@ -83,7 +83,7 @@ struct ottery_state;
 #define ottery_u64_t uint64_t
 #endif
 
-#include <sys/types.h>
+#include <stddef.h>
 
 /* Standard identifier-pasting tricks to declare functions with different
  * names depending on how we're configured. */

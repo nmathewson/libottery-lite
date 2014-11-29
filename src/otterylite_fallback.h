@@ -29,7 +29,8 @@ fallback_entropy_accumulator_init(struct fallback_entropy_accumulator *fbe)
 }
 
 /*
-  Extract an ENTROPY_CHUNK from 'fbe', and store it in 'out'
+  Extract an ENTROPY_CHUNK from 'fbe', and store it in 'out'.  Invalidates
+  fbe.
 */
 static int
 fallback_entropy_accumulator_get_output(

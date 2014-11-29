@@ -38,7 +38,7 @@
  */
 #ifdef _WIN32
 #define OTTERY_MAGIC_MAKE_INVALID(m) ((m) = 0)
-#define OTTERY_MAGIC_MAKE_VALID(m) (m) = OTTERY_MAGIC)
+#define OTTERY_MAGIC_MAKE_VALID(m) ((m) = OTTERY_MAGIC)
 #define OTTERY_MAGIC_IS_OKAY(m) ((m) == OTTERY_MAGIC)
 #else
 #define OTTERY_MAGIC_MAKE_INVALID(m) ((m) = getpid())
@@ -505,8 +505,13 @@ OTTERY_PUBLIC_FN (set_egd_address)(const struct sockaddr *sa, int socklen)
 {
   if (socklen > (int)sizeof(ottery_egd_sockaddr))
     return -1;
-  memcpy(&ottery_egd_sockaddr, sa, socklen);
-  ottery_egd_socklen = socklen;
+  if (socklen <= 0 || ! sa) {
+    memset(&ottery_egd_sockaddr, 0, sizeof(ottery_egd_sockaddr));
+    ottery_egd_socklen = -1;
+  } else {
+    memcpy(&ottery_egd_sockaddr, sa, socklen);
+    ottery_egd_socklen = socklen;
+  }
   return 0;
 }
 #endif
