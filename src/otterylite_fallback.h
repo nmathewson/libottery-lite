@@ -1,3 +1,7 @@
+/* otterylite_fallback.h -- fallback kludge for when all other entropy sources
+   fail.
+ */
+
 /*
   To the extent possible under law, Nick Mathewson has waived all copyright and
   related or neighboring rights to libottery-lite, using the creative commons
@@ -5,10 +9,16 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
+/*
+  A buffer we use for grafting entopy together.  We fill up 'buf', keeping
+  'cp' pointing towards the next spot that we can write to.  If we would
+  overflow, we instead run blake2b on the buffer, put that back at the
+  start, and begin again.
+ */
 struct fallback_entropy_accumulator {
   u8 buf[4096];
   u8 *cp;
-  uint64_t bytes_added;
+  uint64_t bytes_added; /* Tracks how many bytes of imput we actually got */
 };
 
 static void
@@ -18,6 +28,9 @@ fallback_entropy_accumulator_init(struct fallback_entropy_accumulator *fbe)
   fbe->cp = fbe->buf;
 }
 
+/*
+  Extract an ENTROPY_CHUNK from 'fbe', and store it in 'out'
+*/
 static int
 fallback_entropy_accumulator_get_output(
                                   struct fallback_entropy_accumulator *fbe,
@@ -30,26 +43,36 @@ fallback_entropy_accumulator_get_output(
   return ENTROPY_CHUNK;
 }
 
+/*
+  Add a 'len'-byte blob to 'fbe'.
+ */
 static void
 fallback_entropy_accumulator_add_chunk(
                                   struct fallback_entropy_accumulator *fbe,
                                   const void *chunk,
                                   size_t len)
 {
-  size_t addbytes = len > 128 ? OTTERY_DIGEST_LEN : len;
+  /* If len > 128, take the digest of it first.  Else just copy it in. */
+  const size_t addbytes = len > 128 ? OTTERY_DIGEST_LEN : len;
 
   if (fbe->cp - fbe->buf + addbytes > 4096) {
+    /* We need to digest the buffer first or it won't fit. */
     ottery_digest(fbe->buf, fbe->buf, sizeof(fbe->buf));
     fbe->cp = fbe->buf + OTTERY_DIGEST_LEN;
   }
+
   if (len > 128)
     ottery_digest(fbe->cp, chunk, len);
   else
     memcpy(fbe->buf, chunk, len);
+
   fbe->cp += addbytes;
   fbe->bytes_added += len;
 }
 
+/*
+  Macros for implementing fallback kludges.
+ */
 #define FBENT_ADD_CHUNK(chunk, len_) \
   fallback_entropy_accumulator_add_chunk(accumulator, (chunk), (len_))
 #define FBENT_ADD(object)                                               \
