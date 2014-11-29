@@ -118,18 +118,18 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
   }
 }
 
-static int
-ottery_getentropy_fallback_kludge(unsigned char *out)
-{
-  struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
-  int iter, i;
-
-  fallback_entropy_accumulator_init(accumulator);
-
 #define FBENT_ADD_FILE(fname)                                   \
   fallback_entropy_accumulator_add_file(accumulator, (fname), 0)
 #define FBENT_ADD_FILE_TAIL(fname, bytes)                               \
   fallback_entropy_accumulator_add_file(accumulator, (fname), (bytes))
+
+static void
+ottery_getentropy_fallback_kludge_nonvolatile(
+                     struct fallback_entropy_accumulator *accumulator)
+{
+  int i;
+
+  fallback_entropy_accumulator_init(accumulator);
 
   (void)i;
 
@@ -195,13 +195,21 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
 }
 #endif
 
-  FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
+  FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge_nonvolatile);
   FBENT_ADD_FN_ADDR(socket);
   FBENT_ADD_FN_ADDR(printf);
-  FBENT_ADD_ADDR(&iter);
+  FBENT_ADD_ADDR(&i);
+}
 
-  for (iter = 0; iter < 8; ++iter)
-    {
+#define FALLBACK_KLUDGE_ITERATIONS 8
+
+static void
+ottery_getentropy_fallback_kludge_volatile(
+                     int iteration,
+                     struct fallback_entropy_accumulator *accumulator)
+{
+  int i;
+
   struct timeval tv;
   if (gettimeofday(&tv, NULL) == 0)
     FBENT_ADD(tv);
@@ -307,5 +315,17 @@ ottery_getentropy_fallback_kludge(unsigned char *out)
   /* FFFF try some mmap trickery like libressl does */
 }
 
-  return fallback_entropy_accumulator_get_output(accumulator, out);
+static int
+ottery_getentropy_fallback_kludge(u8 *out)
+{
+  int iter;
+
+  struct fallback_entropy_accumulator fbe;
+  fallback_entropy_accumulator_init(&fbe);
+
+  ottery_getentropy_fallback_kludge_nonvolatile(&fbe);
+  for (iter = 0; iter < FALLBACK_KLUDGE_ITERATIONS; ++iter)
+    ottery_getentropy_fallback_kludge_volatile(iter, &fbe);
+
+  return fallback_entropy_accumulator_get_output(&fbe, out);
 }
