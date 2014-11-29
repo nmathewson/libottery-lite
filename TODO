@@ -61,9 +61,11 @@ For 1.0
 
   - Document the code
   o Document the approach
-  - Dedication notice and header on all files.
+  o Dedication notice on all files.
 
   - Seek external review.
+
+  - Header on all files
 
   - Even later tests:
     - egd tests

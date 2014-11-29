@@ -1,3 +1,9 @@
+/*
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 static const int clock_ids[] = {
 #ifdef CLOCK_MONOTONIC
