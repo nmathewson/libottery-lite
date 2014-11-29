@@ -80,27 +80,311 @@ How to use it
 
 Don't, yet.
 
+What's different from Libottery?
+--------------------------------
+
+* Libottery-lite is less tested.
+
+* The entropy collection is much better (unless it's buggy).
+
+* The API is much simpler, and designed to be harder to misuse.
+
+* The fork detection is better.
+
+* It's more memory-safe.
+
+* Libottery-lite is much more reluctant to crash due to running on a
+  horrible system.
+
+* Libottery-lite incorporates many ideas pioneered by OpenBSD's
+  arc4random() and libressl-portable.
+
+* Libottery-lite emphasizes simplicity over performance.  I expect that
+  with work, the overhead for small requests will come down, but
+  libottery is going to remain faster for generating gigabytes of noise
+  at a time.
+
+What's different between this and a modern arc4random()?
+--------------------------------------------------------
+
+Not too much, ideally.  One of my goals here is to make the successor to
+libottery work as an independent drop-in arc4random() replacement for
+systems that don't have a good one.  (Since OpenBSD got getentropy(),
+MAP_INHERIT_ZERO, and switched away from RC4, I've run out of objections
+to its userspace PRNG code.)
+
+If you're on any recent version of OpenBSD, there's no reason to use
+this.
+
+I discuss some differences below, but I don't pretend they're all
+improvements: I've made some API decisions to serve to my own needs as
+a writer of cryptographic networking tools.  Most users won't benefit
+from those.
+
 Details
 -------
 
+=== Cryptography
+
+To gather entropy: we use all the available high-entropy sources.  If none
+are available, we fall back to an old-school "read all the stuff on the
+system we can find" test.  We then compress the data using Blake2b* to
+generate a key and IV for the ChaCha20* stream cipher.
+
+Like Ottery and like OpenBSD's new arc4random, we use the ChaCha20 core to
+generate a lot of bytes at once.  The last 40 bytes will become the next key
+and IV; the rest go into a buffer.  When the user requests bytes, we
+yield them from the buffer, and clear them as we yield them.  When the buffer
+runs out, we generate a new batch of ChaCha20 output using the Key and IV we
+had set aside, and start the process over.
+
+Note that since we destroy each key as soon as we use it, and overwrite each
+part of the stream as soon as we yield it, we shouldn't.
 
 
-We collect entropy from all the available high-entropy sources, compress it
-with Blake2b or Blake2s, and use that for the key and IV of a ChaCha20
-cipher.  We generate 4K of ChaCha20 stream at a time, clear output as we
-yield it, and use the tail end of the 4K stream chunk as the key and IV for
-the next 4K block.
+*Actually, we don't _exactly_ implement blake2b and chacha20.  Instead,
+ we implement an endian-neutral variant of the blake2b/chacha20 code. On
+ little-endian machines, it's the standard variants.  On big-endian
+ machines, it's equally secure, but produces different outputs.  For a
+ PRNG, this doesn't matter.
 
-At least, that's what we do if there aren't any bugs.  But there probably are.
+=== API
 
-Read the source for more info.  I'll write more about how it works once it's
-closer to being done.
+Libttery-lite can main API modes: built-in, stateful, and arc4
+emulation.  By default, we build in built-in mode, and the available
+APIs are as follow:
 
+  unsigned ottery_random(void);
+  unsigned ottery_random_uniform(unsigned limit);
+  uint64_t ottery_random64(void);
+  uint64_t ottery_random_uniform64(uint64_t limit);
+  uint64_t ottery_random_buf(void *buf, size_t n);
+
+     These are the only functions you should need to know about.  The
+     "random" and "random64" functions return a random value in the full
+     range of their type. The "random_uniform" and "random_uniform64"
+     functions return a value between 0 and limit-1, inclusive.
+     The "random_buf" function fills a provided n-byte buffer with
+     random bytes.
+
+  void ottery_addrandom(const unsigned char *input, int n);
+
+     This function adds more bytes to the entropy pool.  For almost all
+     users, using this interface is a mistake.  Unless you're writing
+     GPG or LibNSS or something, just leave it alone.  The arc4random()
+     designers probably think it shouldn't exist.
+
+  int ottery_set_egd_address(const struct sockaddr *sa, int socklen);
+
+     Sets an address that Ottery-lite can use for getting data from an
+     entropy-gathering daemon.  This is not thread-safe; don't do it
+     concurrently with anything else.
+
+  void ottery_need_reseed(void);
+
+     Mark the RNG for needing a reseed.  For almost all users, using
+     this interface is a mistake.  Unless you're writing OTR or Tor
+     or something, just leave it alone. The arc4random() designers
+     probably think it shouldn't exist.
+
+  void ottery_teardown(void);
+
+     Release all resources held by the RNG.  This is useful if you're
+     about to exit, and you don't want valgrind complaining about leaks.
+
+  int ottery_status(void);
+
+     Return an estimate of the quality of the seeding on the RNG.
+     2 is good, 1 is questionable, 0 is iffy, and -1 or lower is
+     completely busted and should never happen.
+
+     This function, unlike the others above, can return -1 rather than
+     abort() if initializing the PRNG is impossible.  You can use it
+     to give a graceful error message rather than crashing if the
+     environment is broken.
+
+     But for one last time, for almost all users, using this interface
+     is a mistake.  Unless you're generating master-keys for signing
+     TAILS or something, just leave it alone.  The arc4random() designers
+     probably think it shouldn't exist.
+
+All of the functions above are threadsafe.  With the exception of
+ottery_status(), they may all call abort() if they cannot find any
+entropy source.
+
+=== arc4random compatibility mode
+
+OpenBSD's arc4random() API is the most well-established secure CSPRNG
+API, so let's aim for compatibility with it.  If you build with
+OTTERY_BE_ARC4RANDOM defined, then the APIs above become:
+
+  unsigned arc4random(void);
+  unsigned arc4random_uniform(unsigned limit);
+  uint64_t arc4random64(void);
+  uint64_t arc4random_uniform64(uint64_t limit);
+  uint64_t arc4random_buf(void *buf, size_t n);
+  void arc4random_addrandom(const unsigned char *input, int n);
+  int arc4random_set_egd_address(const struct sockaddr *sa, int socklen);
+  void arc4random_need_reseed(void);
+  void arc4random_teardown(void);
+  int arc4random_status(void);
+
+In addition, we define a stub "arc4random_stir()" macro that does
+nothing, but which some programs expect to find.
+
+=== Stateful mode
+
+Some programs need a PRNG that they can heap-allocate or stick inside a
+structure or keep different versions of.  If you build otterylite.c
+with OTTERY_STRUCT defined, the APIs above become:
+
+  unsigned ottery_st_random(struct ottery_state *state);
+  unsigned ottery_st_random_uniform(struct ottery_state *state, unsigned limit);
+  uint64_t ottery_st_random64(struct ottery_state *state);
+  uint64_t ottery_st_random_uniform64(struct ottery_state *state, uint64_t limit);
+  uint64_t ottery_st_random_buf(struct ottery_state *state, void *buf, size_t n);
+  void ottery_st_addrandom(struct ottery_state *state, const unsigned char *input, int n);
+  int ottery_st_set_egd_address(const struct sockaddr *sa, int socklen);
+  void ottery_st_need_reseed(struct ottery_state *state);
+  void ottery_st_teardown(struct ottery_state *state);
+  int ottery_st_status(struct ottery_state *state);
+
+(Note the lack of change to ottery_set_egd_address.)
+
+To construct an ottery_state structure, use the API:
+
+  int ottery_st_init(struct ottery_state *state);
+
+And to learn how many bytes to allocate, use:
+
+  size_t ottery_st_size(void);
+
+
+Memory- and fork-security
+-------------------------
+
+Where possible, we allocate the RNG state in a private mapping, and
+disable swapping for the page it's on.
+
+On Windows, since there is no fork(), we don't need any special fork
+handling.  So that's convenient.
+
+We use INHERIT_ZERO where available, since that's the easiest way to
+make sure that child processes don't share RNG state with their
+parents.
+
+Where INHERIT_ZERO isn't available, we use getpid() (and
+pthread_atfork() if possible) to try to notice forks. These methods are
+imperfect, so as a last resort, we turn on INHERIT_NONE if we have it,
+to ensure that missing a fork causes a crash instead of a security
+failure.
+
+Practically speaking, this means that OpenBSD and Windows (!) are your
+most secure options from this POV, and Linux is the least secure among
+the free operating systems.  Let's hope that changes.
+
+Getting entropy
+---------------
+
+Ottery-lite has a list of entropy sources, a guess about how good they
+are, and one or more ways to get entropy from each.
+
+We try to get entropy from each source, in more or less the order
+suggested below.  Once we have read from a source using one method,
+we don't try any other methods listed for that source.  If we can get
+any entropy from any "strong" method, we don't try any source
+marked as "best avoided."
+
+  * Recent Intel CPUs
+    - RDRAND                 (recent x86. not strong.)
+
+      We look at RDRAND if it's available, since it's definitely hard
+      for most attackers to predict, but we don't treat it as strong.
+      (I personally don't think it's backdoored, but by treat it as
+      sufficient? Also, yes, I am aware of that blogpost.  See the
+      references below.)
+
+  * Kernel entropy, syscall based
+    - getentropy()           (recent *bsd)
+    - getrandom()            (recent linux)
+    - CryptGenRandom()       (windows)
+    - sysctl(...RANDOM_UUID) (old linux, best avoided)
+    - sysctl(...KERN_ARND)   (older *bsd)
+
+      Here's the best option if you've got a fairly recent OS.
+
+      The first two interfaces above are pretty good, though getrandom()
+      is a little more error-prone.  (Please review the code and make
+      sure I didn't make any of the errors.)  CryptGenRandom() is kind
+      of a black box, but everybody uses it on Windows, so let's hope
+      it's not too bad.  The sysctl-based options are kind of yucky,
+      and the Linux one hasn't worked for a while.
+
+  * Kernel entropy, device-based
+    - /dev/urandom
+    - /dev/srandom
+    - /dev/random
+    - /proc/sys/kernel/random/uuid  (Linux only, best avoided)
+
+      These are fine if they're present, though a fair amount can go
+      wrong when you read from them.  You might run out of fds, or find
+      yourself stuck in a chroot, or something like that.  What's more,
+      with older Linux systems, /dev/urandom might give you data before
+      it's seeded.
+
+      I also hear tell that on some sufficiently broken Linuxes, you can
+      squeeze some kernel entropy from the /proc file above.  We look
+      there if the other options above don't work.
+
+      Still, because the syscall-based interfaces aren't ubiquitous, and
+      where they _are_ present they're still kinda new, I've decided to be
+      (pointlessly?) conservative and treat a kernel device as an
+      independent source from a syscall.  That means that if both are
+      available, we'll check both and combine them.
+
+  * Hardware entropy, device-based
+    * /dev/hw_random         (?)
+
+      I hear tell some people have strong entropy sources at
+      /dev/hw_random.  We'll read from that if it's present.
+
+  * Entropy gathering daemon
+    * socket-based interface
+
+      Some people like running Brian Warner's EGD, or one of several
+      workalikes.  If for some reason you need to run on an old broken
+      OS, this is a better option than many.
+
+      To use EGD, you need to set an address for it.
+
+  * Kludgey fallback entropy collection method (best avoided, not strong)
+
+      If no other strong method works, libottery-lite will fall back to
+      reading various kinds of system information, enumerating
+      processes, checking network stats, and so on, checking syscall
+      timings, and so on.  The Windows and Linux suites of things to
+      look at here aren't too bad, but the others could use some work.
+
+      This is also a matter of some controversy.  Some folks feel that,
+      if you find yourself in this position, you're better off just
+      crashing the application and giving up.  If you're one of them,
+      build with "OTTERY_DISABLE_FALLBACK_RNG" defined, or write your
+      code to check ottery_status().
+
+Testing
+-------
+
+Line coverage is around 80-something% right now -- 93% with EGD turned
+off.  It passes dieharder.  The underlying primitives are tested
+independently to make sure they match blake2b and chacha.
+
+It needs a lot more testing, though.  I'm not going to be happy with
+this until it's got something close to 100%.
 
 Speed comparison
 ----------------
 
-(Done on my desktop.)
+(Done on my desktop soon after I started hacking.)
 
 Right now, with no effort optimizing (and no effort debugging!) it's actually
 about 0-25% faster as libottery for 4-byte outputs. Looks like simplicity pays
@@ -111,8 +395,73 @@ For 1024-byte outputs, libottery-lite is about 150% slower than libottery.
 (4.4 microseconds instead of 1.8.)  That's as expected; when generating a lot
 of bytes at once, cipher performance will dominate.
 
-Copyright notices
------------------
+References
+----------
+
+DJB's post at http://blog.cr.yp.to/20140205-entropy.html discusses some
+   pitfalls with trying to combine multiple entropy sources, some of
+   which might be hostile, and some of which might be observed.  I
+   _think_ that the setup I'm doing here doesn't fall so well into that
+   category, but best make up your own mind.
+
+The chacha20 stream cipher's page at http://cr.yp.to/chacha.html has
+   reference implementations and papers for the ChaCha cipher family.
+   (I picked ChaCha20 because that's what everybody else is doing,
+   though ChaCha12 is probably good enough.)
+
+The BLAKE2 hash function (https://blake2.net/) is based on BLAKE, a SHA3
+   finalist that was based on ChaCha. I chose it because it's fairly
+   simple to implement, and I like the designers.  You could drop in any
+   cryptographic digest with wide enough outputs with minimal effort,
+   though.
+
+   (Why not use Blake2 for the whole thing?  ChaCha has been more
+   studied, and we seem to be converging to ChaCha20 for free software
+   userspace PRNGs.  I don't mind, since that's what I did in Ottery.  I
+   am not competent to turn Blake2 into a stream generator, or to
+   evaluate the wisdom of doing so.)
+
+If you're interested in userspace PRNG design, you should definitely
+   have a look at Theo de Raadt's November 2014 talk
+   (http://www.openbsd.org/papers/hackfest2014-arc4random/index.html) on
+   OpenBSD's design progress on arc4random().  Libottery-lite is, for most
+   practical purposes, an arc4random() clone.
+
+If you're trying to work around a lack of a kernel RNG, or to improve a
+   kernel RNG, you should read Peter Gutmann's publications, especially
+   the revised vesion of his 1998 paper "Software Generation of
+   Practically Strong Random Numbers" that lives at
+   http://www.cypherpunks.to/~peter/06_random.pdf .  Also read
+   https://www.cs.auckland.ac.nz/~pgut001/pubs/nist_rng.pdf .
+
+The original libottery design (whose choices of cryptographic algorithms
+   influenced the October 2013 changes to OpenBSD arc4random, which in
+   turn lead to libottery-lite) still lives at my github page at
+   https://github.com/nmathewson/libottery .  See "what's different"
+   above for a dicussion of how libottery-lite differs from libottery.
+
+For on entropy pooling inside operating system kernels or EGD-like
+   systems, libottery-lite's constructions would be more or less totally
+   wrong.  Instead, you might want to look into Ferguson and Schneier's
+   Fortuna (https://www.schneier.com/fortuna.html).  A survey of which
+   operating systems behave sensibly internally is beyond the scope of
+   this README.
+
+For more information on EGD, see http://egd.sourceforge.net/ -- I don't
+   think it's been maintained in a while, though, and there may well be
+   nicer clones of it.
+
+(My mention of any people and organizations above doesn't mean that I'm
+necessarily doing this the way they'd want me to, or that they're doing
+everything they do the way I think best.)
+
+Acknowledgments
+---------------
+
+XXXX write this.
+
+Copyright-related notices
+-------------------------
 
 To the extent possible under law, Nick Mathewson has waived all copyright and
 related or neighboring rights to libottery-lite, using the creative commons
