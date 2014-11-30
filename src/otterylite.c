@@ -32,18 +32,17 @@
    reseed? */
 #define RESEED_AFTER_BLOCKS 2048
 
-/*
-  If we have a getpid, then the magic number for the ottery structure
-  is OTTERY_MAGIC xor getpid(), to save us a lookup.
- */
-#ifdef _WIN32
 #define OTTERY_MAGIC_MAKE_INVALID(m) ((m) = 0)
 #define OTTERY_MAGIC_MAKE_VALID(m) ((m) = OTTERY_MAGIC)
 #define OTTERY_MAGIC_IS_OKAY(m) ((m) == OTTERY_MAGIC)
+
+#ifdef WIN32
+#define ottery_getpid() 1
+#define PID_OKAY(x) 1
+#define SETPID(x) ((void)0)
 #else
-#define OTTERY_MAGIC_MAKE_INVALID(m) ((m) = getpid())
-#define OTTERY_MAGIC_MAKE_VALID(m) ((m) = (OTTERY_MAGIC ^ getpid()))
-#define OTTERY_MAGIC_IS_OKAY(m) ((m == (OTTERY_MAGIC ^ getpid())))
+#define PID_OKAY(x) ((x) == getpid())
+#define SETPID(x) ((x) = getpid())
 #endif
 
 #if defined(OTTERY_DISABLE_LOCKING) || defined(_WIN32) || \
@@ -104,6 +103,9 @@ install_atfork_handler(void)
 struct ottery_state {
   DECLARE_LOCK(mutex)
   unsigned magic;
+#ifndef _WIN32
+  pid_t pid;
+#endif
   unsigned forkcount;
   int seeding;
   int entropy_status;
@@ -124,9 +126,13 @@ struct ottery_state {
  */
 DECLARE_INITIALIZED_LOCK(static, ottery_mutex)
 /*
-  OTTERY_MAGIC ^ getpid(), if we are initialized.
+  OTTERY_MAGIC, if we are initialized.
  */
 static unsigned ottery_magic;
+#ifndef _WIN32
+/* The PID with which we last initialized  */
+static pid_t ottery_pid;
+#endif
 /*
   The core RNG.  Probably a pointer to it, stored in an mmap.
  */
@@ -273,6 +279,7 @@ ottery_seed(OTTERY_STATE_ARG_FIRST int release_lock)
 #endif
 
 #define NEED_REINIT ( !OTTERY_MAGIC_IS_OKAY(STATE_FIELD(magic)) || \
+                      ! PID_OKAY(STATE_FIELD(pid)) ||              \
                       FORK_COUNT_INCREASED() )
 #endif
 
@@ -315,6 +322,7 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
 
   RESET_FORK_COUNT();
   OTTERY_MAGIC_MAKE_VALID(STATE_FIELD(magic));
+  SETPID(STATE_FIELD(pid));
   return 0;
 }
 
