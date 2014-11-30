@@ -38,8 +38,8 @@ fallback_entropy_accumulator_get_output(
                                   u8 *out)
 {
   TRACE(("I looked at %llu bytes\n", (unsigned long long)fbe->bytes_added));
-  blake2_noendian(out, ENTROPY_CHUNK, fbe->buf, sizeof(fbe->buf),
-                  0x07735, 1);
+  blake2(out, ENTROPY_CHUNK, fbe->buf, sizeof(fbe->buf),
+         0x07735, 1);
   memwipe(fbe, sizeof(fbe));
   return ENTROPY_CHUNK;
 }

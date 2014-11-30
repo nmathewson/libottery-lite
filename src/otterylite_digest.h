@@ -12,10 +12,8 @@
 /*
   For more information on the BLAKE2 family, see  https://blake2.net/
 
-  This is only a partial implementation of BLAKE2.  It does not handle
-  big-endian platforms in the same way that a real implementation would.  It
-  doesn't support keyed hashes.  It doesn't support very long messages.  It
-  doesn't handle parallel hashing.
+  This is only a partial implementation of BLAKE2: It doesn't support keyed
+  hashes, and it doesn't handle parallel hashing.
 */
 
 /* If this is defined to 32, we provide blake2s.  Otherwise, we do blake2b. */
@@ -25,6 +23,7 @@
 /* Here are the definitions for blake2b */
 typedef uint64_t blake2_word_t;
 #define U64(n) n ## ull
+#define BLAKE2_WORD_MAX (U64(0xffffffffffffffff))
 #define BLAKE2_IV0 U64(0x6a09e667f3bcc908)
 #define BLAKE2_IV1 U64(0xbb67ae8584caa73b)
 #define BLAKE2_IV2 U64(0x3c6ef372fe94f82b)
@@ -45,6 +44,7 @@ typedef uint64_t blake2_word_t;
 #else
 /* And here are the definitions for blake2s */
 typedef uint32_t blake2_word_t;
+#define BLAKE2_WORD_MAX 0xffffffff
 #define BLAKE2_IV0 0x6a09e667
 #define BLAKE2_IV1 0xbb67ae85
 #define BLAKE2_IV2 0x3c6ef372
@@ -112,13 +112,13 @@ static const u8 blake2_sigma[12][16] = {
   of bytes written on success, and -1 on failure.
  */
 static int
-blake2_noendian(u8 *output, int output_len,
-                const u8 *input, blake2_word_t input_len,
-                blake2_word_t personalization_0,
-                blake2_word_t personalization_1)
+blake2(u8 *output, int output_len,
+       const u8 *input, size_t input_len,
+       blake2_word_t personalization_0,
+       blake2_word_t personalization_1)
 {
   blake2_word_t h[8];
-  blake2_word_t counter; /* Too short for standard usage; fine for us. */
+  size_t counter;
   blake2_word_t m[16], v[16];
 
   if (output_len > BLAKE2_MAX_OUTPUT || output_len <= 0)
@@ -147,14 +147,14 @@ blake2_noendian(u8 *output, int output_len,
 
       if (input_len > sizeof(m))
         {
-          memcpy(m, input, sizeof(m));
+          read_u64_le(m, input, 16);
           f0 = 0;
           inc = sizeof(m);
         }
       else
         {
           memset(m, 0, sizeof(m));
-          memcpy(m, input, input_len);
+          read_u64_le_partial(m, input, input_len);
           f0 = ~(blake2_word_t)0;
           inc = input_len;
         }
@@ -168,8 +168,12 @@ blake2_noendian(u8 *output, int output_len,
       v[9] = BLAKE2_IV1;
       v[10] = BLAKE2_IV2;
       v[11] = BLAKE2_IV3;
-      v[12] = BLAKE2_IV4 ^ counter;
-      v[13] = BLAKE2_IV5; /* naughty; should be the high word of the counter */
+      v[12] = BLAKE2_IV4 ^ (counter & ~(blake2_word_t)0);
+#if (SIZE_MAX > BLAKE2_WORD_MAX)
+      v[13] = BLAKE2_IV5 ^ (counter >> (sizeof(blake2_word_t)*8));
+#else
+      v[13] = BLAKE2_IV5;
+#endif
       v[14] = BLAKE2_IV6 ^ f0;
       v[15] = BLAKE2_IV7;
 
@@ -184,7 +188,7 @@ blake2_noendian(u8 *output, int output_len,
         }
     } while (input_len);
 
-  memcpy(output, h, output_len);
+  write_u64_le_partial(output,h,output_len);
 
   memwipe(h, sizeof(h));
   memwipe(m, sizeof(m));
@@ -200,10 +204,10 @@ static void
 ottery_digest(u8 *out, const u8 *inp, size_t inplen)
 {
   int blake_output;
-  blake_output = blake2_noendian(out, BLAKE2_MAX_OUTPUT,
-                                 inp, inplen,
-                                 OTTERY_PERSONALIZATION_1,
-                                 OTTERY_PERSONALIZATION_2);
+  blake_output = blake2(out, BLAKE2_MAX_OUTPUT,
+                        inp, inplen,
+                        OTTERY_PERSONALIZATION_1,
+                        OTTERY_PERSONALIZATION_2);
   if (blake_output != BLAKE2_MAX_OUTPUT)
     abort();
 }

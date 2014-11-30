@@ -225,5 +225,126 @@ typedef unsigned char u8;
 #define ROTR64(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
 #define ROTR32(x, n)  (((x) >> (n)) | ((x) << (32 - (n))))
 
+#ifdef OTTERY_X86
+#define OTTERY_LITTLE_ENDIAN /* FFFF List more little-endian architectures */
+#endif
+
+/* Our crypto assumes that we read and write in little-endian order, so here
+   we define some macros/function to do that.
+
+   It is perfectly safe to just use the little-endian variants everywhere:
+   if you do, the test vectors won't fail, but you'll still have a secure
+   hash and a secure stream cipher: they just won't match the behavior of
+   blake and chacha.
+ */
+#ifdef OTTERY_LITTLE_ENDIAN
+/*
+  The "{read,write}_u{32,64}_le()" functions copy a byte sequence to
+  or from an array of 'n' unsigned integers, treating that byte
+  sequence as a little-endian array.
+ */
+#define read_u32_le(out, in, n) { memcpy((out), (in), ((n)*4)); }
+#define write_u32_le(out, in, n) { memcpy((out), (in), ((n)*4)); }
+#define read_u64_le(out, in, n)  { memcpy((out), (in), ((n)*8)); }
+/*
+  The "{read,write}_u{32,64}_le()" functions copy an 'n' byte sequence to or
+  from an array of CEIL(n / sizeof(type)) unsigned integers, treating that
+  byte sequence as a little-endian array.
+ */
+#define write_u64_le_partial(out, in, n) { memcpy((out), (in), (n)); }
+#define read_u64_le_partial(out, in, n)  { memcpy((out), (in), (n)); }
+#else
+
+static inline void
+write_u32_le(u8 *out, const uint32_t *in, int n)
+{
+  int i;
+  for (i = 0; i < n; ++i) {
+    *out++ = ((*in)>>0) & 0xff;
+    *out++ = ((*in)>>8) & 0xff;
+    *out++ = ((*in)>>16) & 0xff;
+    *out++ = ((*in)>>24) & 0xff;
+    ++in;
+  }
+}
+
+static inline void
+read_u32_le(uint32_t *out, const u8 *in, int n)
+{
+  int i;
+  for (i = 0; i < n; ++i) {
+    *out++ = ((in[0] << 0u) |
+              (in[1] << 8u) |
+              (in[2] << 16u) |
+              (in[3] << 24u));
+    in += 4;
+  }
+}
+
+static inline void
+read_u64_le(uint64_t *out, const u8 *in, int n)
+{
+  int i;
+  for (i = 0; i < n; ++i) {
+    *out++ = ( (((uint64_t)in[0]) << 0)  |
+               (((uint64_t)in[1]) << 8)  |
+               (((uint64_t)in[2]) << 16) |
+               (((uint64_t)in[3]) << 24) |
+               (((uint64_t)in[4]) << 32) |
+               (((uint64_t)in[5]) << 40) |
+               (((uint64_t)in[6]) << 48) |
+               (((uint64_t)in[7]) << 56));
+    in += 8;
+  }
+}
+
+static inline void
+read_u64_le_partial(uint64_t *out, const u8 *in, int n)
+{
+  const int whole = (n & ~7);
+  int shift;
+  read_u64_le(out, in, whole>>3);
+  n &= 7;
+  if (n == 0)
+    return;
+  out += (whole>>3);
+  shift = 0;
+  in += whole;
+  *out = 0;
+  while (n--) {
+    *out |= ((uint64_t)*in++) << shift;
+    shift += 8;
+  }
+}
+
+static inline void
+write_u64_le_partial(u8 *out, const uint64_t *in, int n)
+{
+  const size_t whole = (n & ~7);
+  int i;
+  uint64_t lastword;
+
+  for (i = 0; i < whole; i += 8) {
+    *out++ = ((*in)>>0)  & 0xff;
+    *out++ = ((*in)>>8)  & 0xff;
+    *out++ = ((*in)>>16) & 0xff;
+    *out++ = ((*in)>>24) & 0xff;
+    *out++ = ((*in)>>32) & 0xff;
+    *out++ = ((*in)>>40) & 0xff;
+    *out++ = ((*in)>>48) & 0xff;
+    *out++ = ((*in)>>56) & 0xff;
+    ++in;
+  }
+
+  n &= 7;
+  lastword = *in;
+  for (i = 0; i < n; ++i) {
+    *out++ = lastword & 0xff;
+    lastword >>= 8;
+  }
+}
+#endif
+
+
 
 #endif /* OTTERYLITE_H_IMPL_INCLUDED_ */

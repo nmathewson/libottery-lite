@@ -10,10 +10,6 @@
 
 /* The first half of this file defines the ChaCha20 stream cipher.
 
-   This differs from a proper ChaCha20 implementation in that it doesn't
-   support long outputs, and it doesn't produce the same outputs on
-   big-endian platforms.
-
    For more information on ChaCha, see http://cr.yp.to/chacha.html
  */
 
@@ -36,26 +32,32 @@
 
 static void
 chacha20_blocks(const unsigned char key[CHACHA_KEYLEN+CHACHA_IVLEN],
-                int n_blocks,
+                size_t n_blocks,
                 unsigned char *const output)
 {
   uint32_t x[16];
   uint32_t y[16];
-  int i, j;
+  size_t i;
+  int j;
   unsigned char *outp = output;
 
   x[0] = 1634760805u;
   x[1] = 857760878u;
   x[2] = 2036477234u;
   x[3] = 1797285236u;
-  memcpy(&x[4], key, 8 * sizeof(uint32_t));
+  read_u32_le(&x[4], key, 8);
   x[12] = 0;
   x[13] = 0;
-  memcpy(&x[14], key + 32, 2 * sizeof(uint32_t));
+  read_u32_le(&x[14], key + 32, 2);
 
   for (i = 0; i < n_blocks; ++i)
     {
-      x[12] = i;
+      x[12] = (i & 0xffffffffu);
+#if SIZE_MAX > 0xffffffff
+      x[13] = (i >> 32);
+#else
+      x[13] = 0;
+#endif
       memcpy(y, x, sizeof(x));
 
       for (j = 0; j < (CHACHA_ROUNDS / 2); ++j)
@@ -75,7 +77,7 @@ chacha20_blocks(const unsigned char key[CHACHA_KEYLEN+CHACHA_IVLEN],
           y[j] += x[j];
         }
 
-      memcpy(outp, y, sizeof(y));
+      write_u32_le(outp, y, 16);
       outp += sizeof(y);
     }
 

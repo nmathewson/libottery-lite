@@ -34,7 +34,7 @@ test_kat(void *arg)
 #endif
 
       tt_int_op(BLAKE2_MAX_OUTPUT, ==,
-                blake2_noendian(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0));
+                blake2(out, BLAKE2_MAX_OUTPUT, buf, i, 0, 0));
 
       tt_mem_op(out, ==, expected, BLAKE2_MAX_OUTPUT);
     }
@@ -52,16 +52,16 @@ test_output_len(void *arg)
 
   memset(out, 0, sizeof(out));
 
-  tt_int_op(-1, ==, blake2_noendian(out, 128, msg, 3, 0, 0));
+  tt_int_op(-1, ==, blake2(out, 128, msg, 3, 0, 0));
   tt_assert(iszero(out, sizeof(out)));
-  tt_int_op(-1, ==, blake2_noendian(out, 0, msg, 3, 0, 0));
+  tt_int_op(-1, ==, blake2(out, 0, msg, 3, 0, 0));
   tt_assert(iszero(out, sizeof(out)));
-  tt_int_op(1, ==, blake2_noendian(out, 1, msg, 3, 0, 0));
+  tt_int_op(1, ==, blake2(out, 1, msg, 3, 0, 0));
   tt_assert(iszero(out+1, sizeof(out)-1));
-  tt_int_op(20, ==, blake2_noendian(out, 20, msg, 3, 0, 0));
+  tt_int_op(20, ==, blake2(out, 20, msg, 3, 0, 0));
   tt_assert(iszero(out+20, sizeof(out)-20));
   tt_assert(! iszero(out, 20));
-  tt_int_op(21, ==, blake2_noendian(out+20, 21, msg, 3, 0, 0));
+  tt_int_op(21, ==, blake2(out+20, 21, msg, 3, 0, 0));
   tt_mem_op(out, !=, out+20, 20);
  end:
   ;
@@ -117,7 +117,7 @@ test_blake2b_vectors(void *arg)
     size_t len = strlen(BLAKE2B_VECTORS[i].string);
     TT_BLATHER(("Testing %d: %s", i, BLAKE2B_VECTORS[i].string));
 
-    blake2_noendian(hash, 64, (void*)BLAKE2B_VECTORS[i].string, len, 0, 0);
+    blake2(hash, 64, (void*)BLAKE2B_VECTORS[i].string, len, 0, 0);
     ottery_digest(hashp, (void*)BLAKE2B_VECTORS[i].string, len);
 
     tt_mem_op(hash, ==, BLAKE2B_VECTORS[i].hash, 64);

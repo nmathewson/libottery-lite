@@ -128,8 +128,8 @@ Details
 
 To gather entropy: we use all the available high-entropy sources.  If none
 are available, we fall back to an old-school "read all the stuff on the
-system we can find" test.  We then compress the data using Blake2b* to
-generate a key and IV for the ChaCha20* stream cipher.
+system we can find" test.  We then compress the data using Blake2b to
+generate a key and IV for the ChaCha20 stream cipher.
 
 Like Ottery and like OpenBSD's new arc4random, we use the ChaCha20 core to
 generate a lot of bytes at once.  The last 40 bytes will become the next key
@@ -140,13 +140,6 @@ had set aside, and start the process over.
 
 Note that since we destroy each key as soon as we use it, and overwrite each
 part of the stream as soon as we yield it, we shouldn't.
-
-
-*Actually, we don't _exactly_ implement blake2b and chacha20.  Instead,
- we implement an endian-neutral variant of the blake2b/chacha20 code. On
- little-endian machines, it's the standard variants.  On big-endian
- machines, it's equally secure, but produces different outputs.  For a
- PRNG, this doesn't matter.
 
 === API
 

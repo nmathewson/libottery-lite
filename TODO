@@ -103,3 +103,4 @@ Not for 1.0
 
   - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
 
+  - Optimization for unlocking during bulk output.
