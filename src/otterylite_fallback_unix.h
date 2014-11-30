@@ -128,12 +128,30 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
   }
 }
 
+#ifdef OTTERY_X86
+#define USING_OTTERY_CPUTICKS
+static uint64_t
+ottery_cputicks(void)
+{
+  uint32_t lo, hi;
+  __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
+  return lo | ((uint64_t)hi << 32);
+}
+#endif
+
 static void
 fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
 {
   struct timeval tv;
   if (gettimeofday(&tv, NULL) == 0)
     FBENT_ADD(tv);
+
+#ifdef USING_OTTERY_CPUTICKS
+  {
+    uint64_t t = ottery_cputicks();
+    FBENT_ADD(t);
+  }
+#endif
 
 #ifdef CLOCK_MONOTONIC
   {
@@ -255,6 +273,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   }
 #endif
   fallback_entropy_add_clocks(accumulator);
+
   /* Add in addresses from this library, from the socket library (if
      separate), from libc, and from the stack. */
   FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge_nonvolatile);
@@ -273,7 +292,7 @@ ottery_getentropy_fallback_kludge_volatile(
 {
   int i;
 
-  
+
 #ifdef OTTERY_X86
   {
     unsigned regs[4];
@@ -365,4 +384,3 @@ ottery_getentropy_fallback_kludge_volatile(
 #endif
   /* FFFF try some mmap trickery like libressl does */
 }
-
