@@ -128,6 +128,31 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
   }
 }
 
+static void
+fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
+{
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) == 0)
+    FBENT_ADD(tv);
+
+#ifdef CLOCK_MONOTONIC
+  {
+    int i;
+    struct timespec delay = { 0, 10 };
+    for (i = 0; i < (int)N_CLOCK_IDS; ++i)
+      {
+        struct timespec ts;
+        if (clock_gettime(clock_ids[i], &ts) == 0)
+          {
+            FBENT_ADD(ts);
+            clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
+          }
+      }
+  }
+#endif
+
+}
+
 #define FBENT_ADD_FILE(fname)                                   \
   fallback_entropy_accumulator_add_file(accumulator, (fname), 0)
 #define FBENT_ADD_FILE_TAIL(fname, bytes)                               \
@@ -160,6 +185,8 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   }
 #endif
 
+  fallback_entropy_add_clocks(accumulator);
+
   /*
      The pid and the current time; what could go wrong?  (Ask the Debian
      openssl maintainers.
@@ -180,6 +207,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   FBENT_ADD_FILE_TAIL("/var/log/system.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/cron.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/messages", 16384);
+  fallback_entropy_add_clocks(accumulator);
   FBENT_ADD_FILE_TAIL("/var/log/secure", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/lastlog", 8192);
   FBENT_ADD_FILE_TAIL("/var/log/wtmp", 8192);
@@ -204,12 +232,14 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   FBENT_ADD_FILE("/proc/cmdline");
   FBENT_ADD_FILE("/proc/iomem");
   FBENT_ADD_FILE("/proc/keys");
+  fallback_entropy_add_clocks(accumulator);
   FBENT_ADD_FILE("/proc/modules");
   FBENT_ADD_FILE("/proc/mounts");
   FBENT_ADD_FILE("/proc/net/unix");
   FBENT_ADD_FILE("/proc/self/cmdline");
   FBENT_ADD_FILE("/proc/self/environ");
   FBENT_ADD_FILE("/proc/self/stack");
+  fallback_entropy_add_clocks(accumulator);
   FBENT_ADD_FILE("/proc/scsi/device_info");
   FBENT_ADD_FILE("/proc/version");
   FBENT_ADD_FILE("/proc/kallsyms");
@@ -224,7 +254,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
       }
   }
 #endif
-
+  fallback_entropy_add_clocks(accumulator);
   /* Add in addresses from this library, from the socket library (if
      separate), from libc, and from the stack. */
   FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge_nonvolatile);
@@ -243,24 +273,7 @@ ottery_getentropy_fallback_kludge_volatile(
 {
   int i;
 
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) == 0)
-    FBENT_ADD(tv);
-
-#ifdef CLOCK_MONOTONIC
-  {
-    struct timespec delay = { 0, 10 };
-    for (i = 0; i < (int)N_CLOCK_IDS; ++i)
-      {
-        struct timespec ts;
-        if (clock_gettime(clock_ids[i], &ts) == 0)
-          {
-            FBENT_ADD(ts);
-            clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
-          }
-      }
-  }
-#endif
+  
 #ifdef OTTERY_X86
   {
     unsigned regs[4];
