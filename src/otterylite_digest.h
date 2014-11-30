@@ -204,10 +204,9 @@ static void
 ottery_digest(u8 *out, const u8 *inp, size_t inplen)
 {
   int blake_output;
-  blake_output = blake2(out, BLAKE2_MAX_OUTPUT,
+  blake_output = blake2(out, OTTERY_DIGEST_LEN,
                         inp, inplen,
                         OTTERY_PERSONALIZATION_1,
                         OTTERY_PERSONALIZATION_2);
-  if (blake_output != BLAKE2_MAX_OUTPUT)
-    abort();
+  assert(blake_output == OTTERY_DIGEST_LEN);
 }

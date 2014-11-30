@@ -129,6 +129,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
+#include <assert.h>
 #ifdef __linux__
 #include <sys/syscall.h>
 #include <linux/random.h>
