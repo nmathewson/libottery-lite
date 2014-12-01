@@ -86,7 +86,7 @@ ottery_mmap_anon(size_t length)
     return NULL;
 
   ptr = MapViewOfFile(mapping,
-                       PAGE_EXECUTE_READWRITE,
+                      FILE_MAP_WRITE,
                        0, 0, /* offset */
                        0 /* Extends to end of mapping */);
 
