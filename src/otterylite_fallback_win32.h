@@ -18,18 +18,19 @@ load_windows_library(const TCHAR *library_name)
   return LoadLibrary(path);
 }
 
+#define FALLBACK_KLUDGE_ITERATIONS 16
+
 static void
 ottery_getentropy_fallback_kludge_nonvolatile(
-                                 struct fallback_entropy_accumulator *fbe)
+                             struct fallback_entropy_accumulator *accumulator)
 {
-  struct fallback_entropy_accumulator fbe, *accumulator = &fbe;
   HMODULE netapi32 = NULL;
 
   {
     /* From libc, from this library, and from the stack. */
-    FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge);
+    FBENT_ADD_FN_ADDR(ottery_getentropy_fallback_kludge_nonvolatile);
     FBENT_ADD_FN_ADDR(printf);
-    FBENT_ADD_ADDR(fbe);
+    FBENT_ADD_ADDR(accumulator);
   }
   {
     MEMORYSTATUSEX m;
@@ -154,9 +155,9 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 }
 
 static void
-ottery_getentropy_fallback_kludge_nonvolatile(
-                                 int iter,
-                                 struct fallback_entropy_accumulator *fbe)
+ottery_getentropy_fallback_kludge_volatile(
+                             int iter,
+                             struct fallback_entropy_accumulator *accumulator)
 {
   HMODULE netapi32 = NULL;
   netapi32 = load_windows_library("netapi32.dll");
@@ -180,16 +181,16 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
     if (statsget_fn && netfree_fn) {
       LPBYTE b = NULL;
-      if (statsget_fn(NULL, L"LanmanWorkstation", 0, 0, &b) == NERR_Success) {
+      if (statsget_fn(NULL, (LPWSTR) L"LanmanWorkstation", 0, 0, &b) == NERR_Success) {
         FBENT_ADD_CHUNK(b, sizeof(STAT_WORKSTATION_0));
         netfree_fn(b);
       }
-      if (statsget_fn(NULL, L"LanmanServer", 0, 0, &b) == NERR_Success) {
+      if (statsget_fn(NULL, (LPWSTR )L"LanmanServer", 0, 0, &b) == NERR_Success) {
         FBENT_ADD_CHUNK(b, sizeof(STAT_SERVER_0));
         netfree_fn(b);
       }
     }
-    CloseHandle(netapi23);
+    CloseHandle(netapi32);
   }
 
   if (iter % 16)
