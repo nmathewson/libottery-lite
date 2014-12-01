@@ -45,7 +45,7 @@ benchmarks: $(BENCH_PROGRAMS)
 test/tinytest/tinytest.o: test/tinytest/tinytest.c
 	$(CC) $(TEST_CFLAGS) -c $< -o $@
 
-TEST_DEPS = test/test_main.c test/test_blake2.c test/test_chacha.c test/test_entropy.c test/test_fork.c test/test_rng_core.c test/test_shallow.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
+TEST_DEPS = test/test_main.c test/test_blake2.c test/test_chacha.c test/test_egd.c test/test_entropy.c test/test_fork.c test/test_rng_core.c test/test_shallow.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
 
 test/test: $(TEST_DEPS)
 	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@

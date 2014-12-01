@@ -67,15 +67,14 @@ For 1.0
   o Header on all files
 
   - Even later tests:
-    - egd tests
+    o egd tests
     . failing-case tests, where possible.
-    - even better coverage
+    . even better coverage
 
   - actually run the unit tests on windows
   - actually run the unit tests on *bsd
 
-  - Skip tests that aren't expected to work on big-endian systems when
-    on big-endian systems.
+  - Make it build with icc, mvsc, I guess.
 
 - BEFORE EACH RELEASE:
 

@@ -36,6 +36,7 @@ static int iszero(u8 *, size_t);
 #include "test_fork.c"
 #include "test_rng_core.c"
 #include "test_shallow.c"
+#include "test_egd.c"
 
 static int
 iszero(u8 *p, size_t n)
@@ -56,6 +57,7 @@ static struct testgroup_t groups[] = {
 #endif
   { "rng_core/", rng_core_tests },
   { "shallow/", shallow_tests },
+  { "egd/", egd_tests },
   END_OF_GROUPS
 };
 
