@@ -263,7 +263,7 @@ ottery_getentropy_device_(unsigned char *out, int len,
       r = read(fd, out, remain);
       if (r == -1)
         {
-          if (errno == EINTR)
+          if (errno == EINTR || errno == EAGAIN)
             continue;
           output = -1;
           goto out;
