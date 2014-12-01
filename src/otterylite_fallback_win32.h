@@ -45,6 +45,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
                              struct fallback_entropy_accumulator *accumulator)
 {
   HMODULE netapi32 = NULL;
+  HANDLE snap;
 
   {
     /* From libc, from this library, and from the stack. */
@@ -82,7 +83,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   /* FFFF Also see: VirtualQuery, VirtualQueryEx, Raw memory.
    */
 
-  HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
+  snap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
   if (snap != INVALID_HANDLE_VALUE)
     {
       /*

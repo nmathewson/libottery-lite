@@ -441,13 +441,14 @@ OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY)
 unsigned
 OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
 {
+  unsigned divisor, result;
+
   if (upper == 0)
     return 0; /* arc4random(0) works this way, so let's treat it as
                  the least-wrong response to "give me an unsigned int less
                  than 0". */
 
-  const unsigned divisor = UINT_MAX / upper;
-  unsigned result;
+  divisor = UINT_MAX / upper;
 
   LOCK();
   INIT();
@@ -464,11 +465,11 @@ OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
 uint64_t
 OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
 {
+  uint64_t divisor, result;
   if (upper == 0)
     return 0;
 
-  const uint64_t divisor = UINT64_MAX / upper;
-  uint64_t result;
+  divisor = UINT64_MAX / upper;
 
   LOCK();
   INIT();

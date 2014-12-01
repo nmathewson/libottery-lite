@@ -73,6 +73,9 @@ fallback_entropy_accumulator_add_chunk(
 
 #ifdef OTTERY_X86
 #define USING_OTTERY_CPUTICKS
+#ifdef _MSC_VER
+#define ottery_cputicks() __rdtsc()
+#else
 static uint64_t
 ottery_cputicks(void)
 {
@@ -80,6 +83,7 @@ ottery_cputicks(void)
   __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
   return lo | ((uint64_t)hi << 32);
 }
+#endif
 #endif
 
 static void fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator);
@@ -99,8 +103,8 @@ static void
 fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 {
   int i;
-  const long sizes[] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
-  const int n_sizes = sizeof(sizes)/sizeof(sizes[0]);
+  const int n_sizes = 9
+  const long sizes[n_sizes] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
   char *pointers[n_sizes];
   size_t offset;
 #ifndef _WIN32
