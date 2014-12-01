@@ -103,7 +103,7 @@ static void
 fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 {
   int i;
-  const int n_sizes = 9
+  const int n_sizes = 9;
   const long sizes[n_sizes] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
   char *pointers[n_sizes];
   size_t offset;
