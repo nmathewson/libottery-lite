@@ -355,7 +355,7 @@ ottery_getentropy_proc_uuid(unsigned char *out)
       n += r;
       cp += r;
     }
-  blake2_noendian(out, ENTROPY_CHUNK, buf, n, 909090, 1010101);
+  blake2(out, ENTROPY_CHUNK, buf, n, 909090, 1010101);
   memwipe(buf, sizeof(buf));
   return ENTROPY_CHUNK;
 }
@@ -460,7 +460,7 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
         return -1;
       n_read += n;
     }
-  blake2_noendian(out, ENTROPY_CHUNK, (u8*)buf, n_read, 444, 1234567);
+  blake2(out, ENTROPY_CHUNK, (u8*)buf, n_read, 444, 1234567);
   return ENTROPY_CHUNK;
 }
 #else
