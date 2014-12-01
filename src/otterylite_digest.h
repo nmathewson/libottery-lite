@@ -118,11 +118,15 @@ blake2(u8 *output, int output_len,
        blake2_word_t personalization_1)
 {
   blake2_word_t h[8];
-  size_t counter;
+  blake2_word_t counter;
   blake2_word_t m[16], v[16];
 
   if (output_len > BLAKE2_MAX_OUTPUT || output_len <= 0)
     return -1;
+#if SIZE_MAX > BLAKE2_WORD_MAX
+  if (input_len > BLAKE2_WORD_MAX)
+    return -1;
+#endif
 
   counter = 0;
   h[0] = BLAKE2_IV0;
@@ -161,7 +165,7 @@ blake2(u8 *output, int output_len,
 
       counter += inc;
       input += inc;
-      input_len -= inc;
+      input_len -= (size_t)inc;
 
       memcpy(v, h, sizeof(h));
       v[8] = BLAKE2_IV0;

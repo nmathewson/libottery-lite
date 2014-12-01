@@ -33,7 +33,7 @@ fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
   }
 #endif
   QueryPerformanceCounter(&pc);
-  GetSystemTimePreciseAsFileTime(&ft);
+  /* GetSystemTimePreciseAsFileTime(&ft); Not old enough. */
   ms = GetTickCount();
   FBENT_ADD(pc);
   FBENT_ADD(ft);
@@ -126,7 +126,8 @@ ottery_getentropy_fallback_kludge_nonvolatile(
     HMODULE lib = load_windows_library(TEXT("ihplapi.dll"));
     IP_ADAPTER_ADDRESSES *addrs = NULL;
     if (lib) {
-      if ((getadapters_fn = (void*)GetProcAddress(lib, "GetAdaptersAddresses"))) {
+      getadapters_fn = (void*)GetProcAddress(lib, "GetAdaptersAddresses");
+      if (getadapters_fn) {
         ULONG size, res;
         addrs = malloc(16384);
         if (addrs)
