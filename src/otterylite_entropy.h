@@ -245,7 +245,8 @@ ottery_getentropy_cryptgenrandom(unsigned char *out)
 static int
 ottery_getentropy_device_(unsigned char *out, int len,
                           const char *fname,
-                          unsigned need_mode_flags)
+                          unsigned need_mode_flags,
+                          int want_major, int want_minor)
 {
   int fd;
   int r, output = -1, remain = len;
@@ -262,7 +263,11 @@ ottery_getentropy_device_(unsigned char *out, int len,
   if ((st.st_mode & need_mode_flags) != need_mode_flags)
     goto out; /* If it's not a device, and we asked for one, that's a bad
                * sign. */
-  /* FFFF Check the actual device numbers */
+  if (want_major >= 0 && want_minor >= 0) {
+    if ((int)major(st.st_rdev) != want_major ||
+        (int)minor(st.st_rdev) != want_minor)
+      goto out;
+  }
 
   /* Read until we hit EOF, an error, or the number of bytes we wanted */
   output = 0;
@@ -290,15 +295,30 @@ ottery_getentropy_device_(unsigned char *out, int len,
   return output;
 }
 
+#ifdef __linux__
+#define DEV_RANDOM_MAJOR 1
+#define DEV_RANDOM_MINOR 8
+#define DEV_URANDOM_MAJOR 1
+#define DEV_URANDOM_MINOR 9
+#define DEV_HWRNG_MAJOR 1
+#define DEV_HWRNG_MINOR 10
+#else
+#define DEV_RANDOM_MAJOR -1
+#define DEV_RANDOM_MINOR -1
+#define DEV_URANDOM_MAJOR -1
+#define DEV_URANDOM_MINOR -1
+#endif
+
 /*
   Try to read from the most urandom-like file available.
  */
 static int
 ottery_getentropy_dev_urandom(unsigned char *out)
 {
-#define TRY(fname)                                                      \
+#define TRY(fname, maj, min)                                            \
   do {                                                                  \
-    r = ottery_getentropy_device_(out, ENTROPY_CHUNK, fname, S_IFCHR);  \
+    r = ottery_getentropy_device_(out, ENTROPY_CHUNK, fname, S_IFCHR,   \
+                                  maj, min);                            \
     if (r == ENTROPY_CHUNK)                                             \
       return r;                                                         \
   } while (0)
@@ -309,16 +329,16 @@ ottery_getentropy_dev_urandom(unsigned char *out)
     According to the libressl-portable people, this is where you have to look
     if you're doing O_NOFOLLOW and trying to find a urandom device on sunos.
    */
-  TRY("/devices/pseudo/random@0:urandom");
+  TRY("/devices/pseudo/random@0:urandom", -1, -1);
 #endif
 #ifdef __OpenBSD__
   /*
     OpenBSD puts its RNG in srandom.  ????? Is this so?
    */
-  TRY("/dev/srandom");
+  TRY("/dev/srandom", -1, -1);
 #endif
-  TRY("/dev/urandom");
-  TRY("/dev/random");
+  TRY("/dev/urandom", DEV_URANDOM_MAJOR, DEV_URANDOM_MINOR);
+  TRY("/dev/random", DEV_RANDOM_MAJOR, DEV_RANDOM_MINOR);
   return -1;
 }
 
@@ -328,8 +348,9 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
 {
   int r;
 
-  TRY("/dev/hwrandom");
-  TRY("/dev/hw_random");
+  TRY("/dev/hwrandom", -1, -1);
+  TRY("/dev/hw_random", -1, -1);
+  TRY("/dev/hwrng", DEV_HWRNG_MAJOR, DEV_HWRNG_MINOR);
   return -1;
 }
 #undef TRY
@@ -357,7 +378,7 @@ ottery_getentropy_proc_uuid(unsigned char *out)
    * entropy. Make an extra call just in case */
   for (i = 0; i < 3; ++i)
     {
-      r = ottery_getentropy_device_(cp, LINUX_UUID_LEN, "/proc/sys/kernel/random/uuid", 0);
+      r = ottery_getentropy_device_(cp, LINUX_UUID_LEN, "/proc/sys/kernel/random/uuid", 0, -1, -1);
       if (r < 0)
         return -1;
       n += r;

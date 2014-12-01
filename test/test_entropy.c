@@ -83,7 +83,7 @@ test_entropy_generic_device(void *arg)
   memset(buf, 0, sizeof(buf));
 
   /* 1. Reading a nonexistent file is an error. */
-  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, fname, 0));
+  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, fname, 0, -1, -1));
   tt_assert(iszero(buf, sizeof(buf)));
 
   /* 2. But we can read from a file that's there. */
@@ -93,24 +93,24 @@ test_entropy_generic_device(void *arg)
   close(fd);
   fd = -1;
 
-  tt_int_op(32, ==, ottery_getentropy_device_(buf, 32, fname, 0));
+  tt_int_op(32, ==, ottery_getentropy_device_(buf, 32, fname, 0, -1, -1));
   tt_mem_op(buf, ==, junk, 32);
   tt_assert(iszero(buf+32,32));
   memset(buf, 0, sizeof(buf));
 
   /* 3. We can't read from it if we insist that it be a device, though. */
-  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, fname, S_IFCHR));
+  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, fname, S_IFCHR, -1, -1));
   tt_assert(iszero(buf, sizeof(buf)));
 
   /* 4. And we use nofollow, so it won't work if it's a link. */
   tt_assert(0==symlink(fname, linkname));
-  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, linkname, 0));
+  tt_int_op(-1, ==, ottery_getentropy_device_(buf, 32, linkname, 0, -1, -1));
   tt_assert(iszero(buf, sizeof(buf)));
 
   /* 5. EOF shouldn't actually ever happen.  But make sure we handle it.
    */
   tt_int_op(sizeof(junk), ==,
-            ottery_getentropy_device_(buf, sizeof(buf), fname, 0));
+            ottery_getentropy_device_(buf, sizeof(buf), fname, 0, -1, -1));
   tt_mem_op(buf, ==, junk, sizeof(junk));
   tt_assert(iszero(buf+sizeof(junk), sizeof(buf)-sizeof(junk)));
 
