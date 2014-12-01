@@ -77,6 +77,9 @@ test_shallow_uniform(void *arg)
 
     if (u64 > quite_big)
       ++got_a_big_one;
+
+    tt_int_op(OTTERY_PUBLIC_FN(random_uniform)(OTTERY_STATE_ARG_OUT COMMA 0), ==, 0);
+    tt_assert(OTTERY_PUBLIC_FN(random_uniform64)(OTTERY_STATE_ARG_OUT COMMA 0) == 0);
   }
   for (i = 0; i < 5; ++i) {
     tt_int_op(0, !=, count[i]);
