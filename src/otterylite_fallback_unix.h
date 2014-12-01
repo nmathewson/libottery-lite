@@ -6,6 +6,10 @@
 */
 
 #ifndef __linux__
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_var.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp_var.h>
 #endif
