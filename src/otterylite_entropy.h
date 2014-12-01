@@ -474,17 +474,19 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
 static int
 ottery_getentropy_bsd_sysctl(unsigned char *out)
 {
-  int mib[] = { CTL_KERN, CTL_ARND };
+  int i;
+  int mib[] = { CTL_KERN, KERN_ARND };
 
   /* I hear that some BSDs don't like returning anything but sizeof(unsigned)
    * bytes at a time from this one. */
   for (i = 0; i < ENTROPY_CHUNK; i += sizeof(unsigned))
     {
-      int n = sizeof(unsigned);
+      size_t n = sizeof(unsigned);
       if (sysctl(mib, 2, out, &n, NULL, 0) == -1 || n <= 0)
         return -1;
       out += n;
     }
+  return ENTROPY_CHUNK;
 }
 #else
 #define ottery_getentropy_bsd_sysctl NULL

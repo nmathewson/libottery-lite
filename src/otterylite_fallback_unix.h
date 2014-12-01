@@ -5,6 +5,11 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
+#ifndef __linux__
+#include <netinet/udp_var.h>
+#include <netinet/tcp_var.h>
+#endif
+
 /*
   Here are a bunch of things we can ask clock_gettime() about.  There probably
   isn't more than a bit of entropy in each, but we can hope.
@@ -152,7 +157,7 @@ fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
         if (clock_gettime(clock_ids[i], &ts) == 0)
           {
             FBENT_ADD(ts);
-            clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
+            nanosleep(&delay, NULL);
           }
       }
   }

@@ -77,7 +77,7 @@ For 1.0
   - Make it build with icc, mvsc, I guess.
 
   o header on all files, dedication on all files.
-  - Fix all XXXX comments
+  o Fix all XXXX comments
   - Re-run uncrustify and emacs indent
   o Get it building with all the warnings I can
   - Run dieharder tests with all the options.
