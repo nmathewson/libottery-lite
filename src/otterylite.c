@@ -385,10 +385,11 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
  */
 #define INIT()                                                  \
   do {                                                          \
-  if (UNLIKELY( NEED_REINIT )) {                                \
-    int rrr = ottery_handle_reinit(OTTERY_STATE_ARG_OUT);       \
-    if (rrr < 0) {                                              \
-      abort();                                                  \
+    if (UNLIKELY( NEED_REINIT )) {                              \
+      int rrr = ottery_handle_reinit(OTTERY_STATE_ARG_OUT);     \
+      if (rrr < 0) {                                            \
+        abort();                                                \
+      }                                                         \
     }                                                           \
   } while (0)
 
