@@ -331,6 +331,7 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
 #endif
 
 #ifdef __linux__
+#define LINUX_UUID_LEN 37
 /*
   So, if you don't have getrandom(), and you don't have a working /dev, but
   you still have /proc, you can still get the kernel to give you entropy.
@@ -340,16 +341,15 @@ static int
 ottery_getentropy_proc_uuid(unsigned char *out)
 {
   /* ???? Verify that this actually uses urandom. */
-  /* XXXX Use three, just in case. */
   int n = 0, r, i;
-  u8 buf[37 * 2], *cp = buf;
+  u8 buf[LINUX_UUID_LEN * 3], *cp = buf;
 
   memset(buf, 0, sizeof(buf));
-  /* Each call yields 37 bytes, containing 16 actual bytes of entropy. Make
-   * two calls to get 32 bytes of entropy. */
-  for (i = 0; i < 2; ++i)
+  /* Each call yields LINUX_UUID_LEN bytes, containing 16 actual bytes of
+   * entropy. Make an extra call just in case */
+  for (i = 0; i < 3; ++i)
     {
-      r = ottery_getentropy_device_(cp, 37, "/proc/sys/kernel/random/uuid", 0);
+      r = ottery_getentropy_device_(cp, LINUX_UUID_LEN, "/proc/sys/kernel/random/uuid", 0);
       if (r < 0)
         return -1;
       n += r;
@@ -447,16 +447,16 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
 {
   int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
   int n_read = 0, i;
-  char buf[74];
+  char buf[LINUX_UUID_LEN * 3];
 
   memset(buf, 0, 74);
-  for (i = 0; i < 2; ++i)
+  for (i = 0; i < 3; ++i)
     {
-      size_t n = 37;
+      size_t n = LINUX_UUID_LEN;
       int r = sysctl(mib, 3, buf, &n, NULL, 0);
       if (r < 0 && errno == ENOSYS)
         return -2;
-      else if (r < 0 || n > 37)
+      else if (r < 0 || n > LINUX_UUID_LEN)
         return -1;
       n_read += n;
     }
