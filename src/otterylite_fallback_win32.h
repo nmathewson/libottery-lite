@@ -156,9 +156,9 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
   netapi32 = load_windows_library("netapi32.dll");
   if (netapi32 != NULL) {
-    NET_API_STATUS (*servergetinfo_fn)(LPWSTR, DWORD, LPBYTE *)
+    NET_API_STATUS (WINAPI *servergetinfo_fn)(LPWSTR, DWORD, LPBYTE *)
       = (void*)GetProcAddress(netapi32, "NetServerGetInfo");
-    NET_API_STATUS (*netfree_fn)(LPVOID) =
+    NET_API_STATUS (WINAPI *netfree_fn)(LPVOID) =
       (void*)GetProcAddress(netapi32, "NetApiBufferFree");
 
     if (servergetinfo_fn && netfree_fn) {
@@ -187,9 +187,9 @@ ottery_getentropy_fallback_kludge_volatile(
   fallback_entropy_add_clocks(accumulator);
 
   if (netapi32 != NULL) {
-    NET_API_STATUS (*statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
+    NET_API_STATUS (WINAPI *statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
       = (void*)GetProcAddress(netapi32, "NetStatisticsGet");
-    NET_API_STATUS (*netfree_fn)(LPVOID) =
+    NET_API_STATUS (WINAPI *netfree_fn)(LPVOID) =
       (void*)GetProcAddress(netapi32, "NetApiBufferFree");
 
     if (statsget_fn && netfree_fn) {
