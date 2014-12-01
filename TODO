@@ -81,7 +81,7 @@ For 1.0
   - header on all files, dedication on all files.
   - Fix all XXXX comments
   - Re-run uncrustify and emacs indent
-  - Get it building with all the warnings I can
+  o Get it building with all the warnings I can
   - Run dieharder tests with all the options.
 
 Probably not for 1.0:
@@ -103,3 +103,17 @@ Not for 1.0
   - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
 
   - Optimization for unlocking during bulk output.
+
+
+
+
+
+
+
+- BEFORE EACH RELEASE:
+
+  - header on all files, dedication on all files.
+  - Fix all XXXX comments
+  - Re-run uncrustify and emacs indent
+  o Get it building with all the warnings I can
+  - Run dieharder tests with all the options.
