@@ -12,13 +12,12 @@
 static void
 test_kat(void *arg)
 {
-  (void)arg;
-
 #define ITERATIONS 256
   int i;
   /* this will fail if the platform is big-endian. Don't worry. */
   u8 buf[KAT_LENGTH];
   u8 out[64];
+  (void)arg;
 
   for (i = 0; i < KAT_LENGTH; ++i)
     {
