@@ -166,7 +166,7 @@ ottery_bytes_slow(struct ottery_rng *st, u8 *out, size_t n,
   chacha20_blocks(st->buf + OTTERY_BUFLEN - OTTERY_KEYLEN, OTTERY_N_BLOCKS, st->buf);
   memcpy(out, st->buf, n);
   memset(st->buf, 0, n);
-  st->idx = n;
+  st->idx = (unsigned) n;
 }
 
 /*

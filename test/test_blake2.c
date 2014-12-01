@@ -68,7 +68,7 @@ test_output_len(void *arg)
 }
 
 static const struct {
-  char *string;
+  const char *string;
   u8 hash[64];
   u8 personalized_hash[64];
 } BLAKE2B_VECTORS[] = {
@@ -110,7 +110,9 @@ static const struct {
 static void
 test_blake2b_vectors(void *arg)
 {
-  int i;
+  unsigned i;
+  (void)arg;
+
   for (i = 0; i < N_BLAKE2B_VECTORS; ++i) {
     u8 hash[64];
     u8 hashp[64];

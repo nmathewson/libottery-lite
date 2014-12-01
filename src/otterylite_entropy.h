@@ -260,7 +260,7 @@ ottery_getentropy_device_(unsigned char *out, int len,
   output = 0;
   while (remain)
     {
-      r = read(fd, out, remain);
+      r = (int) read(fd, out, remain);
       if (r == -1)
         {
           if (errno == EINTR || errno == EAGAIN)
@@ -406,7 +406,7 @@ ottery_getentropy_egd(unsigned char *out)
 
   while (n_read < ENTROPY_CHUNK)
     {
-      int r = recv(sock, (void*)out, ENTROPY_CHUNK - n_read, 0);
+      int r = (int) recv(sock, (void*)out, ENTROPY_CHUNK - n_read, 0);
       if (r < 0) {
         if (errno == EAGAIN || errno == EINTR)
           continue;
@@ -638,7 +638,7 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
   else
     *status_out = 2;  /* We have at least one good source. */
 
-  return outp - out;
+  return (int) ( outp - out );
 }
 
 /*

@@ -110,7 +110,7 @@ struct ottery_state {
   int seeding;
   int entropy_status;
   unsigned seed_counter;
-  DECLARE_RNG(rng);
+  DECLARE_RNG(rng)
 };
 #define LOCK()                                  \
   do {                                          \
@@ -338,7 +338,7 @@ ottery_handle_reinit(OTTERY_STATE_ARG_ONLY)
 #ifdef _WIN32
   /* No fork means no postfork */
   postfork = 0;
-#elif USING_INHERIT_ZERO
+#elif defined(USING_INHERIT_ZERO)
   /* If the magic is set to something but the RNG magic got zeroed, we
      forked. */
   postfork = STATE_FIELD(magic) && RNG_PTR && RNG_PTR->magic == 0;

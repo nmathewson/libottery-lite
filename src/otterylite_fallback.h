@@ -85,8 +85,10 @@ fallback_entropy_accumulator_add_chunk(
   } while (0)
 #define FBENT_ADD_FN_ADDR(ptr)                                          \
   do {                                                                  \
+    int (*fnp)();                                                       \
     uint64_t p = 0;                                                     \
-    memcpy(&p, ptr, sizeof(ptr)<sizeof(p) ? sizeof(ptr) : sizeof(p));   \
+    fnp = (int(*)())(ptr);                                              \
+    p = (uint64_t)(void*)fnp;                                           \
     FBENT_ADD(p);                                                       \
   } while (0)
 

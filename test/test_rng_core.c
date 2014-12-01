@@ -15,6 +15,7 @@ test_rng_core_construction_short(void *arg)
   u8 *streamp = stream;
   int i;
   uint64_t ones = 0, zeros = ~(uint64_t)0, t;
+  (void)arg;
 
   ottery_setkey(&rng, key);
   chacha20_blocks(key, OTTERY_BUFLEN / 64, stream);
@@ -68,6 +69,7 @@ test_rng_core_construction_long(void *arg)
   int i;
   struct ottery_rng rng;
   int streamlen;
+  (void)arg;
 
   ottery_setkey(&rng, key);
 
@@ -86,7 +88,7 @@ test_rng_core_construction_long(void *arg)
     streamp = keyp;
   }
 
-  streamlen = streamp - stream;
+  streamlen = (int) (streamp - stream);
   tt_int_op(streamlen, ==, (OTTERY_BUFLEN - OTTERY_KEYLEN) * nbufs);
 
   streamp = stream;

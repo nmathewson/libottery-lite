@@ -56,7 +56,7 @@ free_rng_(struct ottery_rng **rng)
   }
 }
 
-#elif _WIN32
+#elif defined(_WIN32)
 
 #define USING_MMAP
 

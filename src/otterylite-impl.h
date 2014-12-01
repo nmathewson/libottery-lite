@@ -192,6 +192,7 @@
 #else
 #define UNLIKELY(expr) (expr)
 #define LIKELY(expr) (expr)
+#define __attribute__(x)
 #endif
 
 #ifdef OTTERY_BE_ARC4RANDOM

@@ -17,6 +17,9 @@ const u8 notsorandom[] =
   "If you've never gotten a nontrivial project to 100% coverage, I can't "
   "explain it; you need to feel it yourself.";
 
+static void run_egd_server(int fd_listen, int fd_out)
+  __attribute__((noreturn));
+
 static void
 run_egd_server(int fd_listen, int fd_out)
 {
@@ -113,7 +116,7 @@ test_egd_success(void *arg)
   tt_assert(! iszero(buf, ENTROPY_CHUNK));
   tt_mem_op(buf, ==, notsorandom, ENTROPY_CHUNK);
 
-  r = read(pipefds[0], buf, 1);
+  r = (int)read(pipefds[0], buf, 1);
   tt_int_op(r, ==, 1);
   waitpid(pid, &exitstatus, 0);
   tt_int_op(exitstatus, ==, 0);

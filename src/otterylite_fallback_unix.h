@@ -99,12 +99,12 @@ static const struct {
 static void
 fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
                                       const char *fname,
-                                      size_t tailbytes)
+                                      int tailbytes)
 {
   unsigned char tmp[1024];
   int fd;
   int n;
-  size_t max_to_read = 1024*1024;
+  ssize_t max_to_read = 1024*1024;
   struct stat st;
   fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
   if (fd < 0)
@@ -113,12 +113,12 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
     fallback_entropy_accumulator_add_chunk(fbe, &st, sizeof(st));
   }
   if (tailbytes) {
-    lseek(fd, 2, 0-(ssize_t)tailbytes);
+    lseek(fd, 2, -tailbytes);
     max_to_read = tailbytes;
   }
 
   while (1) {
-    n = read(fd, tmp, sizeof(tmp));
+    n = (int) read(fd, tmp, sizeof(tmp));
     if (n <= 0)
       break;
     fallback_entropy_accumulator_add_chunk(fbe, tmp, n);
@@ -291,7 +291,7 @@ ottery_getentropy_fallback_kludge_volatile(
                      struct fallback_entropy_accumulator *accumulator)
 {
   int i;
-
+  (void)iteration;
 
 #ifdef OTTERY_X86
   {

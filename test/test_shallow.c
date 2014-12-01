@@ -25,6 +25,7 @@ test_shallow_unsigned(void *arg)
   uint64_t acc64 = 0, dec64 = ~acc;
   unsigned acc16 = 0, dec16 = 0xffff;
   int i;
+  (void)arg;
   DECLARE_STATE();
   INIT_STATE();
 
@@ -58,6 +59,7 @@ test_shallow_uniform(void *arg)
   const uint64_t bigger_still = (((uint64_t)1)<<51) - (quite_big / 5);
   int got_a_big_one = 0;
   int got_a_big_small_one = 0;
+  (void)arg;
   DECLARE_STATE();
 
   memset(count, 0, sizeof(count));
@@ -114,7 +116,7 @@ test_shallow_buf(void *arg)
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf2, 20);
     tt_int_op(buf1[5], ==, 0xcccccccc);
     tt_int_op(buf2[5], ==, 0xdddddddd);
-    
+
     for (i = 0; i < 5; ++i) {
       acc1[i] |= buf1[i];
       acc2[i] |= buf2[i];
@@ -164,10 +166,11 @@ test_manual_reseed(void *arg)
 static void
 test_auto_reseed(void *arg)
 {
-  int i = 0;
+  unsigned i = 0;
   u8 buf[2500];
   const unsigned count = (OTTERY_BUFLEN - OTTERY_KEYLEN) * RESEED_AFTER_BLOCKS;
   const unsigned blocks = (count+sizeof(buf)-1) / sizeof(buf);
+  (void)arg;
   DECLARE_STATE();
   INIT_STATE();
 

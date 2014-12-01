@@ -12,7 +12,8 @@
 #include <string.h>
 #include "otterylite.h"
 
-void write3(unsigned u)
+static void
+write3(unsigned u)
 {
   unsigned char b3[3];
   b3[0] = u & 0xff;
@@ -20,14 +21,16 @@ void write3(unsigned u)
   b3[2] = (u>>16) & 0xff;
   write(1, b3, 3);
 }
-void write7(uint64_t u64)
+static void
+write7(uint64_t u64)
 {
   uint32_t u32 = (uint32_t) u64;
   write(1, &u32, 4);
   write3((unsigned) (u64 >> 32));
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   unsigned char buf[9000];
   int yes_really = 0;

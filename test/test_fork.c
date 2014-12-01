@@ -45,7 +45,7 @@ cleanup_fork_data(const struct testcase_t *tc, void *arg)
   if (d->forked == 0) {
     TT_GRIPE(("Fork never happened"));
     ok = 0;
-  } else if ((r = read(d->pipefds[0], &msg, 1)) != 1) {
+  } else if ((r = (int)read(d->pipefds[0], &msg, 1)) != 1) {
     if (! d->shouldcrash) {
       if (r < 0)
         TT_GRIPE(("read_failed on %d: %s", d->pipefds[0], strerror(errno)));

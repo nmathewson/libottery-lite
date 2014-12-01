@@ -140,11 +140,11 @@ test_entropy_generic_device(void *arg)
     return len;                                      \
   }
 
-TEST_ENTROPY_DISP_FUNC(a,'a');
-TEST_ENTROPY_DISP_FUNC(b,'b');
-TEST_ENTROPY_DISP_FUNC(c,'c');
-TEST_ENTROPY_DISP_FUNC(d,'d');
-TEST_ENTROPY_DISP_FUNC(e,'e');
+TEST_ENTROPY_DISP_FUNC(a,'a')
+TEST_ENTROPY_DISP_FUNC(b,'b')
+TEST_ENTROPY_DISP_FUNC(c,'c')
+TEST_ENTROPY_DISP_FUNC(d,'d')
+TEST_ENTROPY_DISP_FUNC(e,'e')
 
 static struct entropy_source test_sources[] = {
   { "a", entropy_source_fn_a, 1,  1, 0 },
@@ -160,6 +160,7 @@ test_entropy_dispatcher(void *arg)
   const int N = 5;
   u8 buf[ENTROPY_CHUNK * (N+1)];
   int status = -10;
+  (void)arg;
 
   memset(buf, 0, sizeof(buf));
 
