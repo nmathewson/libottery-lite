@@ -311,7 +311,6 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
 
   install_atfork_handler(); /* This should be idempotent. */
 
-  RNG_PTR->magic = RNG_MAGIC;
   STATE_FIELD(entropy_status) = -2; /* We start out uninitialized */
 
   if (ottery_seed(OTTERY_STATE_ARG_OUT COMMA 0) < 0) {
@@ -320,6 +319,7 @@ ottery_init_backend(OTTERY_STATE_ARG_FIRST int postfork)
     return -1;
   }
 
+  RNG_PTR->magic = RNG_MAGIC;
   RESET_FORK_COUNT();
   OTTERY_MAGIC_MAKE_VALID(STATE_FIELD(magic));
   SETPID(STATE_FIELD(pid));
@@ -356,6 +356,12 @@ OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY)
   memset(state, 0, sizeof(*state));
   if (ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA 0) < 0)
     abort();
+}
+int
+OTTERY_PUBLIC_FN2 (try_init)(OTTERY_STATE_ARG_ONLY)
+{
+  memset(state, 0, sizeof(*state));
+  return (ottery_init_backend(OTTERY_STATE_ARG_OUT COMMA 0) < 0 ? -1 : 0);
 }
 #endif
 

@@ -10,6 +10,8 @@
 #ifndef OTTERYLITE_ALLOC_H_INCLUDED
 #define OTTERYLITE_ALLOC_H_INCLUDED
 
+IF_TESTING(static int ottery_testing_make_alloc_fail;)
+
 #if defined(OTTERY_RNG_NO_HEAP) && defined(OTTERY_RNG_NO_MMAP)
 
 /*
@@ -42,6 +44,10 @@
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
+  IF_TESTING({
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
   *rng = calloc(1, sizeof(**rng));
   return rng ? 0 : -1;
 }
@@ -65,6 +71,11 @@ free_rng_(struct ottery_rng **rng)
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
+  IF_TESTING({
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
+
   HANDLE mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
                                      NULL, /*attributes*/
                                      PAGE_READWRITE,
@@ -117,6 +128,11 @@ free_rng_(struct ottery_rng **rng)
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
+  IF_TESTING({
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
+
   *rng = mmap(NULL, sizeof(**rng),
               PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
               -1, 0);

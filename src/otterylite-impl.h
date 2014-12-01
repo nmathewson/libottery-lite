@@ -195,6 +195,12 @@
 #define __attribute__(x)
 #endif
 
+#ifdef OTTERY_BUILDING_TESTS
+#define IF_TESTING(x) x
+#else
+#define IF_TESTING(x)
+#endif
+
 #ifdef OTTERY_BE_ARC4RANDOM
 /* We suppressed any declarations of arc4random_foo in the system headers,
  * but now we can undo that. */

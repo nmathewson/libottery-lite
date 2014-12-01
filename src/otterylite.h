@@ -104,6 +104,7 @@ struct ottery_state;
 #ifdef OTTERY_STRUCT
 size_t OTTERY_PUBLIC_FN2 (state_size)(void);
 void OTTERY_PUBLIC_FN2 (init)(OTTERY_STATE_ARG_ONLY);
+int OTTERY_PUBLIC_FN2 (try_init)(OTTERY_STATE_ARG_ONLY);
 #endif
 
 void OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY);

@@ -242,6 +242,24 @@ test_shallow_status_2(void *arg)
 }
 
 static void
+test_shallow_status_3(void *arg)
+{
+  DECLARE_STATE();
+  (void)arg;
+
+  ottery_testing_make_alloc_fail = 1;
+
+#ifdef OTTERY_STRUCT
+  state = calloc(1, ottery_st_state_size());
+  tt_int_op(-1, ==, OTTERY_PUBLIC_FN2(try_init)(OTTERY_STATE_ARG_OUT));
+#else
+  tt_int_op(-2, ==, OTTERY_PUBLIC_FN2(status)(OTTERY_STATE_ARG_OUT));
+#endif
+ end:
+  RELEASE_STATE();
+}
+
+static void
 test_shallow_addrandom(void *arg)
 {
   u8 buf[600] = "708901345660";
@@ -310,6 +328,7 @@ static struct testcase_t shallow_tests[] = {
   { "reseed_after_data", test_auto_reseed, TT_FORK, NULL, NULL },
   { "status_1", test_shallow_status_1, TT_FORK, NULL, NULL },
   { "status_2", test_shallow_status_2, TT_FORK, NULL, NULL },
+  { "status_3", test_shallow_status_3, TT_FORK, NULL, NULL },
   { "addrandom", test_shallow_addrandom, TT_FORK, NULL, NULL },
 
 #ifdef OTTERY_STRUCT

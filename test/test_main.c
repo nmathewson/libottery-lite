@@ -5,6 +5,8 @@
   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 */
 
+#define OTTERY_BUILDING_TESTS
+
 #include "otterylite.c"
 
 #include "tinytest.h"
