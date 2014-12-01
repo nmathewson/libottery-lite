@@ -170,14 +170,14 @@ static void
 test_auto_reseed(void *arg)
 {
   unsigned i = 0;
-  u8 buf[1000];
+  u8 buf[550];
   const unsigned count = (OTTERY_BUFLEN - OTTERY_KEYLEN) * RESEED_AFTER_BLOCKS;
   const unsigned blocks = (count+sizeof(buf)) / sizeof(buf);
   DECLARE_STATE();
   INIT_STATE();
   (void)arg;
 
-  for (i = 0; i < blocks+30; ++i) {
+  for (i = 0; i < blocks+20; ++i) {
     OTTERY_PUBLIC_FN(random_buf)(OTTERY_STATE_ARG_OUT COMMA buf, sizeof(buf));
     /* printf("i=%d, count=%d\n", i, (int) RNG_PTR->count); */
     if (i <= blocks) {
