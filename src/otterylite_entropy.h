@@ -44,7 +44,7 @@
 #define SOCK_CLOEXEC 0
 #endif
 
-#if defined(OTTERY_X86)
+#if defined(OTTERY_X86) && ! (defined(_MSC_VER) && !defined(__RDRND__))
 /*
   RDRAND -- get entropy from recent x86 chips.
 
