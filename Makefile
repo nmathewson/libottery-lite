@@ -22,8 +22,9 @@ TEST_PROGRAMS = \
 BENCH_PROGRAMS = \
 	bench/bench
 
-COMMON_CFLAGS = $(EXTRA_CFLAGS) -I ./src -Wall -Wextra -Werror
-EXTRA_CFLAGS = -Wstack-protector -W -Wfloat-equal -Wundef -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wwrite-strings -Wredundant-decls -Wchar-subscripts -Wcomment -Wformat=2 -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wbad-function-cast -Wswitch-enum -Werror -Winit-self -Wmissing-field-initializers -Wold-style-definition -Waddress -Wmissing-noreturn -Wstrict-overflow=1 -Wshorten-64-to-32
+COMMON_CFLAGS = $(EXTRA_CFLAGS) -I ./src -Wall -Wextra -Werror -pthread
+EXTRA_CFLAGS = -Wstack-protector -W -Wfloat-equal -Wundef -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wredundant-decls -Wchar-subscripts -Wcomment -Wformat=2 -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wbad-function-cast -Wswitch-enum -Werror -Winit-self -Wmissing-field-initializers -Wold-style-definition -Waddress -Wmissing-noreturn -Wstrict-overflow=1
+# -Wshorten-64-to-32 -Wstrict-prototypes
 
 CFLAGS = $(COMMON_CFLAGS) -O3
 
