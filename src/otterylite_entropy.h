@@ -407,10 +407,13 @@ ottery_getentropy_egd(unsigned char *out)
   while (n_read < ENTROPY_CHUNK)
     {
       int r = recv(sock, (void*)out, ENTROPY_CHUNK - n_read, 0);
-      if (r < 0)
+      if (r < 0) {
+        if (errno == EAGAIN || errno == EINTR)
+          continue;
         goto out;
-      else if (r == 0)
+      } else if (r == 0) {
         break;
+      }
 
       n_read += r;
       out += r;
