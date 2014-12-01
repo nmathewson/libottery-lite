@@ -71,10 +71,10 @@ For 1.0
     o failing-case tests, where possible.
     o even better coverage
 
-  - actually run the unit tests on windows
-  - actually run the unit tests on *bsd
+  o actually run the unit tests on windows
+  o actually run the unit tests on *bsd
 
-  - Make it build with icc, mvsc, I guess.
+  o Make it build with, mvsc, I guess.
 
   o header on all files, dedication on all files.
   o Fix all XXXX comments
