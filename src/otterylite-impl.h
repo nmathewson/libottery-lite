@@ -122,8 +122,6 @@
 #endif
 #include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
-#include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -133,6 +131,11 @@
 #ifdef __linux__
 #include <sys/syscall.h>
 #include <linux/random.h>
+#endif
+
+#ifndef _WIN32
+#include <unistd.h>
+#include <pthread.h>
 #endif
 
 #ifndef OTTERY_DISABLE_EGD
@@ -176,6 +179,7 @@
 #endif
 
 #ifdef _MSC_VER
+#include <intrin.h>
 #define uint8_t unsigned char
 #define uint16_t unsigned short
 #define uint32_t unsigned int

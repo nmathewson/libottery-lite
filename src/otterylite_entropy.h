@@ -56,6 +56,9 @@
 #define RDRAND_MAXATTEMPTS 16
 
 /* Low-level rdrand implementation */
+#ifdef _MSC_VER
+#define rdrand_ll_ _rdrand32_step
+#else
 static int
 rdrand_ll_(uint32_t *therand)
 {
@@ -65,6 +68,7 @@ rdrand_ll_(uint32_t *therand)
 
   return (status) == 1 ? 0 : -1;
 }
+#endif
 
 /* Call rdrand until it succeeds or we give up. */
 static int
@@ -81,6 +85,9 @@ rdrand_(uint32_t *therand)
 }
 
 /* CPUID implementation to see whether we even have RDRAND */
+#ifdef _MSC_VER
+#define cpuid_(i,result) __cpuid((result), (i))
+#else
 static void
 cpuid_(int index, unsigned result[4])
 {
@@ -101,6 +108,7 @@ cpuid_(int index, unsigned result[4])
   result[2] = ecx;
   result[3] = edx;
 }
+#endif
 
 static int
 cpuid_says_rdrand_supported_(void)
