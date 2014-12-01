@@ -333,13 +333,11 @@ ottery_getentropy_fallback_kludge_volatile(
   FBENT_ADD_FILE("/proc/zoneinfo");
 #endif
 
-#ifdef CLOCK_MONOTONIC
   {
     /* Add a miniscule delay, to try to juice the clocks a little. */
     struct timespec ts = { 0, 100 };
-    clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+    nanosleep(&ts, NULL);
   }
-#endif
 
   {
     struct rusage ru;
