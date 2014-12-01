@@ -6,6 +6,9 @@
 */
 
 #ifndef __linux__
+#if defined(__OpenBSD__)
+#include <netinet/tcp_timer.h>
+#endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -307,7 +310,7 @@ ottery_getentropy_fallback_kludge_volatile(
     FBENT_ADD(t);
   }
 #endif
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__OpenBSD__)
   {
     ucontext_t uc;
     if (getcontext(&uc) == 0)

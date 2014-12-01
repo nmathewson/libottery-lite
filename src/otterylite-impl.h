@@ -118,7 +118,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #if defined(__OpenBSD__)
-#include <param.h>
+#include <sys/param.h>
 #endif
 #include <fcntl.h>
 #include <errno.h>
@@ -171,7 +171,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
 #include <mach/mach_time.h>
-#elif !defined(WIN32)
+#elif !defined(_WIN32) && !defined(__OpenBSD)
 #include <ucontext.h>
 #endif
 
