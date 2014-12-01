@@ -99,13 +99,13 @@ static void fallback_entropy_add_clocks(struct fallback_entropy_accumulator *acc
   (I first saw this trick in libresslp.)
 
  */
+#define N_SIZES 9
 static void
 fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 {
   int i;
-  const int n_sizes = 9;
-  const long sizes[n_sizes] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
-  char *pointers[n_sizes];
+  const long sizes[N_SIZES] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
+  char *pointers[N_SIZES];
   size_t offset;
 #ifndef _WIN32
   long pagesize = sysconf(_SC_PAGESIZE);
@@ -117,7 +117,7 @@ fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 #endif
   offset = pagesize * 37;
 
-  for (i = 0; i < n_sizes; ++i) {
+  for (i = 0; i < N_SIZES; ++i) {
     size_t this_size = pagesize * sizes[i];
     pointers[i] = ottery_mmap_anon(this_size);
     if (pointers[i])
@@ -129,12 +129,13 @@ fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
   fallback_entropy_accumulator_add_chunk(accumulator,
                                          pointers, sizeof(pointers));
 
-  for (i = 0; i < n_sizes; ++i) {
+  for (i = 0; i < N_SIZES; ++i) {
     size_t this_size = pagesize * sizes[i];
     if (pointers[i])
       ottery_munmap_anon(pointers[i], this_size);
   }
 }
+#undef N_SIZES
 #endif
 
 /*
