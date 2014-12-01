@@ -26,7 +26,7 @@ dumphex(const char *label, const u8 *bytes, int n)
 static void
 experiment(const u8 *key, const u8 *nonce, unsigned skip)
 {
-  const unsigned OUTPUT = 512;
+#define OUTPUT 512
   u8 buf[MAXSKIP + OUTPUT];
   u8 k[OTTERY_KEYLEN];
   unsigned n = skip + OUTPUT;
@@ -47,6 +47,7 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   dumphex(NULL, buf + skip, OUTPUT);
  end:
   ;
+#undef OUTPUT
 }
 
 #define X(key, nonce, skip)                                     \

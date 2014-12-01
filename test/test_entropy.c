@@ -157,7 +157,7 @@ static struct entropy_source test_sources[] = {
 static void
 test_entropy_dispatcher(void *arg)
 {
-  const int N = 5;
+#define N 5
   u8 buf[ENTROPY_CHUNK * (N+1)];
   int status = -10;
   (void)arg;
@@ -280,6 +280,7 @@ test_entropy_dispatcher(void *arg)
 
  end:
   ;
+#undef N
 }
 
 #define ENTROPY(name,flags)                                             \
