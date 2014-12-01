@@ -106,6 +106,25 @@
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
+#elif !defined(OTTERY_NO_PTHREAD_SPINLOCKS)
+
+#define DECLARE_INITIALIZED_LOCK(scope, name)                   \
+  scope pthread_spin_t name = 0;
+#define DECLARE_LOCK(name) \
+  pthread_spin_t name;
+#define INIT_LOCK(lock) \
+  pthread_spin_init(lock, 0)
+#define DESTROY_LOCK(lock) \
+  pthread_spin_destroy(lock)
+#define GET_LOCK(lock) \
+  pthread_spin_lock(lock)
+#define RELEASE_LOCK(lock) \
+  pthread_spin_unlock(lock)
+#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
+#define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
+#define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
+
+
 #else /* !_WIN32, !__APPLE__, !DISABELD */
 
 /* pthreads makes all of that stuff fairly easy. */
