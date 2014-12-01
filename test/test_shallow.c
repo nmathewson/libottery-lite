@@ -285,6 +285,22 @@ test_shallow_addrandom(void *arg)
   RELEASE_STATE();
 }
 
+static void
+test_shallow_teardown(void *arg)
+{
+  DECLARE_STATE();
+  INIT_STATE();
+  (void)arg;
+
+  OTTERY_PUBLIC_FN(teardown)(OTTERY_STATE_ARG_OUT);
+  tt_assert(RNG_PTR == NULL);
+ end:
+#ifdef OTTERY_STRUCT
+  free(state);
+#endif
+  ;
+}
+
 static struct testcase_t shallow_tests[] = {
 
   { "unsigned", test_shallow_unsigned, TT_FORK, NULL, NULL },
@@ -299,5 +315,6 @@ static struct testcase_t shallow_tests[] = {
 #ifdef OTTERY_STRUCT
   { "sizeof", test_shallow_sizeof, TT_FORK, NULL, NULL },
 #endif
+  { "teardown", test_shallow_teardown, TT_FORK, NULL, NULL },
   END_OF_TESTCASES
 };
