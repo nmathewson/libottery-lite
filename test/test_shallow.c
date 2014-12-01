@@ -313,6 +313,8 @@ test_shallow_teardown(void *arg)
   INIT_STATE();
   (void)arg;
 
+  OTTERY_PUBLIC_FN(random)(OTTERY_STATE_ARG_OUT);
+
   OTTERY_PUBLIC_FN(teardown)(OTTERY_STATE_ARG_OUT);
   tt_assert(RNG_PTR == NULL);
  end:
