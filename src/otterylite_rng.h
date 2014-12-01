@@ -93,10 +93,17 @@ chacha20_blocks(const unsigned char key[CHACHA_KEYLEN+CHACHA_IVLEN],
  */
 #define OTTERY_KEYLEN (CHACHA_KEYLEN + CHACHA_IVLEN)
 
+#if 0
 /* How much space should we allocate for ChaCha output?  (We subtract
  * CHACHA_BLOCKSIZE so we have some extra space to fit the whole struct
  * ottery_rng in a single 4K mmaped page.) */
 #define OTTERY_BUFLEN (4096 - CHACHA_BLOCKSIZE)
+#else
+/* This gives us about 4% overhead for the keys, but lowers the maximum
+ * time spent regenerating a buffer. */
+#define OTTERY_BUFLEN (1024)
+#endif
+
 
 /* How many ChaCha blocks should we make at a time */
 #define OTTERY_N_BLOCKS (OTTERY_BUFLEN / CHACHA_BLOCKSIZE)

@@ -21,9 +21,9 @@ test_rng_core_construction_short(void *arg)
   chacha20_blocks(key, OTTERY_BUFLEN / 64, stream);
   chacha20_blocks(stream + OTTERY_BUFLEN - OTTERY_KEYLEN, OTTERY_BUFLEN / 64, stream + OTTERY_BUFLEN - OTTERY_KEYLEN);
 
-  tt_assert(! iszero(rng.buf, 7500));
+  tt_assert(! iszero(rng.buf, 1500));
 
-  for (i = 0; i < 7500; ) {
+  for (i = 0; i < 1500; ) {
     tt_int_op(i, ==, i);
     ottery_bytes(&rng, tmp, 1);
     tt_mem_op(tmp, ==, streamp, 1);
@@ -49,7 +49,7 @@ test_rng_core_construction_short(void *arg)
     }
   }
 
-  tt_int_op(i, ==, 7501);
+  tt_int_op(i, ==, 1508);
 
   /* Make sure every bit is sometimes 1 and sometimes 0. */
   tt_assert(zeros == 0);

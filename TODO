@@ -93,11 +93,11 @@ Not for 1.0
 
   - Better arch independence in code
 
-  - Make more tests pass on big-endian systems
+  o Make more tests pass on big-endian systems
 
   - Actually match glibc style.
 
-  - Sometimes use blake2s?
+  X Sometimes use blake2s?
 
   - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
 

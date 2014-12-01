@@ -58,8 +58,8 @@ test/test_st: $(TEST_DEPS)
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
 	$(CC) $(CFLAGS) $< src/otterylite.o -o $@
 
-bench/bench: bench/bench.c $(HEADERS) src/otterylite.o
-	$(CC) $(CFLAGS) $< src/otterylite.o -o $@
+bench/bench: bench/bench.c $(HEADERS)
+	$(CC) $(CFLAGS) $< -o $@
 
 wanted_output: ./test/make_test_vectors.py
 	python ./test/make_test_vectors.py > wanted_output
@@ -74,7 +74,7 @@ coverage:
 	gcov -o . test/test_main.c
 
 dieharder: ./test/test_streamgen
-	./test/test_streamgen --yes-really | dieharder -g 200 -a
+	./test/test_streamgen --yes-really | dieharder -g 200 -a -Y1
 
 clean:
 	rm -f *.o */*.o */*/*.o $(TEST_PROGRAMS) $(BENCH_PROGRAMS) wanted_output received_output
