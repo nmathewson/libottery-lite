@@ -319,6 +319,8 @@ ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
 #define DEV_RANDOM_MINOR -1
 #define DEV_URANDOM_MAJOR -1
 #define DEV_URANDOM_MINOR -1
+#define DEV_HWRNG_MAJOR -1
+#define DEV_HWRNG_MINOR -1
 #endif
 
 /*
