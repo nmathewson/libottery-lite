@@ -44,6 +44,9 @@
 #define SOCK_CLOEXEC 0
 #endif
 
+#define FLAG_WEAK   (1u << 0)
+#define FLAG_AVOID  (1u << 1)
+
 #if defined(OTTERY_X86) && ! (defined(_MSC_VER) && !defined(__RDRND__))
 /*
   RDRAND -- get entropy from recent x86 chips.
@@ -121,12 +124,14 @@ cpuid_says_rdrand_supported_(void)
 
 /* Entropy source using rdrand. */
 static int
-ottery_getentropy_rdrand(unsigned char *output)
+ottery_getentropy_rdrand(unsigned char *output, unsigned *flags_out)
 {
   int i;
+  *flags_out = 0;
 
   if (!cpuid_says_rdrand_supported_())
     return -2; /* RDRAND not supported. */
+
   for (i = 0; i < ENTROPY_CHUNK / 4; ++i, output += 4)
     {
       if (rdrand_((uint32_t*)output) < 0) {
@@ -153,14 +158,16 @@ ottery_getentropy_rdrand(unsigned char *output)
   could ask for.
  */
 static int
-ottery_getentropy_getentropy(unsigned char *out)
+ottery_getentropy_getentropy(unsigned char *out, unsigned *flags)
 {
+  *flags = 0;
   return getentropy(out, ENTROPY_CHUNK) == 0 ? ENTROPY_CHUNK : -1;
 }
 #else
 #define ottery_getentropy_getentropy NULL
 #endif
 
+
 
 #if defined(__linux__) && defined(__NR_getrandom)
 /*
@@ -197,8 +204,9 @@ ottery_getrandom_(void *out, size_t n, unsigned flags)
   Entropy source using getrandom.
  */
 static int
-ottery_getentropy_getrandom(unsigned char *out)
+ottery_getentropy_getrandom(unsigned char *out, unsigned *flags)
 {
+  *flags = 0;
   return ottery_getrandom_(out, ENTROPY_CHUNK, 0);
 }
 #else
@@ -212,10 +220,12 @@ ottery_getentropy_getrandom(unsigned char *out)
   has a nice collection of references.  Also see MSDN.
 */
 static int
-ottery_getentropy_cryptgenrandom(unsigned char *out)
+ottery_getentropy_cryptgenrandom(unsigned char *out, unsigned *flags)
 {
   int n = -1;
   HCRYPTPROV h = 0;
+
+  *flags = 0;
 
   if (!CryptAcquireContext(&h, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
     return -1;
@@ -243,7 +253,8 @@ ottery_getentropy_cryptgenrandom(unsigned char *out)
   bits in need_mode_flags set.
  */
 static int
-ottery_getentropy_device_(unsigned char *out, int len,
+ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
+                          int len,
                           const char *fname,
                           unsigned need_mode_flags,
                           int want_major, int want_minor)
@@ -265,8 +276,9 @@ ottery_getentropy_device_(unsigned char *out, int len,
                * sign. */
   if (want_major >= 0 && want_minor >= 0) {
     if ((int)major(st.st_rdev) != want_major ||
-        (int)minor(st.st_rdev) != want_minor)
-      goto out;
+        (int)minor(st.st_rdev) != want_minor) {
+      *flags_out |= FLAG_WEAK;
+    }
   }
 
   /* Read until we hit EOF, an error, or the number of bytes we wanted */
@@ -313,17 +325,19 @@ ottery_getentropy_device_(unsigned char *out, int len,
   Try to read from the most urandom-like file available.
  */
 static int
-ottery_getentropy_dev_urandom(unsigned char *out)
+ottery_getentropy_dev_urandom(unsigned char *out, unsigned *flags_out)
 {
 #define TRY(fname, maj, min)                                            \
   do {                                                                  \
-    r = ottery_getentropy_device_(out, ENTROPY_CHUNK, fname, S_IFCHR,   \
+    r = ottery_getentropy_device_(out, flags_out,                       \
+                                  ENTROPY_CHUNK, fname, S_IFCHR,        \
                                   maj, min);                            \
     if (r == ENTROPY_CHUNK)                                             \
       return r;                                                         \
   } while (0)
   int r;
 
+  *flags_out = 0;
 #if defined(__sun) || defined(sun)
   /*
     According to the libressl-portable people, this is where you have to look
@@ -344,9 +358,10 @@ ottery_getentropy_dev_urandom(unsigned char *out)
 
 /* Try a /dev/hw{_,}random, if it exists */
 static int
-ottery_getentropy_dev_hwrandom(unsigned char *out)
+ottery_getentropy_dev_hwrandom(unsigned char *out, unsigned *flags_out)
 {
   int r;
+  *flags_out = 0;
 
   TRY("/dev/hwrandom", -1, -1);
   TRY("/dev/hw_random", -1, -1);
@@ -367,18 +382,19 @@ ottery_getentropy_dev_hwrandom(unsigned char *out)
   Just hash a couple of UUIDs together!
  */
 static int
-ottery_getentropy_proc_uuid(unsigned char *out)
+ottery_getentropy_proc_uuid(unsigned char *out, unsigned *flags_out)
 {
   /* ???? Verify that this actually uses urandom. */
   int n = 0, r, i;
   u8 buf[LINUX_UUID_LEN * 3], *cp = buf;
+  *flags_out = 0;
 
   memset(buf, 0, sizeof(buf));
   /* Each call yields LINUX_UUID_LEN bytes, containing 16 actual bytes of
    * entropy. Make an extra call just in case */
   for (i = 0; i < 3; ++i)
     {
-      r = ottery_getentropy_device_(cp, LINUX_UUID_LEN, "/proc/sys/kernel/random/uuid", 0, -1, -1);
+      r = ottery_getentropy_device_(cp, flags_out, LINUX_UUID_LEN, "/proc/sys/kernel/random/uuid", 0, -1, -1);
       if (r < 0)
         return -1;
       n += r;
@@ -411,11 +427,12 @@ static int ottery_egd_socklen = -1;
 #endif
 
 static int
-ottery_getentropy_egd(unsigned char *out)
+ottery_getentropy_egd(unsigned char *out, unsigned *flags_out)
 {
   SOCKET sock;
   char msg[2];
   int result = -1, n_read = 0;
+  *flags_out = 0;
 
   if (ottery_egd_socklen < 0)
     return -2; /* socket not configured */
@@ -472,11 +489,12 @@ ottery_getentropy_egd(unsigned char *out)
   more.
  */
 static int
-ottery_getentropy_linux_sysctl(unsigned char *out)
+ottery_getentropy_linux_sysctl(unsigned char *out, unsigned *flags_out)
 {
   int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
   int n_read = 0, i;
   char buf[LINUX_UUID_LEN * 3];
+  *flags_out = 0;
 
   memset(buf, 0, 74);
   for (i = 0; i < 3; ++i)
@@ -501,10 +519,11 @@ ottery_getentropy_linux_sysctl(unsigned char *out)
   Some of the BSDs provide a different sysctl().  That's worth trying too.
  */
 static int
-ottery_getentropy_bsd_sysctl(unsigned char *out)
+ottery_getentropy_bsd_sysctl(unsigned char *out, unsigned *flags_out)
 {
   int i;
   int mib[] = { CTL_KERN, KERN_ARND };
+  *flags_out = 0;
 
   /* I hear that some BSDs don't like returning anything but sizeof(unsigned)
    * bytes at a time from this one. */
@@ -568,14 +587,12 @@ ottery_getentropy_bsd_sysctl(unsigned char *out)
 #define GROUP_EGD     (1u << 4)
 #define GROUP_KLUDGE  (1u << 5)
 
-#define FLAG_WEAK   (1u << 0)
-#define FLAG_AVOID  (1u << 1)
 
 #define SOURCE(name, id, group, flags)          \
   { #name, ottery_getentropy_ ## name, (id), (group), (flags) }
 static const struct entropy_source {
   const char *name;
-  int (*getentropy_fn)(unsigned char *out);
+  int (*getentropy_fn)(unsigned char *out, unsigned *flags_out);
   unsigned id;
   unsigned group;
   unsigned flags;
@@ -631,6 +648,7 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
 
   for (i = 0; i < n_sources; ++i)
     {
+      unsigned flags;
       if (NULL == sources[i].getentropy_fn)
         continue; /* Not implemented; skip */
       /* assert(outp - out < OTTERY_ENTROPY_MAXLEN - ENTROPY_CHUNK); */
@@ -639,8 +657,10 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
       if ((have_groups & sources[i].group) == sources[i].group)
         continue; /* We already got entropy from this group */
 
+      flags = 0;
+
       /* Try calling the function that implements this source. */
-      n = sources[i].getentropy_fn(outp);
+      n = sources[i].getentropy_fn(outp, &flags);
 
       if (n < 0)
         continue; /* Failed or not implemented */
@@ -652,7 +672,8 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
                      succeeded */
 
       have_a_full_output = 1;
-      if (0 == (sources[i].flags & FLAG_WEAK))
+      flags |= sources[i].flags;
+      if (0 == (flags & FLAG_WEAK))
         have_strong = 1;
       have_groups |= sources[i].group;
       have_sources |= sources[i].id;

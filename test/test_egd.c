@@ -63,6 +63,7 @@ test_egd_success(void *arg)
   pid_t pid;
   int r, exitstatus=0;
   u8 buf[64];
+  unsigned flags;
 
   (void)arg;
 
@@ -75,12 +76,12 @@ test_egd_success(void *arg)
   snprintf(fname, sizeof(fname), "%s/fifo", dir);
   tt_int_op(strlen(fname), <, sizeof(sun.sun_path));
 
-  tt_int_op(-2, ==, ottery_getentropy_egd(buf)); /* not turned on. */
+  tt_int_op(-2, ==, ottery_getentropy_egd(buf, &flags)); /* not turned on. */
 
   memset(&sun, 0, sizeof(sun));
   sun.sun_family = -1; /* Bad family */
   tt_int_op(0, ==, OTTERY_PUBLIC_FN(set_egd_address)((struct sockaddr*)&sun, sizeof(sun)));
-  tt_int_op(-1, ==, ottery_getentropy_egd(buf)); /* bad family */
+  tt_int_op(-1, ==, ottery_getentropy_egd(buf, &flags)); /* bad family */
 
   sun.sun_family = AF_UNIX;
   memcpy(sun.sun_path, fname, strlen(fname)+1);
@@ -93,7 +94,7 @@ test_egd_success(void *arg)
 
   tt_int_op(sizeof(sun), ==, ottery_egd_socklen);
 
-  tt_int_op(-1, ==, ottery_getentropy_egd(buf)); /* nobody listening yet */
+  tt_int_op(-1, ==, ottery_getentropy_egd(buf, &flags)); /* nobody listening yet */
 
   tt_int_op(bind(listener, (struct sockaddr*)&sun, sizeof(sun)), ==, 0);
   tt_int_op(listen(listener, 16), ==, 0);
@@ -110,7 +111,7 @@ test_egd_success(void *arg)
   }
 
   memset(buf, 0, sizeof(buf));
-  r = ottery_getentropy_egd(buf);
+  r = ottery_getentropy_egd(buf, &flags);
   tt_int_op(r, ==, ENTROPY_CHUNK);
   tt_assert(iszero(buf + ENTROPY_CHUNK, sizeof(buf) - ENTROPY_CHUNK));
   tt_assert(! iszero(buf, ENTROPY_CHUNK));

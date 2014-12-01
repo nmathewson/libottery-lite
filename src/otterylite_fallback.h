@@ -166,11 +166,13 @@ fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 #endif
 
 static int
-ottery_getentropy_fallback_kludge(u8 *out)
+ottery_getentropy_fallback_kludge(u8 *out, unsigned *flags_out)
 {
   int iter;
 
   struct fallback_entropy_accumulator fbe;
+  *flags_out = 0;
+
   fallback_entropy_accumulator_init(&fbe);
 
   ottery_getentropy_fallback_kludge_nonvolatile(&fbe);
