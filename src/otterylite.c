@@ -383,12 +383,13 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
   Helper: reinitialize and reseed the RNG if we have not initialized it
   previously, or we have forked.  Abort on failure.
  */
-#define INIT()                                           \
-  do {                                                   \
-  if (UNLIKELY( NEED_REINIT )) {                         \
-    if (ottery_handle_reinit(OTTERY_STATE_ARG_OUT) < 0)  \
-      abort();                                           \
-    }                                                    \
+#define INIT()                                                  \
+  do {                                                          \
+  if (UNLIKELY( NEED_REINIT )) {                                \
+    int rrr = ottery_handle_reinit(OTTERY_STATE_ARG_OUT);       \
+    if (rrr < 0) {                                              \
+      abort();                                                  \
+    }                                                           \
   } while (0)
 
 void
