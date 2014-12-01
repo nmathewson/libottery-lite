@@ -34,7 +34,7 @@
 #define DECLARE_LOCK(name) \
   CRITICAL_SECTION name;
 #define INIT_LOCK(lock) \
-  InitializeCriticalSectionAndSpinCount(lock, 3000)
+  InitializeCriticalSectionAndSpinCount(lock, 6000)
 #define DESTROY_LOCK(lock) \
   DeleteCriticalSection(lock)
 #define GET_LOCK(lock) \
@@ -88,7 +88,25 @@
 #define RELEASE_STATIC_LOCK(lock) \
     RELEASE_LOCK(lock)
 
-#else /* !_WIN32, !DISABELD */
+#elif __APPLE__
+
+#define DECLARE_INITIALIZED_LOCK(scope, name)                   \
+  scope OSSpinLock name = OS_SPINLOCK_INIT;
+#define DECLARE_LOCK(name) \
+  OSSpinLock name;
+#define INIT_LOCK(lock) \
+  (*(lock) = OS_SPINLOCK_INIT)
+#define DESTROY_LOCK(lock) \
+  ((void)0)
+#define GET_LOCK(lock) \
+  OSSpinLockLock(lock)
+#define RELEASE_LOCK(lock) \
+  OSSpinLockUnlock(lock)
+#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
+#define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
+#define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
+
+#else /* !_WIN32, !__APPLE__, !DISABELD */
 
 /* pthreads makes all of that stuff fairly easy. */
 
@@ -108,6 +126,6 @@
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
-#endif /* !_WIN32, !DISABLED */
+#endif /* !_WIN32, !__APPLE__, !DISABLED */
 
 #endif /* OTTERYLITE_LOCKING_H_INCLUDED */

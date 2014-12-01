@@ -174,6 +174,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
 #include <mach/mach_time.h>
+#include <libkern/OSAtomic.h>
 #elif !defined(_WIN32) && !defined(__OpenBSD)
 #include <ucontext.h>
 #endif
