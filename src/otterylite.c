@@ -19,10 +19,11 @@
 
 #include "otterylite_wipe.h"
 #include "otterylite_rng.h"
+#include "otterylite_alloc.h"
 #include "otterylite_digest.h"
 #include "otterylite_entropy.h"
 #include "otterylite_locking.h"
-#include "otterylite_alloc.h"
+
 
 /* Magic number for ottery_magic or ottery_state.magic */
 #define OTTERY_MAGIC 0x6f747472u

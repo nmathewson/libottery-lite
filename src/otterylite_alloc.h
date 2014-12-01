@@ -68,29 +68,44 @@ free_rng_(struct ottery_rng **rng)
 
 /* If we're mmaping it in Windows, this is about the best we can do */
 
+static void *
+ottery_mmap_anon(size_t length)
+{
+  void *ptr;
+  HANDLE mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
+                                     NULL, /*attributes*/
+                                     PAGE_READWRITE,
+                                     length >> 32,
+                                     length & 0xffffffff,
+                                     NULL /* name */);
+  if (mapping == NULL)
+    return NULL;
+
+  ptr = MapViewOfFile(mapping,
+                       PAGE_EXECUTE_READWRITE,
+                       0, 0, /* offset */
+                       0 /* Extends to end of mapping */);
+
+  CloseHandle(mapping); /* The mapped view holds a reference. */
+
+  return ptr;
+}
+static void
+ottery_munmap_anon(void *p, size_t length)
+{
+  (void) length;
+  UnmapViewOfFile(p);
+}
+
 static int
 allocate_rng_(struct ottery_rng **rng)
 {
   IF_TESTING({
       if (ottery_testing_make_alloc_fail)
         return -1;
-    })
+  })
 
-  HANDLE mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-                                     NULL, /*attributes*/
-                                     PAGE_READWRITE,
-                                     0, /* High dword of size */
-                                     sizeof(**rng),
-                                     NULL /* name */);
-  if (mapping == NULL)
-    return -1;
-
-  *rng = MapViewOfFile(mapping,
-                       PAGE_EXECUTE_READWRITE,
-                       0, 0, /* offset */
-                       0 /* Extends to end of mapping */);
-
-  CloseHandle(mapping); /* The mapped view holds a reference. */
+  *rng = ottery_mmap_anon(sizeof(**rng));
 
   if (*rng) {
     VirtualLock(*rng, sizeof(**rng));
@@ -106,12 +121,26 @@ free_rng_(struct ottery_rng **rng)
   if (*rng) {
     memwipe(*rng, sizeof(**rng));
     VirtualUnlock(*rng, sizeof(**rng)); /* ???? Is this needed */
-    UnmapViewOfFile(*rng);
+    ottery_munmap_anon(*rng, sizeof(rng));
     *rng = NULL;
   }
 }
 
 #else
+
+
+static void *
+ottery_mmap_anon(size_t length)
+{
+  return mmap(NULL, length,
+              PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+              -1, 0);
+}
+static void
+ottery_munmap_anon(void *p, size_t length)
+{
+  munmap(p, length);
+}
 
 /*
   On unix, we try to use mlock and minherit to keep the RNG's guts from
@@ -133,23 +162,21 @@ allocate_rng_(struct ottery_rng **rng)
         return -1;
     })
 
-  *rng = mmap(NULL, sizeof(**rng),
-              PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
-              -1, 0);
+  *rng = ottery_mmap_anon(sizeof(**rng));
   if (NULL == *rng)
     return -1;
 
 #if defined(INHERIT_ZERO)
 #define USING_INHERIT_ZERO
   if (minherit(*rng, sizeof(**rng), INHERIT_ZERO) < 0) {
-    munmap(*rng, sizeof(**rng));
+    ottery_munmap_anon(*rng, sizeof(**rng));
     *rng = NULL;
     return -1;
   }
 #elif defined(INHERIT_NONE)
 #define USING_INHERIT_NONE
   if (minherit(*rng, sizeof(**rng), INHERIT_NONE) < 0) {
-    munmap(*rng, sizeof(**rng));
+    ottery_munmap_anon(*rng, sizeof(**rng));
     *rng = NULL;
     return -1;
   }
@@ -165,7 +192,7 @@ free_rng_(struct ottery_rng **rng)
   if (*rng) {
     memwipe(*rng, sizeof(**rng));
     munlock(*rng, sizeof(**rng)); /* ???? is this necessary? */
-    munmap(*rng, sizeof(**rng));
+    ottery_munmap_anon(*rng, sizeof(**rng));
     *rng = NULL;
   }
 }

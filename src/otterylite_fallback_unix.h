@@ -128,17 +128,6 @@ fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
   }
 }
 
-#ifdef OTTERY_X86
-#define USING_OTTERY_CPUTICKS
-static uint64_t
-ottery_cputicks(void)
-{
-  uint32_t lo, hi;
-  __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
-  return lo | ((uint64_t)hi << 32);
-}
-#endif
-
 static void
 fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
 {
@@ -382,5 +371,6 @@ ottery_getentropy_fallback_kludge_volatile(
       FBENT_ADD_CHUNK(tmp, n);
     }
 #endif
-  /* FFFF try some mmap trickery like libressl does */
+
+  fallback_entropy_add_mmap(accumulator);
 }

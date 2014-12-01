@@ -71,6 +71,68 @@ fallback_entropy_accumulator_add_chunk(
   fbe->bytes_added += len;
 }
 
+#ifdef OTTERY_X86
+#define USING_OTTERY_CPUTICKS
+static uint64_t
+ottery_cputicks(void)
+{
+  uint32_t lo, hi;
+  __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
+  return lo | ((uint64_t)hi << 32);
+}
+#endif
+
+static void fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator);
+
+#ifdef USING_MMAP
+/*
+  Try to extract entropy from the system's virtual memory manager and memory
+  fragmentation status.
+
+  We're going to mmap some blocks of different (prime) sizes, and add their
+  addresses and the time it took us to access them.
+
+  (I first saw this trick in libresslp.)
+
+ */
+static void
+fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
+{
+  int i;
+  const long sizes[] = { 7, 1, 11, 3, 17, 2, 5, 3, 13 };
+  const int n_sizes = sizeof(sizes)/sizeof(sizes[0]);
+  char *pointers[n_sizes];
+  size_t offset;
+#ifndef _WIN32
+  long pagesize = sysconf(_SC_PAGESIZE);
+#else
+  long pagesize;
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  pagesize = (long) si.dwPageSize;
+#endif
+  offset = pagesize * 37;
+
+  for (i = 0; i < n_sizes; ++i) {
+    size_t this_size = pagesize * sizes[i];
+    pointers[i] = ottery_mmap_anon(this_size);
+    if (pointers[i])
+      pointers[i][offset % this_size]++;
+    fallback_entropy_add_clocks(accumulator);
+    offset *= 10103;
+  }
+
+  fallback_entropy_accumulator_add_chunk(accumulator,
+                                         pointers, sizeof(pointers));
+
+  for (i = 0; i < n_sizes; ++i) {
+    size_t this_size = pagesize * sizes[i];
+    if (pointers[i])
+      ottery_munmap_anon(pointers[i], this_size);
+  }
+}
+#endif
+
 /*
   Macros for implementing fallback kludges.
  */

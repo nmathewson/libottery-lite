@@ -21,6 +21,26 @@ load_windows_library(const TCHAR *library_name)
 #define FALLBACK_KLUDGE_ITERATIONS 16
 
 static void
+fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
+{
+  LARGE_INTEGER pc;
+  FILETIME ft;
+  DWORD ms;
+#ifdef USING_OTTERY_CPUTICKS
+  {
+    uint64_t t = ottery_cputicks();
+    FBENT_ADD(t);
+  }
+#endif
+  QueryPerformanceCounter(&pc);
+  GetSystemTimePreciseAsFileTime(&ft);
+  ms = GetTickCount();
+  FBENT_ADD(pc);
+  FBENT_ADD(ft);
+  FBENT_ADD(ms);
+}
+
+static void
 ottery_getentropy_fallback_kludge_nonvolatile(
                              struct fallback_entropy_accumulator *accumulator)
 {
@@ -162,17 +182,8 @@ ottery_getentropy_fallback_kludge_volatile(
   HMODULE netapi32 = NULL;
   netapi32 = load_windows_library("netapi32.dll");
 
-  {
-    LARGE_INTEGER pc;
-    FILETIME ft;
-    DWORD ms;
-    QueryPerformanceCounter(&pc);
-    GetSystemTimePreciseAsFileTime(&ft);
-    ms = GetTickCount();
-    FBENT_ADD(pc);
-    FBENT_ADD(ft);
-    FBENT_ADD(ms);
-  }
+  fallback_entropy_add_clocks(accumulator);
+
   if (netapi32 != NULL) {
     NET_API_STATUS (*statsget_fn)(LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *)
       = (void*)GetProcAddress(netapi32, "NetStatisticsGet");
@@ -192,6 +203,8 @@ ottery_getentropy_fallback_kludge_volatile(
     }
     CloseHandle(netapi32);
   }
+
+  fallback_entropy_add_mmap(accumulator);
 
   if (iter % 16)
     Sleep(0);
