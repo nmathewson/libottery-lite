@@ -485,14 +485,28 @@ OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
   return result;
 }
 
+#define LARGE_BUFFER_CUTOFF  (OTTERY_BUFLEN - OTTERY_KEYLEN)
+
 void
 OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
 {
   LOCK();
   INIT();
   CHECK();
-  ottery_bytes(RNG_PTR, output, n);
-  UNLOCK();
+  if (n < LARGE_BUFFER_CUTOFF) {
+    ottery_bytes(RNG_PTR, output, n);
+    UNLOCK();
+  } else {
+    u8 key[OTTERY_KEYLEN + CHACHA_BLOCKSIZE-1];
+    size_t leftovers = n & (CHACHA_BLOCKSIZE - 1);
+    ottery_bytes(RNG_PTR, key, OTTERY_KEYLEN + leftovers);
+    UNLOCK();
+    chacha20_blocks(key, n / CHACHA_BLOCKSIZE, output);
+    memcpy(((u8*)output) + (n - leftovers),
+           key + OTTERY_KEYLEN,
+           leftovers);
+    memwipe(key, sizeof(key));
+  }
 }
 
 void
