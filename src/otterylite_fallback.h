@@ -148,9 +148,9 @@ fallback_entropy_add_mmap(struct fallback_entropy_accumulator *accumulator)
 #define FBENT_ADD_FN_ADDR(ptr)                                          \
   do {                                                                  \
     int (*fnp)();                                                       \
-    uint64_t p = 0;                                                     \
+    uintptr_t p = 0;                                                    \
     fnp = (int(*)())(ptr);                                              \
-    p = (uint64_t)(void*)fnp;                                           \
+    p = (uintptr_t)(void*)fnp;                                          \
     FBENT_ADD(p);                                                       \
   } while (0)
 

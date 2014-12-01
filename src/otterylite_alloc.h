@@ -75,7 +75,11 @@ ottery_mmap_anon(size_t length)
   HANDLE mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
                                      NULL, /*attributes*/
                                      PAGE_READWRITE,
+#if SIZE_MAX > 0xffffffff
                                      length >> 32,
+#else
+                                     0,
+#endif
                                      length & 0xffffffff,
                                      NULL /* name */);
   if (mapping == NULL)

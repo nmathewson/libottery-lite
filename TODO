@@ -69,7 +69,7 @@ For 1.0
   - Even later tests:
     o egd tests
     . failing-case tests, where possible.
-    . even better coverage
+    o even better coverage
 
   - actually run the unit tests on windows
   - actually run the unit tests on *bsd
@@ -89,6 +89,7 @@ Probably not for 1.0:
   - Spinlocks for fast-yield cases?
 
 Not for 1.0
+  - 100% coverage.
 
   - Split into more files
 
