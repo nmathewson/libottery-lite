@@ -22,50 +22,86 @@
   } while (0)
 #endif
 
+typedef struct {
+  struct timeval tv;
+  uint64_t ticks;
+} btimer_t;
+
+typedef struct {
+  uint64_t ns;
+  uint64_t ticks;
+} btimer_diff_t;
+
+static void
+btimer_gettime(btimer_t *t)
+{
+  gettimeofday(&t->tv, NULL);
+#ifdef USING_OTTERY_CPUTICKS
+  t->ticks = ottery_cputicks();
+#endif
+}
+static void
+btimer_diff(btimer_diff_t *diff, const btimer_t *start, const btimer_t *end)
+{
+  struct timeval tv_tmp;
+  timersub(&end->tv, &start->tv, &tv_tmp);
+  diff->ns = tv_tmp.tv_sec * (uint64_t)1000000000 + tv_tmp.tv_usec*1000;
+#ifdef USING_OTTERY_CPUTICKS
+  diff->ticks = end->ticks - start->ticks;
+#endif
+}
+
+static const char *
+diff_fmt(btimer_diff_t *diff, uint64_t divisor)
+{
+  static char buf[64];
+#ifdef USING_OTTERY_CPUTICKS
+  snprintf(buf, sizeof(buf), "%ld ns (%ld ticks)", (long)diff->ns/divisor, (long)diff->ticks/divisor);
+#else
+  snprintf(buf, sizeof(buf), "%ld ns", (long)diff->ns/divisor);
+#endif
+  return buf;
+}
+
+
 int
 main(int c, char **v)
 {
-  struct timeval tv_start, tv_end, tv_diff;
+  btimer_t t_start, t_end;
+  btimer_diff_t t_diff;
   u8 block[4096];
   int i;
   const int N = 100000;
-  uint64_t ns;
 
   (void)c; (void)v;
 
-  gettimeofday(&tv_start, NULL);
+  btimer_gettime(&t_start);
   for (i = 0; i < N*100; ++i)
     {
       ottery_random();
     }
-  gettimeofday(&tv_end, NULL);
-  timersub(&tv_end, &tv_start, &tv_diff);
-  ns = tv_diff.tv_sec * (uint64_t)1000000000 + tv_diff.tv_usec * 1000;
-  ns /= N*100;
-  printf("%ld ns per call to ottery_random()\n", (long)ns);
+  btimer_gettime(&t_end);
+  btimer_diff(&t_diff, &t_start, &t_end);
+  printf("%s per call to ottery_random()\n", diff_fmt(&t_diff, N*100));
 
 
-  gettimeofday(&tv_start, NULL);
+  btimer_gettime(&t_start);
   for (i = 0; i < N*10; ++i)
     {
       ottery_random_buf(block, 1024);
     }
-  gettimeofday(&tv_end, NULL);
-  timersub(&tv_end, &tv_start, &tv_diff);
-  ns = tv_diff.tv_sec * (uint64_t)1000000000 + tv_diff.tv_usec * 1000;
-  ns /= N*10;
-  printf("%ld ns per call to ottery_random_buf(1024)\n", (long)ns);
+  btimer_gettime(&t_end);
+  btimer_diff(&t_diff, &t_start, &t_end);
+  printf("%s per call to ottery_random_buf(1024)\n", diff_fmt(&t_diff, N*10));
 
-  gettimeofday(&tv_start, NULL);
+  btimer_gettime(&t_start);
   for (i = 0; i < N; ++i)
     {
       chacha20_blocks(block, OTTERY_BUFLEN / 64, block);
     }
-  gettimeofday(&tv_end, NULL);
-  timersub(&tv_end, &tv_start, &tv_diff);
-  ns = tv_diff.tv_sec * (uint64_t)1000000000 + tv_diff.tv_usec * 1000;
-  ns /= N;
-  printf("%ld ns per buffer refill\n", (long)ns);
+  btimer_gettime(&t_end);
+  btimer_diff(&t_diff, &t_start, &t_end);
+  printf("%s per buffer refill\n",  diff_fmt(&t_diff, N));
 
   return 0;
 }
