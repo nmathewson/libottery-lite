@@ -96,7 +96,7 @@ static void fallback_entropy_add_clocks(struct fallback_entropy_accumulator *acc
   We're going to mmap some blocks of different (prime) sizes, and add their
   addresses and the time it took us to access them.
 
-  (I first saw this trick in libresslp.)
+  (I first saw this trick in libressl.)
 
  */
 #define N_SIZES 9
