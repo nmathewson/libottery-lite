@@ -82,9 +82,10 @@ For 1.0
   o Get it building with all the warnings I can
   - Run dieharder tests with all the options.
 
-Probably not for 1.0:
+  o Spinlocks for fast-yield cases?
 
-  - Spinlocks for fast-yield cases?
+  - Rethink and minimize initialization/check code.
+
 
 Not for 1.0
   - 100% coverage.
