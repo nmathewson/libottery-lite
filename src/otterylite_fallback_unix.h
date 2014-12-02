@@ -208,7 +208,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
   /*
      The pid and the current time; what could go wrong?  (Ask the Debian
-     openssl maintainers.
+     openssl maintainers.)
   */
   {
     pid_t pid;
@@ -238,7 +238,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
     /* This isn't volatile at all. */
     long hostid = gethostid();
     FBENT_ADD(hostid);
-}
+  }
 #ifdef __APPLE__
   FBENT_ADD_FILE("/var/run/utmpx");
   FBENT_ADD_FILE("/var/run/resolv.conf");
