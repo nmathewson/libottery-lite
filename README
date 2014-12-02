@@ -139,13 +139,13 @@ runs out, we generate a new batch of ChaCha20 output using the Key and IV we
 had set aside, and start the process over.
 
 Note that since we destroy each key as soon as we use it, and overwrite each
-part of the stream as soon as we yield it, we shouldn't have any issues with
-information leaks.
+part of the stream as soon as we yield it, we should maintain forward secrecy
+(backtracking resistance) in the presence of information leaks.
 
 === API
 
-Libottery-lite has 3 main API modes: built-in, stateful, and arc4
-emulation.  By default, we build in built-in mode, and the available
+Libottery-lite can be built in any of 3 main API modes: built-in, stateful,
+and arc4 emulation.  By default, we build in built-in mode, and the available
 APIs are as follow:
 
   unsigned ottery_random(void);
