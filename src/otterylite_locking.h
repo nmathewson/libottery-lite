@@ -9,11 +9,21 @@
 #ifndef OTTERYLITE_LOCKING_H_INCLUDED
 #define OTTERYLITE_LOCKING_H_INCLUDED
 
+#ifdef __GNUC__
+#define INITIALIZER_FUNC(name)                                  \
+  static void name(void) __attribute__((constructor));          \
+  static void name(void)
+#elif defined(_MSC_VER)
+#define INITIALIZER_FUNC(name)                                  \
+  static void __cdecl name(void);                               \
+  __declspec(allocate(".CRT$XCU")) void (__cdecl * name##_)(void) = name ; \
+  static void name(void)
+#endif
+
 #ifdef OTTERY_DISABLE_LOCKING
 /*
   If locking is disabled, a lot of things become a no-op.
  */
-
 
 #define DECLARE_INITIALIZED_LOCK(scope, name)
 #define DECLARE_LOCK(name)
@@ -22,7 +32,6 @@
 #define GET_LOCK(lock) ((void)0)
 #define RELEASE_LOCK(lock) ((void)0)
 #define GET_STATIC_LOCK(lock) ((void)0)
-#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
 #define RELEASE_STATIC_LOCK(lock) ((void)0)
 
 #elif defined(_WIN32)
@@ -43,55 +52,24 @@
   LeaveCriticalSection(lock)
 
 /*
-  One tricky point here is that you're not actually supposed to declare
-  an initializer for a CRITICAL_SECTION.  So instead, we have a separate
-  "initialized" variable for it, and we do atomic operations to try to
-  make sure we initialize it only once.
+  XXXX DOCUMENT
 */
 #define DECLARE_INITIALIZED_LOCK(scope, name)                   \
-  scope int name ## _initialized = 0;                           \
-  scope CRITICAL_SECTION *name = NULL;
-
-/* ???? Get some review on this; the only thing I'm really sure about
-   ???? when it comes to atomic operations is that they're harder
-   ???? than you think.
-
-   This macro checks whether the statically allocated critical section in
-   "lock" has been initialized yet, and if not, creates a new critical
-   section for it.
- */
-#define CHECK_LOCK_INITIALIZED(lock)                                    \
-  do {                                                                  \
-    if (UNLIKELY(! lock ## _initialized )) {                            \
-      CRITICAL_SECTION *csp;                                            \
-      CRITICAL_SECTION *new_cs = malloc(sizeof(CRITICAL_SECTION));      \
-      void *cspp = &lock;                                               \
-      if (!new_cs)                                                      \
-        abort();                                                        \
-      INIT_LOCK(new_cs);                                                \
-      /* Now set it to new_cs if it was NULL */                         \
-      csp = InterlockedCompareExchangePointer(cspp, new_cs, NULL);      \
-      if (csp != NULL) { /* Someone else set it. */                     \
-        DeleteCriticalSection(new_cs);                                  \
-        free(new_cs);                                                   \
-      }                                                                 \
-      /* Do I need a memory barrier here? */                            \
-    }                                                                   \
-  } while (0)
-
-#define GET_STATIC_LOCK(lock)                   \
-    do {                                        \
-      CHECK_LOCK_INITIALIZED(lock);             \
-      GET_LOCK(lock);                           \
-      lock ## _initialized = 1;                 \
-    } while(0)
-#define RELEASE_STATIC_LOCK(lock) \
-    RELEASE_LOCK(lock)
+  scope CRITICAL_SECTION name;                                  \
+  INITIALIZER_FUNC(initialize_cs_##name)                        \
+  {                                                             \
+    INIT_LOCK(&name);                                           \
+  }
+#define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
+#define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
 #elif __APPLE__
 
 #define DECLARE_INITIALIZED_LOCK(scope, name)                   \
-  scope OSSpinLock name = OS_SPINLOCK_INIT;
+  scope OSSpinLock name = OS_SPINLOCK_INIT;                     \
+  INITIALIZER_FUNC(init_spinlock_##name) { \
+  name = 0;                                \
+  }
 #define DECLARE_LOCK(name) \
   OSSpinLock name;
 #define INIT_LOCK(lock) \
@@ -102,14 +80,21 @@
   OSSpinLockLock(lock)
 #define RELEASE_LOCK(lock) \
   OSSpinLockUnlock(lock)
-#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
 #elif !defined(OTTERY_NO_PTHREAD_SPINLOCKS)
 
 #define DECLARE_INITIALIZED_LOCK(scope, name)                   \
-  scope pthread_spin_t name = 0;
+  scope pthread_spin_t name;                                    \
+  INITIALIZER_FUNC(initialize_cs_##name)                        \
+  {                                                             \
+    pthread_spin_init(&name, 0);                                \
+  }
+
+#define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
+#define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
+
 #define DECLARE_LOCK(name) \
   pthread_spin_t name;
 #define INIT_LOCK(lock) \
@@ -120,10 +105,8 @@
   pthread_spin_lock(lock)
 #define RELEASE_LOCK(lock) \
   pthread_spin_unlock(lock)
-#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
-
 
 #else /* !_WIN32, !__APPLE__, !DISABELD */
 
@@ -141,7 +124,6 @@
   pthread_mutex_lock(lock)
 #define RELEASE_LOCK(lock) \
   pthread_mutex_unlock(lock)
-#define CHECK_LOCK_INITIALIZED(lock) ((void)0)
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
