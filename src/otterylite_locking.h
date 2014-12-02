@@ -63,7 +63,7 @@
 #define GET_STATIC_LOCK(lock) GET_LOCK(&lock)
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
-#elif __APPLE__
+#elif defined(__APPLE__)
 
 #define DECLARE_INITIALIZED_LOCK(scope, name)                   \
   scope OSSpinLock name = OS_SPINLOCK_INIT;                     \
@@ -86,7 +86,7 @@
 #elif !defined(OTTERY_NO_PTHREAD_SPINLOCKS)
 
 #define DECLARE_INITIALIZED_LOCK(scope, name)                   \
-  scope pthread_spin_t name;                                    \
+  scope pthread_spinlock_t name;                                    \
   INITIALIZER_FUNC(initialize_cs_##name)                        \
   {                                                             \
     pthread_spin_init(&name, 0);                                \
@@ -96,7 +96,7 @@
 #define RELEASE_STATIC_LOCK(lock) RELEASE_LOCK(&lock)
 
 #define DECLARE_LOCK(name) \
-  pthread_spin_t name;
+  pthread_spinlock_t name;
 #define INIT_LOCK(lock) \
   pthread_spin_init(lock, 0)
 #define DESTROY_LOCK(lock) \
