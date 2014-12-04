@@ -1,9 +1,9 @@
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 
 #define MAXSKIP 8192
 
@@ -45,15 +45,15 @@ experiment(const u8 *key, const u8 *nonce, unsigned skip)
   printf("offset: %d\n", skip);
 
   dumphex(NULL, buf + skip, OUTPUT);
- end:
+end:
   ;
 #undef OUTPUT
 }
 
 #define X(key, nonce, skip)                                     \
   do {                                                          \
-    experiment((const u8*)(key), (const u8*)(nonce), (skip));   \
-  } while (0)
+      experiment((const u8*)(key), (const u8*)(nonce), (skip));   \
+    } while (0)
 
 
 static void
@@ -74,7 +74,6 @@ dump_chacha20_test_vectors(void *arg)
 
 static struct testcase_t chacha_testvectors_tests[] = {
   { "make_chacha_testvectors", dump_chacha20_test_vectors,
-    TT_OFF_BY_DEFAULT, NULL, 0
-  },
+    TT_OFF_BY_DEFAULT, NULL, 0 },
   END_OF_TESTCASES
 };

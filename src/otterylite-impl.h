@@ -2,67 +2,67 @@
    libottery-lite PRNG */
 
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 
 #ifndef OTTERYLITE_IMPL_H_INCLUDED_
 #define OTTERYLITE_IMPL_H_INCLUDED_
 
 /*
-  Here are more macros you can define to override Libottery-lite's default
-  behavior.  Unlike the ones in otterylite.h, these ones don't change the
-  declarations of the APIs.
+   Here are more macros you can define to override Libottery-lite's default
+   behavior.  Unlike the ones in otterylite.h, these ones don't change the
+   declarations of the APIs.
  */
 
 /*
-  Don't lock the PRNG if this option is set.
+   Don't lock the PRNG if this option is set.
 
-  Only for use in embedded single-threaded applications.  And really, just
-  don't.  It isn't worth it.  You'll regret it.
+   Only for use in embedded single-threaded applications.  And really, just
+   don't.  It isn't worth it.  You'll regret it.
 
-  #define OTTERY_DISABLE_LOCKING
-*/
-
-/*
-  Don't try to mmap the ottery RNG state into its own separate page.
-
-  By default, we use mlock and minherit tricks to keep things from going wrong
-  with the private parts of the RNG state.  Setting this option disables that.
-
-  #define OTTERY_RNG_NO_MMAP
-*/
+   #define OTTERY_DISABLE_LOCKING
+ */
 
 /*
-  Don't allocate the RNG on the heap.
+   Don't try to mmap the ottery RNG state into its own separate page.
 
-  If used together with NO_MMAP, this option makes the RNG get stored inside
-  the regular ottery state.  Not recommended.
+   By default, we use mlock and minherit tricks to keep things from going wrong
+   with the private parts of the RNG state.  Setting this option disables that.
+
+   #define OTTERY_RNG_NO_MMAP
+ */
+
+/*
+   Don't allocate the RNG on the heap.
+
+   If used together with NO_MMAP, this option makes the RNG get stored inside
+   the regular ottery state.  Not recommended.
 
    #define OTTERY_RNG_NO_HEAP
-*/
+ */
 
 /*
-  If we can't get any entropy from a real entropy source, don't try to gather
-  it from kludging around the OS.
+   If we can't get any entropy from a real entropy source, don't try to gather
+   it from kludging around the OS.
 
-  #define OTTERY_DISABLE_FALLBACK_RNG
+   #define OTTERY_DISABLE_FALLBACK_RNG
  */
 
 /* Define this for a little debugging output.
    #define TRACE(x) printf x
-*/
+ */
 #define TRACE(x)
 
 /*
-  Here are the internal parts of the OTTERY_STRUCT implementation.  If we're
-  putting our state in a structure, then our local pointer to it is in
-  a variable called "state", and we need to insert a comma after that sometimes.
-  We'll find members at state->membername.
+   Here are the internal parts of the OTTERY_STRUCT implementation.  If we're
+   putting our state in a structure, then our local pointer to it is in
+   a variable called "state", and we need to insert a comma after that sometimes.
+   We'll find members at state->membername.
 
-  On the other hand, if we're storing things statically, we don't pass
+   On the other hand, if we're storing things statically, we don't pass
  */
 #ifdef OTTERY_STRUCT
 #define OTTERY_STATE_ARG_OUT state
@@ -82,9 +82,9 @@
 #endif
 
 /*
-  Now find out a little bit about what kind of CPU we're building for.  Define
-  OTTERY_X86 if it's an x86 or x86_64, and define OTTERY_X86_64 if it's an
-  X86_64.
+   Now find out a little bit about what kind of CPU we're building for.  Define
+   OTTERY_X86 if it's an x86 or x86_64, and define OTTERY_X86_64 if it's an
+   X86_64.
  */
 #if defined(i386) ||                            \
   defined(__i386) ||                            \
@@ -188,7 +188,7 @@
 #define uint64_t unsigned __int64
 #define inline __inline
 #ifndef UINT64_MAX
-#define UINT64_MAX (~ (uint64_t)0)
+#define UINT64_MAX (~(uint64_t)0)
 #endif
 #else
 #include <stdint.h>
@@ -256,17 +256,17 @@ typedef unsigned char u8;
  */
 #ifdef OTTERY_LITTLE_ENDIAN
 /*
-  The "{read,write}_u{32,64}_le()" functions copy a byte sequence to
-  or from an array of 'n' unsigned integers, treating that byte
-  sequence as a little-endian array.
+   The "{read,write}_u{32,64}_le()" functions copy a byte sequence to
+   or from an array of 'n' unsigned integers, treating that byte
+   sequence as a little-endian array.
  */
-#define read_u32_le(out, in, n) { memcpy((out), (in), ((n)*4)); }
-#define write_u32_le(out, in, n) { memcpy((out), (in), ((n)*4)); }
-#define read_u64_le(out, in, n)  { memcpy((out), (in), ((n)*8)); }
+#define read_u32_le(out, in, n) { memcpy((out), (in), ((n) * 4)); }
+#define write_u32_le(out, in, n) { memcpy((out), (in), ((n) * 4)); }
+#define read_u64_le(out, in, n)  { memcpy((out), (in), ((n) * 8)); }
 /*
-  The "{read,write}_u{32,64}_le()" functions copy an 'n' byte sequence to or
-  from an array of CEIL(n / sizeof(type)) unsigned integers, treating that
-  byte sequence as a little-endian array.
+   The "{read,write}_u{32,64}_le()" functions copy an 'n' byte sequence to or
+   from an array of CEIL(n / sizeof(type)) unsigned integers, treating that
+   byte sequence as a little-endian array.
  */
 #define write_u64_le_partial(out, in, n) { memcpy((out), (in), (n)); }
 #define read_u64_le_partial(out, in, n)  { memcpy((out), (in), (n)); }
@@ -276,43 +276,49 @@ static inline void
 write_u32_le(u8 *out, const uint32_t *in, int n)
 {
   int i;
-  for (i = 0; i < n; ++i) {
-    *out++ = ((*in)>>0) & 0xff;
-    *out++ = ((*in)>>8) & 0xff;
-    *out++ = ((*in)>>16) & 0xff;
-    *out++ = ((*in)>>24) & 0xff;
-    ++in;
-  }
+
+  for (i = 0; i < n; ++i)
+    {
+      *out++ = ((*in) >> 0) & 0xff;
+      *out++ = ((*in) >> 8) & 0xff;
+      *out++ = ((*in) >> 16) & 0xff;
+      *out++ = ((*in) >> 24) & 0xff;
+      ++in;
+    }
 }
 
 static inline void
 read_u32_le(uint32_t *out, const u8 *in, int n)
 {
   int i;
-  for (i = 0; i < n; ++i) {
-    *out++ = ((in[0] << 0u) |
-              (in[1] << 8u) |
-              (in[2] << 16u) |
-              (in[3] << 24u));
-    in += 4;
-  }
+
+  for (i = 0; i < n; ++i)
+    {
+      *out++ = ((in[0] << 0u) |
+                (in[1] << 8u) |
+                (in[2] << 16u) |
+                (in[3] << 24u));
+      in += 4;
+    }
 }
 
 static inline void
 read_u64_le(uint64_t *out, const u8 *in, int n)
 {
   int i;
-  for (i = 0; i < n; ++i) {
-    *out++ = ( (((uint64_t)in[0]) << 0)  |
-               (((uint64_t)in[1]) << 8)  |
-               (((uint64_t)in[2]) << 16) |
-               (((uint64_t)in[3]) << 24) |
-               (((uint64_t)in[4]) << 32) |
-               (((uint64_t)in[5]) << 40) |
-               (((uint64_t)in[6]) << 48) |
-               (((uint64_t)in[7]) << 56));
-    in += 8;
-  }
+
+  for (i = 0; i < n; ++i)
+    {
+      *out++ = ((((uint64_t)in[0]) << 0) |
+                (((uint64_t)in[1]) << 8) |
+                (((uint64_t)in[2]) << 16) |
+                (((uint64_t)in[3]) << 24) |
+                (((uint64_t)in[4]) << 32) |
+                (((uint64_t)in[5]) << 40) |
+                (((uint64_t)in[6]) << 48) |
+                (((uint64_t)in[7]) << 56));
+      in += 8;
+    }
 }
 
 static inline void
@@ -320,18 +326,20 @@ read_u64_le_partial(uint64_t *out, const u8 *in, int n)
 {
   const int whole = (n & ~7);
   int shift;
-  read_u64_le(out, in, whole>>3);
+
+  read_u64_le(out, in, whole >> 3);
   n &= 7;
   if (n == 0)
     return;
-  out += (whole>>3);
+  out += (whole >> 3);
   shift = 0;
   in += whole;
   *out = 0;
-  while (n--) {
-    *out |= ((uint64_t)*in++) << shift;
-    shift += 8;
-  }
+  while (n--)
+    {
+      *out |= ((uint64_t)*in++) << shift;
+      shift += 8;
+    }
 }
 
 static inline void
@@ -341,27 +349,26 @@ write_u64_le_partial(u8 *out, const uint64_t *in, int n)
   int i;
   uint64_t lastword;
 
-  for (i = 0; i < whole; i += 8) {
-    *out++ = ((*in)>>0)  & 0xff;
-    *out++ = ((*in)>>8)  & 0xff;
-    *out++ = ((*in)>>16) & 0xff;
-    *out++ = ((*in)>>24) & 0xff;
-    *out++ = ((*in)>>32) & 0xff;
-    *out++ = ((*in)>>40) & 0xff;
-    *out++ = ((*in)>>48) & 0xff;
-    *out++ = ((*in)>>56) & 0xff;
-    ++in;
-  }
+  for (i = 0; i < whole; i += 8)
+    {
+      *out++ = ((*in) >> 0) & 0xff;
+      *out++ = ((*in) >> 8) & 0xff;
+      *out++ = ((*in) >> 16) & 0xff;
+      *out++ = ((*in) >> 24) & 0xff;
+      *out++ = ((*in) >> 32) & 0xff;
+      *out++ = ((*in) >> 40) & 0xff;
+      *out++ = ((*in) >> 48) & 0xff;
+      *out++ = ((*in) >> 56) & 0xff;
+      ++in;
+    }
 
   n &= 7;
   lastword = *in;
-  for (i = 0; i < n; ++i) {
-    *out++ = lastword & 0xff;
-    lastword >>= 8;
-  }
+  for (i = 0; i < n; ++i)
+    {
+      *out++ = lastword & 0xff;
+      lastword >>= 8;
+    }
 }
 #endif
-
-
-
 #endif /* OTTERYLITE_H_IMPL_INCLUDED_ */

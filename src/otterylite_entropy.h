@@ -1,20 +1,20 @@
 /* otterylite_entropy.h -- entropy extraction for lottery-lite */
 
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 
 /*
-  See the README for a discussion of approaches and ideas here.
+   See the README for a discussion of approaches and ideas here.
 
-  The first part of this file provides a wide variety of methods for getting
-  entropy from the OS and hardware.  Fallback methods are implemented in other
-  files.
+   The first part of this file provides a wide variety of methods for getting
+   entropy from the OS and hardware.  Fallback methods are implemented in other
+   files.
 
-  The second part of this file chooses and combines entropy methods.
+   The second part of this file chooses and combines entropy methods.
  */
 
 #ifndef OTTERYLITE_ENTROPY_H_INCLUDED
@@ -25,14 +25,14 @@
 #define ENTROPY_CHUNK 32
 
 /*
-  We consider ourselves unseeded if we have less than this much output from
-  all our entropy producers.
+   We consider ourselves unseeded if we have less than this much output from
+   all our entropy producers.
  */
 #define OTTERY_ENTROPY_MINLEN 32
 
 /*
-  Define some flags to 0 when they don't exist, so we can write the code
-  as if they did.
+   Define some flags to 0 when they don't exist, so we can write the code
+   as if they did.
  */
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
@@ -47,12 +47,12 @@
 #define FLAG_WEAK   (1u << 0)
 #define FLAG_AVOID  (1u << 1)
 
-#if defined(OTTERY_X86) && ! (defined(_MSC_VER) && !defined(__RDRND__))
+#if defined(OTTERY_X86) && !(defined(_MSC_VER) && !defined(__RDRND__))
 /*
-  RDRAND -- get entropy from recent x86 chips.
+   RDRAND -- get entropy from recent x86 chips.
 
-  Have sinister forces backdoored this friendly instruction?  Let's hope not.
-  But also, let's not use it last, or use it alone.
+   Have sinister forces backdoored this friendly instruction?  Let's hope not.
+   But also, let's not use it last, or use it alone.
  */
 
 /* Giving RDRAND too many chances to fail seems risky to me. */
@@ -89,7 +89,7 @@ rdrand_(uint32_t *therand)
 
 /* CPUID implementation to see whether we even have RDRAND */
 #ifdef _MSC_VER
-#define cpuid_(i,result) __cpuid((result), (i))
+#define cpuid_(i, result) __cpuid((result), (i))
 #else
 static void
 cpuid_(int index, unsigned result[4])
@@ -101,10 +101,10 @@ cpuid_(int index, unsigned result[4])
         : "0" (index));
 #else
   __asm volatile (
-                  "xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1"
-                  : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
-                  : "0" (index)
-                  : "cc");
+    "xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1"
+    : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
+    : "0" (index)
+    : "cc");
 #endif
   result[0] = eax;
   result[1] = ebx;
@@ -127,6 +127,7 @@ static int
 ottery_getentropy_rdrand(unsigned char *output, unsigned *flags_out)
 {
   int i;
+
   *flags_out = 0;
 
   if (!cpuid_says_rdrand_supported_())
@@ -134,14 +135,15 @@ ottery_getentropy_rdrand(unsigned char *output, unsigned *flags_out)
 
   for (i = 0; i < ENTROPY_CHUNK / 4; ++i, output += 4)
     {
-      if (rdrand_((uint32_t*)output) < 0) {
-        /*
-          A tricky point -- if rdrand stops working partway through, do
-          we use what it gave us before?  I don't think so; let's allow
-          minimum space for shenanigans.
-        */
-        return -1;
-      }
+      if (rdrand_((uint32_t*)output) < 0)
+        {
+          /*
+             A tricky point -- if rdrand stops working partway through, do
+             we use what it gave us before?  I don't think so; let's allow
+             minimum space for shenanigans.
+           */
+          return -1;
+        }
     }
   return ENTROPY_CHUNK;
 }
@@ -150,12 +152,12 @@ ottery_getentropy_rdrand(unsigned char *output, unsigned *flags_out)
 #define ottery_getentropy_rdrand NULL
 #endif
 
-
+
 
 #if ((defined(__OpenBSD__) && OpenBSD >= 201411 /* 5.6 */))
 /*
-  Ah, a good entropy source!  getentropy is about as simple as you
-  could ask for.
+   Ah, a good entropy source!  getentropy is about as simple as you
+   could ask for.
  */
 static int
 ottery_getentropy_getentropy(unsigned char *out, unsigned *flags)
@@ -167,13 +169,13 @@ ottery_getentropy_getentropy(unsigned char *out, unsigned *flags)
 #define ottery_getentropy_getentropy NULL
 #endif
 
-
+
 
 #if defined(__linux__) && defined(__NR_getrandom)
 /*
-  getrandom tries its best, but supplies too many options, and doesn't
-  make it too easy to just do the right thing.  Still, it's so much better
-  than the situation before that I really don't want to complain.
+   getrandom tries its best, but supplies too many options, and doesn't
+   make it too easy to just do the right thing.  Still, it's so much better
+   than the situation before that I really don't want to complain.
  */
 
 /* Define a getrandom, since glibc doesn't wrap it as of this writing. */
@@ -183,7 +185,7 @@ ottery_getrandom_ll_(void *out, size_t n, unsigned flags)
   return syscall(__NR_getrandom, out, n, flags);
 }
 /*
-  Wrap getrandom to make it try harder.
+   Wrap getrandom to make it try harder.
  */
 static int
 ottery_getrandom_(void *out, size_t n, unsigned flags)
@@ -201,7 +203,7 @@ ottery_getrandom_(void *out, size_t n, unsigned flags)
   return -1;
 }
 /*
-  Entropy source using getrandom.
+   Entropy source using getrandom.
  */
 static int
 ottery_getentropy_getrandom(unsigned char *out, unsigned *flags)
@@ -215,10 +217,10 @@ ottery_getentropy_getrandom(unsigned char *out, unsigned *flags)
 
 #if defined(_WIN32)
 /*
-  On Windows, everybody uses CryptGenRandom.  The wikipedia page at
+   On Windows, everybody uses CryptGenRandom.  The wikipedia page at
       https://en.wikipedia.org/wiki/CryptGenRandom
-  has a nice collection of references.  Also see MSDN.
-*/
+   has a nice collection of references.  Also see MSDN.
+ */
 static int
 ottery_getentropy_cryptgenrandom(unsigned char *out, unsigned *flags)
 {
@@ -235,7 +237,7 @@ ottery_getentropy_cryptgenrandom(unsigned char *out, unsigned *flags)
 
   n = ENTROPY_CHUNK;
 
- out:
+out:
   CryptReleaseContext(h, 0);
   return n;
 }
@@ -247,10 +249,10 @@ ottery_getentropy_cryptgenrandom(unsigned char *out, unsigned *flags)
 /* Everything besides windows has device files */
 
 /*
-  Try to read 'len' bytes from the device file named 'fname', storing them
-  into 'out'.  Return the actual number of bytes read, or -1 on error.  If
-  need_mode_flags, fail if the st_mode field of the file does not have all the
-  bits in need_mode_flags set.
+   Try to read 'len' bytes from the device file named 'fname', storing them
+   into 'out'.  Return the actual number of bytes read, or -1 on error.  If
+   need_mode_flags, fail if the st_mode field of the file does not have all the
+   bits in need_mode_flags set.
  */
 static int
 ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
@@ -264,7 +266,7 @@ ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
   struct stat st;
 
   /*
-    Open with O_NOFOLLOW -- this stuff should not be a symlink.
+     Open with O_NOFOLLOW -- this stuff should not be a symlink.
    */
   fd = open(fname, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
   if (fd < 0)
@@ -274,18 +276,20 @@ ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
   if ((st.st_mode & need_mode_flags) != need_mode_flags)
     goto out; /* If it's not a device, and we asked for one, that's a bad
                * sign. */
-  if (want_major >= 0 && want_minor >= 0) {
-    if ((int)major(st.st_rdev) != want_major ||
-        (int)minor(st.st_rdev) != want_minor) {
-      *flags_out |= FLAG_WEAK;
+  if (want_major >= 0 && want_minor >= 0)
+    {
+      if ((int)major(st.st_rdev) != want_major ||
+          (int)minor(st.st_rdev) != want_minor)
+        {
+          *flags_out |= FLAG_WEAK;
+        }
     }
-  }
 
   /* Read until we hit EOF, an error, or the number of bytes we wanted */
   output = 0;
   while (remain)
     {
-      r = (int) read(fd, out, remain);
+      r = (int)read(fd, out, remain);
       if (r == -1)
         {
           if (errno == EINTR || errno == EAGAIN)
@@ -302,7 +306,7 @@ ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
       remain -= r;
     }
 
- out:
+out:
   close(fd);
   return output;
 }
@@ -324,32 +328,32 @@ ottery_getentropy_device_(unsigned char *out, unsigned *flags_out,
 #endif
 
 /*
-  Try to read from the most urandom-like file available.
+   Try to read from the most urandom-like file available.
  */
 static int
 ottery_getentropy_dev_urandom(unsigned char *out, unsigned *flags_out)
 {
 #define TRY(fname, maj, min)                                            \
   do {                                                                  \
-    r = ottery_getentropy_device_(out, flags_out,                       \
-                                  ENTROPY_CHUNK, fname, S_IFCHR,        \
-                                  maj, min);                            \
-    if (r == ENTROPY_CHUNK)                                             \
-      return r;                                                         \
-  } while (0)
+      r = ottery_getentropy_device_(out, flags_out,                       \
+                                    ENTROPY_CHUNK, fname, S_IFCHR,        \
+                                    maj, min);                            \
+      if (r == ENTROPY_CHUNK)                                             \
+        return r;                                                         \
+    } while (0)
   int r;
 
   *flags_out = 0;
 #if defined(__sun) || defined(sun)
   /*
-    According to the libressl-portable people, this is where you have to look
-    if you're doing O_NOFOLLOW and trying to find a urandom device on sunos.
+     According to the libressl-portable people, this is where you have to look
+     if you're doing O_NOFOLLOW and trying to find a urandom device on sunos.
    */
   TRY("/devices/pseudo/random@0:urandom", -1, -1);
 #endif
 #ifdef __OpenBSD__
   /*
-    OpenBSD puts its RNG in srandom.  ????? Is this so?
+     OpenBSD puts its RNG in srandom.  ????? Is this so?
    */
   TRY("/dev/srandom", -1, -1);
 #endif
@@ -363,6 +367,7 @@ static int
 ottery_getentropy_dev_hwrandom(unsigned char *out, unsigned *flags_out)
 {
   int r;
+
   *flags_out = 0;
 
   TRY("/dev/hwrandom", -1, -1);
@@ -379,9 +384,9 @@ ottery_getentropy_dev_hwrandom(unsigned char *out, unsigned *flags_out)
 #ifdef __linux__
 #define LINUX_UUID_LEN 37
 /*
-  So, if you don't have getrandom(), and you don't have a working /dev, but
-  you still have /proc, you can still get the kernel to give you entropy.
-  Just hash a couple of UUIDs together!
+   So, if you don't have getrandom(), and you don't have a working /dev, but
+   you still have /proc, you can still get the kernel to give you entropy.
+   Just hash a couple of UUIDs together!
  */
 static int
 ottery_getentropy_proc_uuid(unsigned char *out, unsigned *flags_out)
@@ -389,6 +394,7 @@ ottery_getentropy_proc_uuid(unsigned char *out, unsigned *flags_out)
   /* ???? Verify that this actually uses urandom. */
   int n = 0, r, i;
   u8 buf[LINUX_UUID_LEN * 3], *cp = buf;
+
   *flags_out = 0;
 
   memset(buf, 0, sizeof(buf));
@@ -412,10 +418,10 @@ ottery_getentropy_proc_uuid(unsigned char *out, unsigned *flags_out)
 
 #ifndef OTTERY_DISABLE_EGD
 /*
-  EGD is a venerable replacement for having a kernel that actually knows how
-  to treat entropy.
+   EGD is a venerable replacement for having a kernel that actually knows how
+   to treat entropy.
 
-  The protocol is documented in the EGD distribution
+   The protocol is documented in the EGD distribution
  */
 static struct sockaddr_storage ottery_egd_sockaddr;
 static int ottery_egd_socklen = -1;
@@ -434,6 +440,7 @@ ottery_getentropy_egd(unsigned char *out, unsigned *flags_out)
   SOCKET sock;
   char msg[2];
   int result = -1, n_read = 0;
+
   *flags_out = 0;
 
   if (ottery_egd_socklen < 0)
@@ -454,14 +461,17 @@ ottery_getentropy_egd(unsigned char *out, unsigned *flags_out)
 
   while (n_read < ENTROPY_CHUNK)
     {
-      int r = (int) recv(sock, (void*)out, ENTROPY_CHUNK - n_read, 0);
-      if (r < 0) {
-        if (errno == EAGAIN || errno == EINTR)
-          continue;
-        goto out;
-      } else if (r == 0) {
-        break;
-      }
+      int r = (int)recv(sock, (void*)out, ENTROPY_CHUNK - n_read, 0);
+      if (r < 0)
+        {
+          if (errno == EAGAIN || errno == EINTR)
+            continue;
+          goto out;
+        }
+      else if (r == 0)
+        {
+          break;
+        }
 
       n_read += r;
       out += r;
@@ -469,7 +479,7 @@ ottery_getentropy_egd(unsigned char *out, unsigned *flags_out)
 
   result = n_read;
 
- out:
+out:
   closesocket(sock);
   return result;
 }
@@ -480,15 +490,15 @@ ottery_getentropy_egd(unsigned char *out, unsigned *flags_out)
 
 #if defined(__linux__)
 /*
-  Let's say that you're on a horrible Linux with no getrandom(), no /proc, and
-  no /dev.  Well, maybe it's a horrible _old_ Linux!  If it is, it might have
-  the sysctl() syscall, and you might be able to get random UUIDs this way.
+   Let's say that you're on a horrible Linux with no getrandom(), no /proc, and
+   no /dev.  Well, maybe it's a horrible _old_ Linux!  If it is, it might have
+   the sysctl() syscall, and you might be able to get random UUIDs this way.
 
-  ("Come back here and take what's coming to you! I'll randomize your legs
+   ("Come back here and take what's coming to you! I'll randomize your legs
    off!")
 
-  This won't work on more modern Linuxes, since they don't have sysctl any
-  more.
+   This won't work on more modern Linuxes, since they don't have sysctl any
+   more.
  */
 static int
 ottery_getentropy_linux_sysctl(unsigned char *out, unsigned *flags_out)
@@ -496,6 +506,7 @@ ottery_getentropy_linux_sysctl(unsigned char *out, unsigned *flags_out)
   int mib[] = { CTL_KERN, KERN_RANDOM, RANDOM_UUID };
   int n_read = 0, i;
   char buf[LINUX_UUID_LEN * 3];
+
   *flags_out = 0;
 
   memset(buf, 0, 74);
@@ -518,13 +529,14 @@ ottery_getentropy_linux_sysctl(unsigned char *out, unsigned *flags_out)
 
 #if defined(CTL_KERN) && defined(KERN_ARND)
 /*
-  Some of the BSDs provide a different sysctl().  That's worth trying too.
+   Some of the BSDs provide a different sysctl().  That's worth trying too.
  */
 static int
 ottery_getentropy_bsd_sysctl(unsigned char *out, unsigned *flags_out)
 {
   int i;
   int mib[] = { CTL_KERN, KERN_ARND };
+
   *flags_out = 0;
 
   /* I hear that some BSDs don't like returning anything but sizeof(unsigned)
@@ -544,8 +556,8 @@ ottery_getentropy_bsd_sysctl(unsigned char *out, unsigned *flags_out)
 
 #if !defined(OTTERY_DISABLE_FALLBACK_RNG)
 /*
-  And last of all, we can define a hairy mess of junk.  Let's stick that in
-  another file so it doesn't fighten the livestock.
+   And last of all, we can define a hairy mess of junk.  Let's stick that in
+   another file so it doesn't fighten the livestock.
  */
 #include "otterylite_fallback.h"
 #else
@@ -553,19 +565,19 @@ ottery_getentropy_bsd_sysctl(unsigned char *out, unsigned *flags_out)
 #endif /* OTTERY_DISABLE_FALLBACK_RNG */
 
 /*
-  Now turn we to selecting where to get our entropy.  Every function for
-  getting entropy comes with a unique ID, and belongs to a Group.
+   Now turn we to selecting where to get our entropy.  Every function for
+   getting entropy comes with a unique ID, and belongs to a Group.
 
-  A function can be Weak, or Avoided.  Any non-weak function is considered
-  Strong.
+   A function can be Weak, or Avoided.  Any non-weak function is considered
+   Strong.
 
-  Here are the rules:
+   Here are the rules:
 
-     * If you've already gotten a complete ENTROPY_CHUNK from some
+ * If you've already gotten a complete ENTROPY_CHUNK from some
        function in a Group, don't consider any other function from that
        Group.
 
-     * If you've already gotten a complete ENTROPY_CHUNK from a Strong
+ * If you've already gotten a complete ENTROPY_CHUNK from a Strong
        function, don't consider any Avoided function.
  */
 
@@ -609,21 +621,21 @@ static const struct entropy_source {
   SOURCE(proc_uuid, ID_PROC_UUID, GROUP_DEVICE, FLAG_AVOID),
   SOURCE(linux_sysctl, ID_LINUX_SYSCTL, GROUP_SYSCALL, FLAG_AVOID),
   SOURCE(bsd_sysctl, ID_BSD_SYSCTL, GROUP_SYSCALL, 0),
-  SOURCE(fallback_kludge, ID_FALLBACK_KLUDGE, GROUP_KLUDGE, FLAG_AVOID|FLAG_WEAK)
+  SOURCE(fallback_kludge, ID_FALLBACK_KLUDGE, GROUP_KLUDGE, FLAG_AVOID | FLAG_WEAK)
 };
 
 #define N_ENTROPY_SOURCES (sizeof(entropy_sources) / sizeof(entropy_sources[0]))
 
 /*
-  The largest possible output from ottery_getentropy().
+   The largest possible output from ottery_getentropy().
  */
 #define OTTERY_ENTROPY_MAXLEN (ENTROPY_CHUNK * N_ENTROPY_SOURCES)
 
 /*
-  Helper: As ottery_getentropy, but consider the 'n_sources' entropy
-  sources in 'sources'.
+   Helper: As ottery_getentropy, but consider the 'n_sources' entropy
+   sources in 'sources'.
 
-  This is done as a different function so that we can test it.
+   This is done as a different function so that we can test it.
  */
 static int
 ottery_getentropy_impl(unsigned char *out, int *status_out,
@@ -643,9 +655,9 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
   unsigned have_groups = 0, have_sources = 0;
 
   /*
-    Start by filling the output with 0s, so that we can just hash
-    the whole thing later on.
-  */
+     Start by filling the output with 0s, so that we can just hash
+     the whole thing later on.
+   */
   memset(out, 0, ENTROPY_CHUNK * n_sources);
 
   for (i = 0; i < n_sources; ++i)
@@ -681,27 +693,27 @@ ottery_getentropy_impl(unsigned char *out, int *status_out,
       have_sources |= sources[i].id;
       TRACE(("source %s gave us %d\n", sources[i].name, n));
     }
-  (void) have_sources; /* Eventually, expose this. FFFFF */
+  (void)have_sources;  /* Eventually, expose this. FFFFF */
 
   if (outp - out < ENTROPY_CHUNK)
     *status_out = -1; /* Not enough output altogether */
-  else if (! have_a_full_output)
+  else if (!have_a_full_output)
     *status_out = 0;  /* Nobody gave us complete output */
   else if (!have_strong)
     *status_out = 1;  /* No source that I really trust much */
   else
     *status_out = 2;  /* We have at least one good source. */
 
-  return (int) ( outp - out );
+  return (int)(outp - out);
 }
 
 /*
-  Fill 'out' with up to OTTERY_ENTROPY_MAXLEN bytes of entropy.  Return
-  the number of bytes we added.
+   Fill 'out' with up to OTTERY_ENTROPY_MAXLEN bytes of entropy.  Return
+   the number of bytes we added.
 
-  Set *'status_out' to -1 or 0 if we're doing quite badly, 1 if we have
-  entropy but not from good sources, and 2 if we're doing as well
-  as we're likely to do.
+   Set *'status_out' to -1 or 0 if we're doing quite badly, 1 if we have
+   entropy but not from good sources, and 2 if we're doing as well
+   as we're likely to do.
  */
 static int
 ottery_getentropy(unsigned char *out, int *status_out)
@@ -709,5 +721,4 @@ ottery_getentropy(unsigned char *out, int *status_out)
   return ottery_getentropy_impl(out, status_out,
                                 entropy_sources, (int)N_ENTROPY_SOURCES);
 }
-
 #endif /* OTTERYLITE_ENTROPY_H_INCLUDED */

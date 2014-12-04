@@ -9,7 +9,7 @@
 
    You should have received a copy of the CC0 Public Domain Dedication along with
    this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-*/
+ */
 #ifndef __BLAKE2_KAT_H__
 #define __BLAKE2_KAT_H__
 
@@ -4121,8 +4121,6 @@ static const uint8_t blake2b_kat[KAT_LENGTH][BLAKE2B_OUTBYTES] =
     0xD4, 0x1F, 0x0C, 0xC1, 0x4F, 0xA6, 0x79, 0x28
   },
 };
-
-
 #endif
 
 

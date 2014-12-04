@@ -1,10 +1,10 @@
 /* otterylite.h -- public APIs and declarations for libottery-lite */
 /*
-  To the extent possible under law, Nick Mathewson has waived all copyright and
-  related or neighboring rights to libottery-lite, using the creative commons
-  "cc0" public domain dedication.  See doc/cc0.txt or
-  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
-*/
+   To the extent possible under law, Nick Mathewson has waived all copyright and
+   related or neighboring rights to libottery-lite, using the creative commons
+   "cc0" public domain dedication.  See doc/cc0.txt or
+   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+ */
 #ifndef OTTERYLITE_H_INCLUDED_
 #define OTTERYLITE_H_INCLUDED_
 
@@ -13,37 +13,37 @@ extern "C" {
 #endif
 
 /*
-  The following macros, if defined, override aspects of some of the
-  definitions in this file, and corresponding definitions in Libottery-lite.
-*/
+   The following macros, if defined, override aspects of some of the
+   definitions in this file, and corresponding definitions in Libottery-lite.
+ */
 
 /* Declare the APIs as taking a "struct ottery_state" structure, for
    state isolation.
 
    #define OTTERY_STRUCT
-*/
-
-/*
-  Override the prefix we use for non-static functions.  By default, the prefix
-  is "ottery_", or "ottery_st_" if OTTERY_STRUCT is defined.
-
-  #define OTTERY_FUNC_PREFIX foo_
  */
 
 /*
-  Don't build with support for EGD (Entropy Gathering Daemon).  This
-  option also disables the EGD API in this header.
+   Override the prefix we use for non-static functions.  By default, the prefix
+   is "ottery_", or "ottery_st_" if OTTERY_STRUCT is defined.
 
-  #define OTTERY_DISABLE_EGD
-*/
+   #define OTTERY_FUNC_PREFIX foo_
+ */
 
 /*
-  Declare out interfaces to match arc4random_'s .  This is the same as
-  setting OTTERY_FUNC_PREFIX to "arc4random_", except that it prevents
-  APIs from having silly names like "arc4random_random()".
+   Don't build with support for EGD (Entropy Gathering Daemon).  This
+   option also disables the EGD API in this header.
 
-  #define OTTERY_BE_ARC4RANDOM
-*/
+   #define OTTERY_DISABLE_EGD
+ */
+
+/*
+   Declare out interfaces to match arc4random_'s .  This is the same as
+   setting OTTERY_FUNC_PREFIX to "arc4random_", except that it prevents
+   APIs from having silly names like "arc4random_random()".
+
+   #define OTTERY_BE_ARC4RANDOM
+ */
 
 
 /* Now we set OTTERY_FUNC_PREFIX if it's not already declared. */
@@ -97,8 +97,8 @@ struct ottery_state;
 #endif
 
 /*
-  And here's the API!  See the README for documentation on what all these
-  functions do.
+   And here's the API!  See the README for documentation on what all these
+   functions do.
 
  */
 #ifdef OTTERY_STRUCT
