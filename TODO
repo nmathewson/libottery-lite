@@ -84,7 +84,7 @@ For 1.0
 
   o Spinlocks for fast-yield cases?
 
-  - Rethink and minimize initialization/check code.
+  o Rethink and minimize initialization/check code.
 
 
 Maybe for 1.0

@@ -2,19 +2,19 @@
    libottery-lite */
 
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 
 /*
-   For more information on the BLAKE2 family, see  https://blake2.net/
+  For more information on the BLAKE2 family, see  https://blake2.net/
 
-   This is only a partial implementation of BLAKE2: It doesn't support keyed
-   hashes, and it doesn't handle parallel hashing.
- */
+  This is only a partial implementation of BLAKE2: It doesn't support keyed
+  hashes, and it doesn't handle parallel hashing.
+*/
 
 /* If this is defined to 32, we provide blake2s.  Otherwise, we do blake2b. */
 #define BLAKE2_WORDBITS 64
@@ -68,27 +68,27 @@ typedef uint32_t blake2_word_t;
 
 #define BLAKE2_G(a, b, c, d, round, idx)                \
   do {                                                  \
-      a += b + m[blake2_sigma[round][2 * idx]];           \
-      d = BLAKE2_ROT(d ^ a, BLAKE2_ROT1);                 \
-      c += d;                                             \
-      b = BLAKE2_ROT(b ^ c, BLAKE2_ROT2);                 \
-      a += b + m[blake2_sigma[round][2 * idx + 1]];       \
-      d = BLAKE2_ROT(d ^ a, BLAKE2_ROT3);                 \
-      c += d;                                             \
-      b = BLAKE2_ROT(b ^ c, BLAKE2_ROT4);                 \
-    } while (0)
+    a += b + m[blake2_sigma[round][2 * idx]];           \
+    d = BLAKE2_ROT(d ^ a, BLAKE2_ROT1);                 \
+    c += d;                                             \
+    b = BLAKE2_ROT(b ^ c, BLAKE2_ROT2);                 \
+    a += b + m[blake2_sigma[round][2 * idx + 1]];       \
+    d = BLAKE2_ROT(d ^ a, BLAKE2_ROT3);                 \
+    c += d;                                             \
+    b = BLAKE2_ROT(b ^ c, BLAKE2_ROT4);                 \
+  } while (0)
 
 #define BLAKE2_ROUND(round)                             \
   do {                                                  \
-      BLAKE2_G(v[0], v[4], v[8], v[12], round, 0);        \
-      BLAKE2_G(v[1], v[5], v[9], v[13], round, 1);        \
-      BLAKE2_G(v[2], v[6], v[10], v[14], round, 2);       \
-      BLAKE2_G(v[3], v[7], v[11], v[15], round, 3);       \
-      BLAKE2_G(v[0], v[5], v[10], v[15], round, 4);       \
-      BLAKE2_G(v[1], v[6], v[11], v[12], round, 5);       \
-      BLAKE2_G(v[2], v[7], v[8], v[13], round, 6);        \
-      BLAKE2_G(v[3], v[4], v[9], v[14], round, 7);        \
-    } while (0)
+    BLAKE2_G(v[0], v[4], v[8], v[12], round, 0);        \
+    BLAKE2_G(v[1], v[5], v[9], v[13], round, 1);        \
+    BLAKE2_G(v[2], v[6], v[10], v[14], round, 2);       \
+    BLAKE2_G(v[3], v[7], v[11], v[15], round, 3);       \
+    BLAKE2_G(v[0], v[5], v[10], v[15], round, 4);       \
+    BLAKE2_G(v[1], v[6], v[11], v[12], round, 5);       \
+    BLAKE2_G(v[2], v[7], v[8], v[13], round, 6);        \
+    BLAKE2_G(v[3], v[4], v[9], v[14], round, 7);        \
+  } while (0)
 
 static const u8 blake2_sigma[12][16] = {
   { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
@@ -106,11 +106,11 @@ static const u8 blake2_sigma[12][16] = {
 };
 
 /*
-   Do a one-pass computation of the BLAKE2 digest of the input_len-byte message
-   at 'input'.  Tweak the hash using the two provided personalization
-   parameters.  Store the output_len-byte result at 'output'.  Return the number
-   of bytes written on success, and -1 on failure.
- */
+  Do a one-pass computation of the BLAKE2 digest of the input_len-byte message
+  at 'input'.  Tweak the hash using the two provided personalization
+  parameters.  Store the output_len-byte result at 'output'.  Return the number
+  of bytes written on success, and -1 on failure.
+*/
 static int
 blake2(u8 *output, int output_len,
        const u8 *input, size_t input_len,

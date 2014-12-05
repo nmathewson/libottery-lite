@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 static HMODULE
 load_windows_library(const TCHAR *library_name)
@@ -44,7 +44,7 @@ fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
 
 static void
 ottery_getentropy_fallback_kludge_nonvolatile(
-  struct fallback_entropy_accumulator *accumulator)
+                                              struct fallback_entropy_accumulator *accumulator)
 {
   HMODULE netapi32 = NULL;
   HANDLE snap;
@@ -90,8 +90,8 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   if (snap != INVALID_HANDLE_VALUE)
     {
       /*
-         Walk through the processes, threads, and heaps.
-       */
+        Walk through the processes, threads, and heaps.
+      */
       PROCESSENTRY32 pwe;
       THREADENTRY32 te;
       MODULEENTRY32 me;
@@ -158,7 +158,7 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
             FBENT_ADD_CHUNK(addrs, size);
           }
-done_getadapters:
+      done_getadapters:
         if (addrs)
           free(addrs);
         CloseHandle(lib);
@@ -193,8 +193,8 @@ done_getadapters:
 
 static void
 ottery_getentropy_fallback_kludge_volatile(
-  int iter,
-  struct fallback_entropy_accumulator *accumulator)
+                                           int iter,
+                                           struct fallback_entropy_accumulator *accumulator)
 {
   HMODULE netapi32 = NULL;
 

@@ -1,9 +1,9 @@
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 #ifndef __linux__
 #if defined(__OpenBSD__)
@@ -18,9 +18,9 @@
 #endif
 
 /*
-   Here are a bunch of things we can ask clock_gettime() about.  There probably
-   isn't more than a bit of entropy in each, but we can hope.
- */
+  Here are a bunch of things we can ask clock_gettime() about.  There probably
+  isn't more than a bit of entropy in each, but we can hope.
+*/
 static const int clock_ids[] = {
 #ifdef CLOCK_MONOTONIC
   CLOCK_MONOTONIC,
@@ -67,8 +67,8 @@ static const int clock_ids[] = {
 /* FFFF mib lists for more platforms.
  */
 /*
-   Here are a bunch of things we can ask sysctl about.
- */
+  Here are a bunch of things we can ask sysctl about.
+*/
 static const struct {
   int miblen;
   const int mib[6];
@@ -105,9 +105,9 @@ static const struct {
 #endif /* !__linux__ */
 
 /*
-   Read the contents of 'fname' into 'fbe'.  If 'tailbytes' is nonzero, read
-   only the last 'tailbytes' bytes of the file.  Never read more than 1MB.
- */
+  Read the contents of 'fname' into 'fbe'.  If 'tailbytes' is nonzero, read
+  only the last 'tailbytes' bytes of the file.  Never read more than 1MB.
+*/
 static void
 fallback_entropy_accumulator_add_file(struct fallback_entropy_accumulator *fbe,
                                       const char *fname,
@@ -176,24 +176,24 @@ fallback_entropy_add_clocks(struct fallback_entropy_accumulator *accumulator)
 #endif
 }
 
-#define FBENT_ADD_FILE(fname)                                   \
+#define FBENT_ADD_FILE(fname)                                           \
   fallback_entropy_accumulator_add_file(accumulator, (fname), 0)
 #define FBENT_ADD_FILE_TAIL(fname, bytes)                               \
   fallback_entropy_accumulator_add_file(accumulator, (fname), (bytes))
 
 /*
-   Poll less-volatile kludgy entropy sources into 'accumulator'.
+  Poll less-volatile kludgy entropy sources into 'accumulator'.
 
-   This stuff doesn't change enough over the couse of a second that it's worth
-   polling more than once.
+  This stuff doesn't change enough over the couse of a second that it's worth
+  polling more than once.
 
-   Here we use a mixture of things that are (we hope) hard to predict for
-   somebody not running locally on the same host, and things that should be
-   hard for *anyone* to predict.
- */
+  Here we use a mixture of things that are (we hope) hard to predict for
+  somebody not running locally on the same host, and things that should be
+  hard for *anyone* to predict.
+*/
 static void
 ottery_getentropy_fallback_kludge_nonvolatile(
-  struct fallback_entropy_accumulator *accumulator)
+                                              struct fallback_entropy_accumulator *accumulator)
 {
   int i;
 
@@ -212,9 +212,9 @@ ottery_getentropy_fallback_kludge_nonvolatile(
   fallback_entropy_add_clocks(accumulator);
 
   /*
-     The pid and the current time; what could go wrong?  (Ask the Debian
-     openssl maintainers.)
-   */
+    The pid and the current time; what could go wrong?  (Ask the Debian
+    openssl maintainers.)
+  */
   {
     pid_t pid;
     pid = getppid();
@@ -225,9 +225,9 @@ ottery_getentropy_fallback_kludge_nonvolatile(
     FBENT_ADD(pid);
   }
   /*
-     Try to tail the logs a bit. This is pretty easy to find out if you're on
-     the same host, but not if you're not.
-   */
+    Try to tail the logs a bit. This is pretty easy to find out if you're on
+    the same host, but not if you're not.
+  */
   FBENT_ADD_FILE_TAIL("/var/log/system.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/cron.log", 16384);
   FBENT_ADD_FILE_TAIL("/var/log/messages", 16384);
@@ -250,9 +250,9 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 #endif
 #ifdef __linux__
   /*
-     It's a little weird to be reading from proc at this point; if we
-     have a working proc, how did /proc/sys/kernel/random/uuid fail for us?
-   */
+    It's a little weird to be reading from proc at this point; if we
+    have a working proc, how did /proc/sys/kernel/random/uuid fail for us?
+  */
   FBENT_ADD_FILE("/proc/cmdline");
   FBENT_ADD_FILE("/proc/iomem");
   FBENT_ADD_FILE("/proc/keys");
@@ -293,8 +293,8 @@ ottery_getentropy_fallback_kludge_nonvolatile(
 
 static void
 ottery_getentropy_fallback_kludge_volatile(
-  int iteration,
-  struct fallback_entropy_accumulator *accumulator)
+                                           int iteration,
+                                           struct fallback_entropy_accumulator *accumulator)
 {
   int i;
 

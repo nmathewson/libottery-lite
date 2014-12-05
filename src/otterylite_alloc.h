@@ -1,11 +1,11 @@
 /* otterylite_alloc.h -- allocation for libottery-lite */
 
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 #ifndef OTTERYLITE_ALLOC_H_INCLUDED
 #define OTTERYLITE_ALLOC_H_INCLUDED
@@ -15,9 +15,9 @@ IF_TESTING(static int ottery_testing_make_alloc_fail; )
 #if defined(OTTERY_RNG_NO_HEAP) && defined(OTTERY_RNG_NO_MMAP)
 
 /*
-   If the RNG is just stored inside the libottery-lite state, then
-   we just need to wipe it on startup and teardown.
- */
+  If the RNG is just stored inside the libottery-lite state, then
+  we just need to wipe it on startup and teardown.
+*/
 
 #define ALLOCATE_RNG(p) memset((p), 0, sizeof(*(p)))
 #define FREE_RNG(p) memwipe((p), sizeof(*(p)))
@@ -27,9 +27,9 @@ IF_TESTING(static int ottery_testing_make_alloc_fail; )
 #else
 
 /*
-   Otherwise, it's a pointer of some kind and we need functions to allocate and
-   free it.
- */
+  Otherwise, it's a pointer of some kind and we need functions to allocate and
+  free it.
+*/
 
 #define ALLOCATE_RNG(p) allocate_rng_(&(p))
 #define FREE_RNG(p) free_rng_(&(p))
@@ -38,17 +38,17 @@ IF_TESTING(static int ottery_testing_make_alloc_fail; )
 #ifdef OTTERY_RNG_NO_MMAP
 
 /*
-   If it's on the heap, we just calloc and free.
- */
+  If it's on the heap, we just calloc and free.
+*/
 
-static int
-allocate_rng_(struct ottery_rng **rng)
+  static int
+  allocate_rng_(struct ottery_rng **rng)
 {
   IF_TESTING({
-               if (ottery_testing_make_alloc_fail)
-                 return -1;
-             })
-  * rng = calloc(1, sizeof(**rng));
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
+    * rng = calloc(1, sizeof(**rng));
   return rng ? 0 : -1;
 }
 
@@ -107,11 +107,11 @@ static int
 allocate_rng_(struct ottery_rng **rng)
 {
   IF_TESTING({
-               if (ottery_testing_make_alloc_fail)
-                 return -1;
-             })
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
 
-  * rng = ottery_mmap_anon(sizeof(**rng));
+    * rng = ottery_mmap_anon(sizeof(**rng));
 
   if (*rng)
     {
@@ -153,14 +153,14 @@ ottery_munmap_anon(void *p, size_t length)
 }
 
 /*
-   On unix, we try to use mlock and minherit to keep the RNG's guts from
-   leaking to swap or to.
+  On unix, we try to use mlock and minherit to keep the RNG's guts from
+  leaking to swap or to.
 
-   Using mmap has a couple of advantages: First, it ensures that the RNG goes
-   on its own page, so that it's convenient to call mlock and minherit on it.
-   Second, if the kernel is feeling helpful, it will stick the RNG at a
-   hard-to-predict location in the address space.
- */
+  Using mmap has a couple of advantages: First, it ensures that the RNG goes
+  on its own page, so that it's convenient to call mlock and minherit on it.
+  Second, if the kernel is feeling helpful, it will stick the RNG at a
+  hard-to-predict location in the address space.
+*/
 
 #define USING_MMAP
 
@@ -168,11 +168,11 @@ static int
 allocate_rng_(struct ottery_rng **rng)
 {
   IF_TESTING({
-               if (ottery_testing_make_alloc_fail)
-                 return -1;
-             })
+      if (ottery_testing_make_alloc_fail)
+        return -1;
+    })
 
-  * rng = ottery_mmap_anon(sizeof(**rng));
+    * rng = ottery_mmap_anon(sizeof(**rng));
   if (NULL == *rng)
     return -1;
 

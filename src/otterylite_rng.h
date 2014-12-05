@@ -2,33 +2,33 @@
    libottery-lite. */
 
 /*
-   To the extent possible under law, Nick Mathewson has waived all copyright and
-   related or neighboring rights to libottery-lite, using the creative commons
-   "cc0" public domain dedication.  See doc/cc0.txt or
-   <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
- */
+  To the extent possible under law, Nick Mathewson has waived all copyright and
+  related or neighboring rights to libottery-lite, using the creative commons
+  "cc0" public domain dedication.  See doc/cc0.txt or
+  <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
+*/
 
 /* The first half of this file defines the ChaCha20 stream cipher.
 
    For more information on ChaCha, see http://cr.yp.to/chacha.html
- */
+*/
 
 #define CHACHA_BLOCKSIZE 64
 #define CHACHA_ROUNDS 20
 #define CHACHA_KEYLEN 32
 #define CHACHA_IVLEN 8
 
-#define CHACHA_QUARTER_ROUND(a, b, c, d)         \
-  do {                                           \
-      a += b;                                      \
-      d = ROTL32(d ^ a, 16);                       \
-      c += d;                                      \
-      b = ROTL32(b ^ c, 12);                       \
-      a += b;                                      \
-      d = ROTL32(d ^ a, 8);                        \
-      c += d;                                      \
-      b = ROTL32(b ^ c, 7);                        \
-    } while (0)
+#define CHACHA_QUARTER_ROUND(a, b, c, d)        \
+  do {                                          \
+    a += b;                                     \
+    d = ROTL32(d ^ a, 16);                      \
+    c += d;                                     \
+    b = ROTL32(b ^ c, 12);                      \
+    a += b;                                     \
+    d = ROTL32(d ^ a, 8);                       \
+    c += d;                                     \
+    b = ROTL32(b ^ c, 7);                       \
+  } while (0)
 
 static void
 chacha20_blocks(const unsigned char key[CHACHA_KEYLEN + CHACHA_IVLEN],
@@ -90,7 +90,7 @@ chacha20_blocks(const unsigned char key[CHACHA_KEYLEN + CHACHA_IVLEN],
 /* The amount of secret material that we use to fill an ottery buffer.
 
    (Even though we're using 320 bits here, I do not claim 320-bit security.)
- */
+*/
 #define OTTERY_KEYLEN (CHACHA_KEYLEN + CHACHA_IVLEN)
 
 #if 0
@@ -117,31 +117,31 @@ struct ottery_rng {
    */
   unsigned idx;
   /*
-     How many times have we regenerated buf?  If this gets large, we rekey.
-   */
+    How many times have we regenerated buf?  If this gets large, we rekey.
+  */
   unsigned count;
   /*
-     For all 0 <= j < idx, buf[j] contains 0.
+    For all 0 <= j < idx, buf[j] contains 0.
 
-     For all j >= idx, buf[j] contains a random byte generated with
-     the previous key material.
+    For all j >= idx, buf[j] contains a random byte generated with
+    the previous key material.
 
-     The last KEYLEN bytes of buf will be the key material for the next
-     buffer.
-   */
+    The last KEYLEN bytes of buf will be the key material for the next
+    buffer.
+  */
   unsigned char buf[OTTERY_BUFLEN];
 };
 
 /*
-   Helper function to implement the slow-path of ottery_bytes.
+  Helper function to implement the slow-path of ottery_bytes.
 
-   We don't have enough buffered bytes to fulfil the request straight from
-   the buffer, so we will need to call the ChaCha core.
+  We don't have enough buffered bytes to fulfil the request straight from
+  the buffer, so we will need to call the ChaCha core.
 
-   We're going to use the rng 'st' to fill 'out' with 'n' bytes.  We already
-   counted how many bytes we have queued, and found 'available_bytes'.
+  We're going to use the rng 'st' to fill 'out' with 'n' bytes.  We already
+  counted how many bytes we have queued, and found 'available_bytes'.
 
- */
+*/
 static void
 ottery_bytes_slow(struct ottery_rng *st, u8 *out, size_t n,
                   size_t available_bytes)
@@ -157,7 +157,7 @@ ottery_bytes_slow(struct ottery_rng *st, u8 *out, size_t n,
      The original libottery had an optimization for this case, where it
      write data straight into the output buffer.  But doing it this way
      simplifies the code a lot.
-   */
+  */
   while (n > OTTERY_BUFLEN - OTTERY_KEYLEN)
     {
       ++st->count;
@@ -177,8 +177,8 @@ ottery_bytes_slow(struct ottery_rng *st, u8 *out, size_t n,
 }
 
 /*
-   Core RNG implementation: write 'n' bytes into 'output' using 'st'.
- */
+  Core RNG implementation: write 'n' bytes into 'output' using 'st'.
+*/
 static inline void
 ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
 {
@@ -189,7 +189,7 @@ ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
     {
       /* Fast path: we don't need to generate more bytes; we can fulfil
          this from our buffer.
-       */
+      */
       memcpy(out, st->buf + st->idx, n);
       memset(st->buf + st->idx, 0, n);
       st->idx += n;
@@ -202,8 +202,8 @@ ottery_bytes(struct ottery_rng *st, void * const output, size_t n)
 
 
 /*
-   Replace the existing material in 'st' with material generated using 'key'
- */
+  Replace the existing material in 'st' with material generated using 'key'
+*/
 static void
 ottery_setkey(struct ottery_rng *st, const unsigned char key[OTTERY_KEYLEN])
 {
