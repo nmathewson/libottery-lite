@@ -87,8 +87,13 @@ For 1.0
   - Rethink and minimize initialization/check code.
 
 
+Maybe for 1.0
+
+
 Not for 1.0
   - 100% coverage.
+
+  - Build struct and nonstruct versions with shared code.
 
   - Split into more files
 
@@ -106,6 +111,10 @@ Not for 1.0
 
 
 
+IMO never:
+
+  - Support for setting the PRNG to a known state for reproducibility.  If
+    you need that, #define ottery_random() mt_random() or something.
 
 
 

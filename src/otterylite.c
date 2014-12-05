@@ -385,19 +385,30 @@ OTTERY_PUBLIC_FN2 (teardown)(OTTERY_STATE_ARG_ONLY)
   OTTERY_MAGIC_MAKE_INVALID(STATE_FIELD(magic));
 }
 
+/* XXXX document */
+static inline int
+init_or_reseed_as_needed(OTTERY_STATE_ARG_ONLY)
+{
+  if (UNLIKELY(NEED_REINIT)) {
+    if (ottery_handle_reinit(OTTERY_STATE_ARG_OUT) < 0)
+      return -1;
+  } else if (UNLIKELY(RNG_PTR->count > RESEED_AFTER_BLOCKS) &&
+             !STATE_FIELD(seeding)) {
+    ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);
+  }
+  return 0;
+}
+
+
 /*
    Helper: reinitialize and reseed the RNG if we have not initialized it
    previously, or we have forked.  Abort on failure.
  */
 #define INIT()                                                  \
   do {                                                          \
-      if (UNLIKELY(NEED_REINIT)) {                              \
-          int rrr = ottery_handle_reinit(OTTERY_STATE_ARG_OUT);     \
-          if (rrr < 0) {                                            \
-              abort();                                                \
-            }                                                         \
-        }                                                           \
-    } while (0)
+    if (init_or_reseed_as_needed(OTTERY_STATE_ARG_OUT) < 0)     \
+      abort();                                                  \
+  } while (0)
 
 void
 OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
@@ -407,19 +418,6 @@ OTTERY_PUBLIC_FN2 (need_reseed)(OTTERY_STATE_ARG_ONLY)
   UNLOCK();
 }
 
-/*
-   Helper: If we have generated too much output since our last reseed, launch
-   an opportunistic reseed.
- */
-#define CHECK()                                                         \
-  do {                                                                  \
-      if (UNLIKELY(RNG_PTR->count > RESEED_AFTER_BLOCKS) &&               \
-          !STATE_FIELD(seeding)) {                                        \
-          ottery_seed(OTTERY_STATE_ARG_OUT COMMA 1);                        \
-        }                                                                   \
-    } while (0)
-
-
 unsigned
 OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY)
 {
@@ -427,7 +425,6 @@ OTTERY_PUBLIC_FN (random)(OTTERY_STATE_ARG_ONLY)
 
   LOCK();
   INIT();
-  CHECK();
   ottery_bytes(RNG_PTR, &result, sizeof(result));
   UNLOCK();
   return result;
@@ -440,7 +437,6 @@ OTTERY_PUBLIC_FN (random64)(OTTERY_STATE_ARG_ONLY)
 
   LOCK();
   INIT();
-  CHECK();
   ottery_bytes(RNG_PTR, &result, sizeof(result));
   UNLOCK();
   return result;
@@ -460,7 +456,6 @@ OTTERY_PUBLIC_FN (random_uniform)(OTTERY_STATE_ARG_FIRST unsigned upper)
 
   LOCK();
   INIT();
-  CHECK();
   do
     {
       ottery_bytes(RNG_PTR, &result, sizeof(result));
@@ -482,7 +477,6 @@ OTTERY_PUBLIC_FN (random_uniform64)(OTTERY_STATE_ARG_FIRST uint64_t upper)
 
   LOCK();
   INIT();
-  CHECK();
   do
     {
       ottery_bytes(RNG_PTR, &result, sizeof(result));
@@ -499,7 +493,6 @@ OTTERY_PUBLIC_FN (random_buf)(OTTERY_STATE_ARG_FIRST void *output, size_t n)
 {
   LOCK();
   INIT();
-  CHECK();
   if (n < LARGE_BUFFER_CUTOFF)
     {
       ottery_bytes(RNG_PTR, output, n);
@@ -526,7 +519,6 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
     return;
   LOCK();
   INIT();
-  CHECK();
   {
     u8 buf[OTTERY_DIGEST_LEN * 2];
     u8 digest[OTTERY_DIGEST_LEN];
@@ -570,15 +562,10 @@ OTTERY_PUBLIC_FN2 (status)(OTTERY_STATE_ARG_ONLY)
 
   LOCK();
   /* This would ordinarily abort, but this function is special. */
-  if (NEED_REINIT)
-    {
-      if (ottery_handle_reinit(OTTERY_STATE_ARG_OUT) < 0)
-        {
-          UNLOCK();
-          return -2;
-        }
-    }
-  CHECK();
+  if (init_or_reseed_as_needed(OTTERY_STATE_ARG_OUT) < 0) {
+    UNLOCK();
+    return -2;
+  }
   r = STATE_FIELD(entropy_status);
   UNLOCK();
   return r;
