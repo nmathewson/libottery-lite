@@ -216,6 +216,7 @@ test_shallow_status_1(void *arg)
 
 #ifdef OTTERY_STRUCT
   state = calloc(1, sizeof(struct ottery_state));
+  INIT_LOCK(&STATE_FIELD(mutex));
 #endif
   tt_int_op(STATE_FIELD(seed_counter), ==, 0);
 
