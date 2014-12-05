@@ -62,8 +62,6 @@ For 1.0
   o Document the approach
   o Dedication notice on all files.
 
-  . Seek external review.
-
   o Header on all files
 
   o Even later tests:
@@ -78,13 +76,17 @@ For 1.0
 
   o header on all files, dedication on all files.
   o Fix all XXXX comments
-  - Re-run uncrustify and emacs indent
+  o Re-run uncrustify and emacs indent
   o Get it building with all the warnings I can
-  - Run dieharder tests with all the options.
+  o Run dieharder tests with all the options.
 
   o Spinlocks for fast-yield cases?
 
   o Rethink and minimize initialization/check code.
+
+  . Seek external review.
+
+  - Optimization for unlocking during bulk output.
 
 
 Maybe for 1.0
@@ -93,22 +95,20 @@ Maybe for 1.0
 Not for 1.0
   - 100% coverage.
 
+  - Split into more files
+
   - Build struct and nonstruct versions with shared code.
 
-  - Split into more files
 
   - Better arch independence in code
 
   o Make more tests pass on big-endian systems
 
-  - Actually match glibc style.
+  . Actually match glibc style.
 
   X Sometimes use blake2s?
 
   - Avoid getpid() checks when INHERIT_NONE and atfork are in use??
-
-  - Optimization for unlocking during bulk output.
-
 
 
 IMO never:
@@ -116,13 +116,10 @@ IMO never:
   - Support for setting the PRNG to a known state for reproducibility.  If
     you need that, #define ottery_random() mt_random() or something.
 
-
-
-
 - BEFORE EACH RELEASE:
 
   - header on all files, dedication on all files.
   - Fix all XXXX comments
   - Re-run uncrustify and emacs indent
-  o Get it building with all the warnings I can
+  - Get it building with all the warnings I can
   - Run dieharder tests with all the options.

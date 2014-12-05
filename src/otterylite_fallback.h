@@ -40,7 +40,7 @@ fallback_entropy_accumulator_get_output(
   TRACE(("I looked at %llu bytes\n", (unsigned long long)fbe->bytes_added));
   blake2(out, ENTROPY_CHUNK, fbe->buf, sizeof(fbe->buf),
          0x07735, 1);
-  memwipe(fbe, sizeof(fbe));
+  memwipe(fbe, sizeof(*fbe));
   return ENTROPY_CHUNK;
 }
 
