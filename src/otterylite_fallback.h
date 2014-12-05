@@ -66,7 +66,7 @@ fallback_entropy_accumulator_add_chunk(
   if (len > 128)
     ottery_digest(fbe->cp, chunk, len);
   else
-    memcpy(fbe->buf, chunk, len);
+    memcpy(fbe->cp, chunk, len);
 
   fbe->cp += addbytes;
   fbe->bytes_added += len;
