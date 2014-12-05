@@ -56,11 +56,21 @@ static const char *
 diff_fmt(btimer_diff_t *diff, uint64_t divisor)
 {
   static char buf[64];
+  const char *unit = "ns";
+  long quantity =  (long)diff->ns / divisor;
+  if (quantity > 10000) {
+    quantity /= 1000;
+    unit = "us";
+  }
+  if (quantity > 10000) {
+    quantity /= 1000;
+    unit = "ms";
+  }
 
 #ifdef USING_OTTERY_CPUTICKS
-  snprintf(buf, sizeof(buf), "%ld ns (%ld ticks)", (long)diff->ns / divisor, (long)diff->ticks / divisor);
+  snprintf(buf, sizeof(buf), "%ld %s (%ld ticks)", quantity, unit, (long)diff->ticks / divisor);
 #else
-  snprintf(buf, sizeof(buf), "%ld ns", (long)diff->ns / divisor);
+  snprintf(buf, sizeof(buf), "%ld %s", quantity, unit);
 #endif
   return buf;
 }
@@ -72,8 +82,9 @@ main(int c, char **v)
   btimer_t t_start, t_end;
   btimer_diff_t t_diff;
   u8 block[4096];
-  int i;
+  int i, j;
   const int N = 100000;
+  const int NENT = 100;
 
   (void)c; (void)v;
 
@@ -104,6 +115,28 @@ main(int c, char **v)
   btimer_gettime(&t_end);
   btimer_diff(&t_diff, &t_start, &t_end);
   printf("%s per buffer refill\n", diff_fmt(&t_diff, N));
+
+  for (j = 0; j < (int)N_ENTROPY_SOURCES; ++j)
+    {
+      const struct entropy_source *es = &entropy_sources[j];
+      unsigned flags=0;
+      unsigned bad=0;
+      if (!es->getentropy_fn)
+        continue;
+      btimer_gettime(&t_start);
+      for (i = 0; i < NENT; ++i)
+        {
+          if (es->getentropy_fn(block, &flags) < ENTROPY_CHUNK)
+            ++bad;
+        }
+      btimer_gettime(&t_end);
+      btimer_diff(&t_diff, &t_start, &t_end);
+      if (bad == (int)NENT)
+        continue;
+      printf("%s per %s\n", diff_fmt(&t_diff, NENT), es->name);
+      if (bad)
+        printf("%u failed.\n", bad);
+    }
 
   return 0;
 }
