@@ -134,7 +134,7 @@ end:
 }
 #endif
 
-#ifdef INHERIT_NONE
+#if defined(INHERIT_NONE) || defined(MADV_DONTFORK)
 static void
 test_fork_backend_inherit_none(void *arg)
 {
@@ -146,7 +146,11 @@ test_fork_backend_inherit_none(void *arg)
   tt_assert(cp);
   memcpy(cp, "Hello", 5);
 
+#ifdef INHERIT_NONE
   tt_int_op(0, ==, minherit(cp, 4096, INHERIT_NONE));
+#else
+  tt_int_op(0, ==, madvise(cp, 4096, MADV_DONTFORK));
+#endif
 
   d->shouldcrash = 1;
 
@@ -230,7 +234,7 @@ end:
 }
 
 static struct testcase_t fork_tests[] = {
-#ifdef INHERIT_NONE
+#if defined(INHERIT_NONE) || defined(MADV_DONTFORK)
   { "backend/inherit_none", test_fork_backend_inherit_none,
     TT_FORK, &fork_data_setup, NULL },
 #endif
