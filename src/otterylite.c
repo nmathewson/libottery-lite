@@ -539,8 +539,10 @@ OTTERY_PUBLIC_FN2 (addrandom)(OTTERY_STATE_ARG_FIRST const unsigned char *inp, i
 int
 OTTERY_PUBLIC_FN (set_egd_address)(const struct sockaddr *sa, int socklen)
 {
-  if (socklen > (int)sizeof(ottery_egd_sockaddr))
+  if (socklen > (int)sizeof(ottery_egd_sockaddr)) {
+    errno = EINVAL;
     return -1;
+  }
   if (socklen <= 0 || !sa)
     {
       memset(&ottery_egd_sockaddr, 0, sizeof(ottery_egd_sockaddr));
