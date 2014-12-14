@@ -170,9 +170,9 @@ allocate_rng_(struct ottery_rng **rng)
   IF_TESTING({
       if (ottery_testing_make_alloc_fail)
         return -1;
-    })
+    });
 
-    * rng = ottery_mmap_anon(sizeof(**rng));
+  *rng = ottery_mmap_anon(sizeof(**rng));
   if (NULL == *rng)
     return -1;
 
@@ -188,6 +188,17 @@ allocate_rng_(struct ottery_rng **rng)
 #define USING_INHERIT_NONE
   if (minherit(*rng, sizeof(**rng), INHERIT_NONE) < 0)
     {
+      /* A bit incorrect; we shouldn't actually die in this case */
+      ottery_munmap_anon(*rng, sizeof(**rng));
+      *rng = NULL;
+      return -1;
+    }
+#elif defined(MADV_DONTFORK)
+#define USING_INHERIT_NONE
+  if (madvise(*rng, sizeof(**rng), MADV_DONTFORK) < 0 ||
+      madvise(*rng, sizeof(**rng), MADV_DONTDUMP) < 0)
+    {
+      /* A bit incorrect; we shouldn't actually die in this case */
       ottery_munmap_anon(*rng, sizeof(**rng));
       *rng = NULL;
       return -1;
