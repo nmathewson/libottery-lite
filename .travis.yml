@@ -3,6 +3,6 @@ compiler:
   - gcc
   - clang
 script:
-  - make && make check
+  - make -k && make check
 
 
