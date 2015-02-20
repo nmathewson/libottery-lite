@@ -26,7 +26,7 @@ COMMON_CFLAGS = $(EXTRA_CFLAGS) -I ./src -Wall -Wextra -Werror -pthread
 EXTRA_CFLAGS = -W -Wfloat-equal -Wundef -Wpointer-arith -Wmissing-prototypes -Wwrite-strings -Wredundant-decls -Wchar-subscripts -Wcomment -Wformat=2 -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wbad-function-cast -Wswitch-enum -Werror -Winit-self -Wmissing-field-initializers -Wold-style-definition -Waddress -Wmissing-noreturn -Wstrict-overflow=1 -Wdeclaration-after-statement
 # -Wshorten-64-to-32 -Wstrict-prototypes
 
-CFLAGS = $(COMMON_CFLAGS) -O3
+CFLAGS = $(COMMON_CFLAGS) $(ADD_CFLAGS) -O3
 
 TEST_CFLAGS = $(COMMON_CFLAGS) --coverage -g -I test/tinytest
 # XXXX figure out how to make coverage work here too.
@@ -50,16 +50,16 @@ test/tinytest/tinytest.o: test/tinytest/tinytest.c
 TEST_DEPS = test/test_main.c test/test_blake2.c test/test_chacha.c test/test_egd.c test/test_entropy.c test/test_fork.c test/test_rng_core.c test/test_shallow.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
 
 test/test: $(TEST_DEPS)
-	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< -o $@
+	$(CC) $(TEST_CFLAGS) $(ADD_LIBS) test/tinytest/tinytest.o $< -o $@
 
 test/test_st: $(TEST_DEPS)
-	$(CC) $(TEST_CFLAGS2) -DOTTERY_STRUCT test/tinytest/tinytest.c $< -o $@
+	$(CC) $(TEST_CFLAGS2) -DOTTERY_STRUCT $(ADD_LIBS) test/tinytest/tinytest.c $< -o $@
 
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
-	$(CC) $(CFLAGS) $< src/otterylite.o -o $@
+	$(CC) $(CFLAGS) $(ADD_LIBS) $< src/otterylite.o -o $@
 
 bench/bench: bench/bench.c $(HEADERS)
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(ADD_LIBS) $< -o $@
 
 wanted_output: ./test/make_test_vectors.py
 	python ./test/make_test_vectors.py > wanted_output
