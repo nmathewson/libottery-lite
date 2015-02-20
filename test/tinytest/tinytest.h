@@ -26,6 +26,10 @@
 #ifndef TINYTEST_H_INCLUDED_
 #define TINYTEST_H_INCLUDED_
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 /** Flag for a test that needs to run in a subprocess. */
 #define TT_FORK  (1<<0)
 /** Runtime flag for a test we've decided to skip. */
