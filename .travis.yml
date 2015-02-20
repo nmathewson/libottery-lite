@@ -3,6 +3,6 @@ compiler:
   - gcc
   - clang
 script:
-  - make -k && make check
+  - make -k ADD_LIBS=-lrt && make check
 
 
