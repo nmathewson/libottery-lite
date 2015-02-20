@@ -68,7 +68,7 @@ diff_fmt(btimer_diff_t *diff, uint64_t divisor)
   }
 
 #ifdef USING_OTTERY_CPUTICKS
-  snprintf(buf, sizeof(buf), "%ld %s (%ld ticks)", quantity, unit, (long)diff->ticks / divisor);
+  snprintf(buf, sizeof(buf), "%ld %s (%ld ticks)", quantity, unit, (long)(diff->ticks / divisor));
 #else
   snprintf(buf, sizeof(buf), "%ld %s", quantity, unit);
 #endif
