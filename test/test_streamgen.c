@@ -12,7 +12,7 @@
 #include <string.h>
 #include "otterylite.h"
 
-static void
+static int
 write3(unsigned u)
 {
   unsigned char b3[3];
@@ -20,15 +20,15 @@ write3(unsigned u)
   b3[0] = u & 0xff;
   b3[1] = (u >> 8) & 0xff;
   b3[2] = (u >> 16) & 0xff;
-  write(1, b3, 3);
+  return write(1, b3, 3) == 3;
 }
-static void
+static int
 write7(uint64_t u64)
 {
   uint32_t u32 = (uint32_t)u64;
 
-  write(1, &u32, 4);
-  write3((unsigned)(u64 >> 32));
+  return write(1, &u32, 4) == 4 &&
+         write3((unsigned)(u64 >> 32));
 }
 
 int
@@ -38,6 +38,7 @@ main(int argc, char **argv)
   int yes_really = 0;
   int type = 0;
   int n = 0, i;
+  int ok = 1;
 
   for (i = 1; i < argc; ++i)
     {
@@ -83,63 +84,63 @@ main(int argc, char **argv)
     case 2:
       n = 9000; goto case_buf;
 case_buf:
-      while (1)
+      while (ok)
         {
           ottery_random_buf(buf, n);
-          write(1, buf, n);
+          ok = write(1, buf, n) == n;
         }
       break;
 
     case 3:
-      while (1)
+      while (ok)
         {
           unsigned u = ottery_random();
-          write(1, &u, sizeof(u));
+          ok = write(1, &u, sizeof(u)) == sizeof(u);
         }
       break;
 
     case 4:
-      while (1)
+      while (ok)
         {
           uint64_t u64 = ottery_random64();
-          write(1, &u64, sizeof(u64));
+          ok = write(1, &u64, sizeof(u64)) == sizeof(u64);
         }
       break;
 
     case 5:
-      while (1)
+      while (ok)
         {
           unsigned u = ottery_random_uniform(1 << 24);
-          write3(u);
+          ok = write3(u);
         }
       break;
 
     case 6:
-      while (1)
+      while (ok)
         {
           unsigned u = ottery_random_uniform((1 << 24) + 200000);
           if (u >= (1 << 24))
             continue;
-          write3(u);
+          ok = write3(u);
         }
       break;
 
     case 7:
-      while (1)
+      while (ok)
         {
           uint64_t u64 = ottery_random_uniform64(((uint64_t)1) << 56);
-          write7(u64);
+          ok = write7(u64);
         }
       break;
 
     case 8:
-      while (1)
+      while (ok)
         {
           uint64_t u64 = ottery_random_uniform64((((uint64_t)1) << 56) +
                                                  (((uint64_t)1) << 54));
           if (u64 >= (((uint64_t)1) << 56))
             continue;
-          write7(u64);
+          ok = write7(u64);
         }
       break;
     }
