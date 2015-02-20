@@ -9,10 +9,6 @@
 
 #include "otterylite.c"
 
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
-
 #include "tinytest.h"
 #include "tinytest_macros.h"
 

@@ -14,8 +14,9 @@
   static void name(void) __attribute__((constructor));  \
   static void name(void)
 #elif defined(_MSC_VER)
-#define INITIALIZER_FUNC(name)                                          \
-  static void __cdecl name(void);                                       \
+#pragma section(".CRT$XCU",read)
+#define INITIALIZER_FUNC(name)                                              \
+  static void __cdecl name(void);                                           \
   __declspec(allocate(".CRT$XCU")) void(__cdecl * name ## _) (void) = name; \
   static void name(void)
 #endif
