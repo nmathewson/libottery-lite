@@ -195,8 +195,11 @@ allocate_rng_(struct ottery_rng **rng)
     }
 #elif defined(MADV_DONTFORK)
 #define USING_INHERIT_NONE
-  if (madvise(*rng, sizeof(**rng), MADV_DONTFORK) < 0 ||
-      madvise(*rng, sizeof(**rng), MADV_DONTDUMP) < 0)
+  if (madvise(*rng, sizeof(**rng), MADV_DONTFORK) < 0
+#ifdef MADV_DONTDUMP
+      || madvise(*rng, sizeof(**rng), MADV_DONTDUMP) < 0)
+#endif
+      )
     {
       /* A bit incorrect; we shouldn't actually die in this case */
       ottery_munmap_anon(*rng, sizeof(**rng));
