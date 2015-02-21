@@ -50,16 +50,16 @@ test/tinytest/tinytest.o: test/tinytest/tinytest.c
 TEST_DEPS = test/test_main.c test/test_blake2.c test/test_chacha.c test/test_egd.c test/test_entropy.c test/test_fork.c test/test_rng_core.c test/test_shallow.c $(HEADERS) src/otterylite.c test/tinytest/tinytest.o
 
 test/test: $(TEST_DEPS)
-	$(CC) $(TEST_CFLAGS) $(ADD_LIBS) test/tinytest/tinytest.o $< -o $@
+	$(CC) $(TEST_CFLAGS) test/tinytest/tinytest.o $< $(ADD_LIBS) -o $@
 
 test/test_st: $(TEST_DEPS)
-	$(CC) $(TEST_CFLAGS2) -DOTTERY_STRUCT $(ADD_LIBS) test/tinytest/tinytest.c $< -o $@
+	$(CC) $(TEST_CFLAGS2) -DOTTERY_STRUCT test/tinytest/tinytest.c $< $(ADD_LIBS) -o $@
 
 test/test_streamgen: test/test_streamgen.c $(HEADERS) src/otterylite.o
-	$(CC) $(CFLAGS) $(ADD_LIBS) $< src/otterylite.o -o $@
+	$(CC) $(CFLAGS) $< src/otterylite.o $(ADD_LIBS)  -o $@
 
 bench/bench: bench/bench.c $(HEADERS)
-	$(CC) $(CFLAGS) $(ADD_LIBS) $< -o $@
+	$(CC) $(CFLAGS) $< $(ADD_LIBS)  -o $@
 
 wanted_output: ./test/make_test_vectors.py
 	python ./test/make_test_vectors.py > wanted_output
